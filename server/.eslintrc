@@ -1,0 +1,10 @@
+{
+  "extends": ["loopback", "eslint:recommended"],
+  "parserOptions": {
+    "ecmaVersion": 2018,
+    "ecmaFeatures": {
+      "globalReturn": true,
+      "experimentalObjectRestSpread": true
+    }
+  }
+}

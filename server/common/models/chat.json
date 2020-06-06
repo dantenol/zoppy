@@ -1,0 +1,41 @@
+{
+  "name": "chat",
+  "plural": "chats",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "type": {
+      "type": "string",
+      "required": true
+    },
+    "lastMessageAt": {
+      "type": "date",
+      "required": true
+    },
+    "chatId": {
+      "type": "string",
+      "id": true,
+      "required": true
+    }
+  },
+  "validations": [],
+  "relations": {
+    "messages": {
+      "type": "hasMany",
+      "model": "message",
+      "foreignKey": ""
+    }
+  },
+  "acls": [],
+  "methods": {},
+  "scope": {
+    "order": "lastMessageAt DESC"
+  }
+}

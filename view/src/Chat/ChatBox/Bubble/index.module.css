@@ -1,0 +1,90 @@
+.container {
+  display: flex;
+  margin-bottom: 2px;
+  padding: 0 7%;
+}
+
+.container > div {
+  padding: 8px;
+  border-radius: 8px;
+  max-width: 85%;
+  width: auto;
+  font-size: 14px;
+  position: relative;
+  display: inline-flex;
+}
+
+.left + .right,
+.right + .left {
+  margin-bottom: 12px;
+}
+
+.right {
+  justify-content: flex-end;
+}
+
+.right > div {
+  background-color: #dcf8c6;
+  border-top-right-radius: 0;
+}
+
+.left > div {
+  background-color: #fff;
+  border-top-left-radius: 0;
+}
+
+.left > div:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  border: 8px solid transparent;
+  border-right-color: #fff;
+  border-left: 0;
+  border-top: 0;
+  margin-top: 0;
+  margin-left: -8px;
+}
+
+.right > div:after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  border: 8px solid transparent;
+  border-left-color: #dcf8c6;
+  border-right: 0;
+  border-top: 0;
+  margin-top: 0;
+  margin-right: -8px;
+}
+
+.container .time {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.45);
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+}
+
+.message {
+  display: inline-flex;
+}
+
+.message span {
+  line-height: 19px;
+}
+
+.message .buffer {
+  width: 56px;
+  display: inline-block;
+}
+
+.container span,
+.container p {
+  margin: 0;
+}

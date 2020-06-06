@@ -1,0 +1,44 @@
+{
+  "name": "message",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {
+    "sender": {
+      "type": "object",
+      "required": true
+    },
+    "timestamp": {
+      "type": "date",
+      "required": true
+    },
+    "body": {
+      "type": "string",
+      "required": false
+    },
+    "type": {
+      "type": "string",
+      "required": true
+    },
+    "messageId": {
+      "type": "string",
+      "id": true,
+      "required": true
+    }
+  },
+  "validations": [],
+  "relations": {
+    "chat": {
+      "type": "belongsTo",
+      "model": "chat",
+      "foreignKey": ""
+    }
+  },
+  "acls": [],
+  "methods": {},
+  "scope": {
+    "order": "timestamp DESC"
+  }
+}

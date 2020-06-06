@@ -1,0 +1,49 @@
+.container {
+  position: relative;
+  width: 100%;
+  text-align: center;
+  top: calc(100% - 72px);
+}
+
+.loader {
+  display: inline-block;
+  position: relative;
+  background-color: white;
+  border-radius: 50%;
+  padding: 8px;
+  width: 48px;
+  height: 48px;
+}
+
+.loader div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #24d755;
+  border-radius: 50%;
+  animation: loader 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #24d755 transparent transparent transparent;
+}
+
+.loader div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+
+.loader div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+
+.loader div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+
+@keyframes loader {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
