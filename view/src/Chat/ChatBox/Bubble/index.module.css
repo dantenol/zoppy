@@ -2,6 +2,7 @@
   display: flex;
   margin-bottom: 2px;
   padding: 0 7%;
+  text-align: initial;
 }
 
 .container > div {
@@ -21,6 +22,11 @@
 
 .right {
   justify-content: flex-end;
+}
+
+.center {
+  justify-content: center;
+  margin: 16px;
 }
 
 .right > div {
@@ -73,6 +79,17 @@
 
 .message {
   display: inline-flex;
+  flex-direction: column;
+}
+
+.message a,
+.message a:visited {
+  color: #1b7bb7;
+}
+
+div.message p {
+  margin: 8px 0;
+  font-weight: bold;
 }
 
 .message span {
@@ -87,4 +104,65 @@
 .container span,
 .container p {
   margin: 0;
+}
+
+.day {
+  background-color: #e1f5fe;
+  padding: 5px 12px 6px;
+  border-radius: 8px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.88);
+  box-shadow: 1px 0.5px rgba(#000, 0.13);
+  text-shadow: 0 1px 0 rgba(#fff, 0.4);
+  font-size: 12.5px;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.image {
+  width: 200px;
+  height: 200px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.audio {
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+  background-color: #4caf50;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.audioController {
+  border: 0;
+  background: transparent;
+  box-sizing: border-box;
+  width: 0;
+  height: 40px;
+  border-color: transparent transparent transparent #fff;
+  transition: 100ms all ease;
+  cursor: pointer;
+  border-style: solid;
+  border-width: 20px 0 20px 30px;
+  margin-left: 8px;
+}
+.audioController.paused {
+  border-style: double;
+  border-width: 0px 0 0px 30px;
+  margin-left: 0;
+}
+.audioController:hover {
+  border-color: transparent transparent transparent #ccc;
+}
+
+.image ~ .msg {
+  max-width: 200px;
 }

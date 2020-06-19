@@ -11,10 +11,17 @@
   background-image: url("../../assets/images/background.png");
   flex-grow: 1;
   max-height: 100%;
-  overflow-x: auto;
+  overflow-y: hidden;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column-reverse;
-  padding-bottom: 32px;
+  padding: 32px 0;
+  padding-right: 6px;
+}
+
+.chat .container:hover {
+  overflow-y: scroll;
+  padding-right: 0
 }
 
 .chat .input {
@@ -48,13 +55,66 @@
   opacity: 0.6;
 }
 
-.day {
-  background-color: #e1f5fe;
-  padding: 5px 12px 6px;
-  border-radius: 8px;
+.loadMore {
+  width: 100%;
+  color: #fff;
+  background-color: darkgrey;
+  opacity: 0.7;
+  padding: 16px;
   text-align: center;
-  box-shadow: 1px 0.5px rgba(#000, 0.13);
-  text-shadow: 0 1px 0 rgba(#fff, 0.4);
-  font-size: 12.5px;
-  text-transform: uppercase;
+  position: relative;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.linearActivity {
+  overflow: hidden;
+  width: 100%;
+  height: 4px;
+  background-color: #bfffd1;
+  margin: 0;
+}
+
+.indeterminate {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.indeterminate:before {
+  content: '';
+  position: absolute;
+  height: 100%;
+  background-color: #24d755;
+  animation: indeterminate_first 1.5s infinite ease-out;
+}
+
+.indeterminate:after {
+  content: '';
+  position: absolute;
+  height: 100%;
+  background-color: #24d755;
+  animation: indeterminate_second 1.5s infinite ease-in;
+}
+
+@keyframes indeterminate_first {
+  0% {
+      left: -100%;
+      width: 100%;
+  }
+  100% {
+      left: 100%;
+      width: 10%;
+  }
+}
+
+@keyframes indeterminate_second {
+  0% {
+      left: -150%;
+      width: 100%;
+  }
+  100% {
+      left: 100%;
+      width: 10%;
+  }
 }

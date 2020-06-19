@@ -3,19 +3,20 @@ import moment from "moment";
 
 import classes from "./index.module.css";
 
-const urlRegex = /([-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))/g;
+const urlRegex = /([-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*))/g;
 
-export default ({ message }) => {
+const PureText = ({ message, isGroup }) => {
   function urlify() {
-    return message.body.split(urlRegex).map((part, i) => {
+    return message.body.split(" ").map((part, i) => {
       if (part.match(urlRegex)) {
+        const url = part.startsWith("http") ? part : "http://" + part;
         return (
-          <a key={i} href={part}>
+          <a key={i} rel="noopener noreferrer" target="_blank" href={url}>
             {part}
           </a>
         );
       }
-      return part;
+      return part + " ";
     });
   }
 
@@ -23,8 +24,11 @@ export default ({ message }) => {
   return (
     <div>
       <div className={classes.message}>
-        <span>{text}</span>
-        <span className={classes.buffer}></span>
+        {(isGroup && !message.mine) && <p>{message.sender}</p>}
+        <div className={classes.msg}>
+          <span>{text}</span>
+          <span className={classes.buffer}></span>
+        </div>
       </div>
       <div className={classes.time}>
         <p>{moment(message.timestamp).format("HH:mm")}</p>
@@ -32,3 +36,5 @@ export default ({ message }) => {
     </div>
   );
 };
+
+export default PureText

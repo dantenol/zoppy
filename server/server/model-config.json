@@ -14,7 +14,7 @@
     ]
   },
   "chat": {
-    "dataSource": "db",
+    "dataSource": "mongodb",
     "public": true,
     "options": {
       "remoting": {
@@ -24,13 +24,18 @@
           "profilePicUrl": true,
           "updateName": true,
           "getMessages": true,
-          "markSeen": true
+          "markSeen": true,
+          "loadMore": true,
+          "sendMessage": true,
+          "checkRecentMessages": true,
+          "loadFile": true,
+          "uploadMedia": true
         }
       }
     }
   },
   "message": {
-    "dataSource": "db",
+    "dataSource": "mongodb",
     "public": false
   }
 }

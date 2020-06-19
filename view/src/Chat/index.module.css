@@ -15,6 +15,7 @@
 .noChat {
   background-color: #f7f7f7;
   color: darkgrey;
+  padding: 24px;
 }
 
 .header {
@@ -26,9 +27,65 @@
   align-items: center;
 }
 
-.header img {
+.header .profilePic {
   width: 56px;
   height: 56px;
   border-radius: 28px;
   margin-right: 16px;
+}
+
+.header .name {
+  flex-grow: 1;
+}
+
+.header .camera {
+  margin-right: 16px;
+  opacity: 0.7;
+  cursor: pointer;
+  background: none;
+  transition: all ease 0.1s;
+}
+
+.header .nameInput {
+  border: 1px solid transparent;
+  background-color: transparent;
+  padding: 8px;
+  font-size: 20px;
+  background-image: url(../assets/images/edit.svg);
+  background-repeat: no-repeat;
+  background-size: 16px;
+  background-position: center right;
+}
+
+.header .camera:hover {
+  opacity: 1;
+  background: #e4e4e4;
+  padding: 8px;
+  margin-right: 8px;
+  border-radius: 8px;
+}
+
+.hintBubble {
+  background: #d6d6d6;
+  border-radius: .4em;
+  padding: 16px;
+  position: absolute;
+  z-index: 1;
+  width: 256px;
+  text-align: center;
+  color: #636363;
+}
+
+.hintBubble:after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 50%;
+	width: 0;
+	height: 0;
+	border: 9px solid transparent;
+	border-bottom-color: #d6d6d6;
+	border-top: 0;
+	margin-left: -9px;
+	margin-top: -9px;
 }

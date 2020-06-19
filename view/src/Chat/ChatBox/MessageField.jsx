@@ -5,11 +5,17 @@ import sendImg from "../../assets/images/send.svg";
 
 const MessageField = ({ message, handleChangeMessage, send }) => {
   const [rows, setRows] = useState(1);
+  const [sending, setSending] = useState(false);
 
-  const enterListener = (e) => {
+  const enterListener = async (e) => {
     if (e.keyCode === 13 && !e.shiftKey) {
       e.preventDefault();
-      send();
+      if (message) {
+        setSending(true);
+        await send(message);
+        handleChangeMessage("");
+        setSending(false);
+      }
     }
   };
 
@@ -38,19 +44,26 @@ const MessageField = ({ message, handleChangeMessage, send }) => {
   };
 
   return (
-    <div className={classes.input}>
-      <textarea
-        type="text"
-        rows={rows}
-        value={message}
-        onKeyDown={enterListener}
-        onChange={handleChange}
-        placeholder="Digite uma mensagem"
-      ></textarea>
-      <button>
-        <img src={sendImg} alt="Enviar" />
-      </button>
-    </div>
+    <>
+      {sending && (
+        <div className={classes.linearActivity}>
+          <div className={classes.indeterminate}></div>
+        </div>
+      )}
+      <div className={classes.input}>
+        <textarea
+          type="text"
+          rows={rows}
+          value={message}
+          onKeyDown={enterListener}
+          onChange={handleChange}
+          placeholder="Digite uma mensagem"
+        ></textarea>
+        <button onClick={send}>
+          <img src={sendImg} alt="Enviar" />
+        </button>
+      </div>
+    </>
   );
 };
 

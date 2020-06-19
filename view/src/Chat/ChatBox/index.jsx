@@ -1,24 +1,24 @@
-import React, { useState } from "react";
+import React, { Fragment, useState } from "react";
 import moment from "moment";
 
 import classes from "./index.module.css";
 import Spinner from "../Spinner";
 import MessageField from "./MessageField";
 import Bubble from "./Bubble";
+import Day from "./Bubble/Day";
 
-const calendarTexts = {
-  sameDay: "[Hoje]",
-  lastDay: "[Ontem]",
-  lastWeek: "dddd",
-  sameElse: "DD/MM/YYYY",
-};
-
-const Chat = ({ messages, loading, chatId }) => {
+const Chat = ({
+  messages,
+  loading,
+  chatId,
+  handleLoadMore,
+  send,
+  showMedia,
+}) => {
   const [message, setMessage] = useState("");
   const isGroup = chatId.includes("-");
 
-  const send = () => {};
-  let lastDay = 0;
+  let lastDay = new Date(messages[0].timestamp);
 
   return (
     <div className={classes.chat}>
@@ -26,22 +26,49 @@ const Chat = ({ messages, loading, chatId }) => {
         {loading ? (
           <Spinner />
         ) : (
-          messages.map((m) => {
-            const last = lastDay;
-            lastDay = m.timeStamp;
-            if (!moment(last).isSame(lastDay, "day")) {
-              return (
-                <>
-                  <div className={classes.day}>
-                    {moment(lastDay).calendar(calendarTexts)}
-                  </div>
-                  <Bubble message={m} isGroup={isGroup} />;
-                </>
-              );
-            } else {
-              return <Bubble message={m} isGroup={isGroup} />;
-            }
-          })
+          <>
+            {messages.map((m, i) => {
+              const last = lastDay;
+              const current = m.timestamp;
+              lastDay = current;
+              if (!moment(last).isSame(lastDay, "day")) {
+                return (
+                  <Fragment key={m.messageId}>
+                    <Day day={last} />
+                    <Bubble
+                      showMedia={showMedia}
+                      message={m}
+                      isGroup={isGroup}
+                    />
+                  </Fragment>
+                );
+              } else if (i === messages.length - 1) {
+                return (
+                  <Fragment key={m.messageId}>
+                    <Bubble
+                      showMedia={showMedia}
+                      key={m.messageId}
+                      message={m}
+                      isGroup={isGroup}
+                    />
+                    <Day day={last} />
+                  </Fragment>
+                );
+              } else {
+                return (
+                  <Bubble
+                    showMedia={showMedia}
+                    key={m.messageId}
+                    message={m}
+                    isGroup={isGroup}
+                  />
+                );
+              }
+            })}
+            <div onClick={handleLoadMore} className={classes.loadMore}>
+              Carregar mais
+            </div>
+          </>
         )}
       </div>
       <MessageField

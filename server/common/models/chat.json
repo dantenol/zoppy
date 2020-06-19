@@ -6,10 +6,16 @@
   "options": {
     "validateUpsert": true
   },
+  "scope": {
+    "order": "lastMessageAt DESC"
+  },
   "properties": {
     "name": {
       "type": "string",
       "required": true
+    },
+    "customName": {
+      "type": "string"
     },
     "type": {
       "type": "string",
@@ -23,7 +29,9 @@
       "type": "string",
       "id": true,
       "required": true
-    }
+    },
+    "pin": "number",
+    "mute": "boolean"
   },
   "validations": [],
   "relations": {
@@ -34,8 +42,5 @@
     }
   },
   "acls": [],
-  "methods": {},
-  "scope": {
-    "order": "lastMessageAt DESC"
-  }
+  "methods": {}
 }

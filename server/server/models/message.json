@@ -5,28 +5,29 @@
   "options": {
     "validateUpsert": true
   },
+  "scope": {
+    "order": "timestamp DESC"
+  },
   "properties": {
-    "sender": {
-      "type": "object",
-      "required": true
-    },
+    "sender": "string",
     "timestamp": {
       "type": "date",
       "required": true
     },
-    "body": {
-      "type": "string",
-      "required": false
-    },
+    "body": "string",
     "type": {
       "type": "string",
       "required": true
     },
+    "mine": "boolean",
     "messageId": {
       "type": "string",
       "id": true,
       "required": true
-    }
+    },
+    "clientUrl": "string",
+    "mediaKey": "string",
+    "mimetype": "string"
   },
   "validations": [],
   "relations": {
@@ -37,8 +38,5 @@
     }
   },
   "acls": [],
-  "methods": {},
-  "scope": {
-    "order": "timestamp DESC"
-  }
+  "methods": {}
 }

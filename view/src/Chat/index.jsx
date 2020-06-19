@@ -6,12 +6,26 @@ import NoChat from "./NoChat";
 
 import classes from "./index.module.css";
 
-const Chat = ({ chat, handleChangeName }) => {
+const Chat = ({
+  chat,
+  handleChangeName,
+  handleSend,
+  handleLoadMore,
+  handleUpload,
+  showMedia,
+}) => {
   if (chat) {
     return (
       <div className={classes.chatContainer}>
-        <Header data={chat} handleChangeName={handleChangeName} />
+        <Header
+          handleUpload={handleUpload}
+          data={chat}
+          handleChangeName={handleChangeName}
+        />
         <ChatBox
+          showMedia={showMedia}
+          handleLoadMore={handleLoadMore}
+          send={handleSend}
           chatId={chat.chatId}
           handleChangeName={handleChangeName}
           messages={chat.messages}

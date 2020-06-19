@@ -2,7 +2,6 @@
   position: relative;
   width: 100%;
   text-align: center;
-  top: calc(100% - 72px);
 }
 
 .loader {
