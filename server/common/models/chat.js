@@ -1,17 +1,15 @@
 'use strict';
 const moment = require('moment');
-const fs = require('fs');
-const mime = require('mime-types');
 const wa = require('@open-wa/wa-automate');
 
 require('axios-debug-log')({
-  request: function (debug, config) {
+  request: function(debug, config) {
     debug('Request with ', config);
   },
-  response: function (debug, response) {
+  response: function(debug, response) {
     debug('Response with ' + response.data, 'from ' + response.config.url);
   },
-  error: function (debug, error) {
+  error: function(debug, error) {
     // Read https://www.npmjs.com/package/axios#handling-errors for more info
     debug('Boom', error);
   },
@@ -20,7 +18,7 @@ require('axios-debug-log')({
 let model, wp;
 
 wa.create({
-  // licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
+  licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
   headless: false, // Headless chrome
   devtools: false, // Open devtools by default
   useChrome: true, // If false will use Chromium instance
@@ -142,7 +140,7 @@ async function setSeen(id) {
   return sen;
 }
 
-module.exports = function (Chat) {
+module.exports = function(Chat) {
   Chat.disableRemoteMethodByName('prototype.__delete__messages');
   Chat.disableRemoteMethodByName('prototype.__destroyById__messages');
   Chat.disableRemoteMethodByName('prototype.__findById__messages');
@@ -287,6 +285,9 @@ module.exports = function (Chat) {
           }
         }),
       );
+
+      // TODO clear cache if its over 2000 messages
+      // getAmountOfLoadedMessages and cutMsgCache
     }
   };
 
@@ -352,10 +353,10 @@ module.exports = function (Chat) {
 
     const mediaData = await wa.decryptMedia(msg);
 
-    const fileBase64 = `data:${msg.mimetype.replace(
-      / /g,
-      '',
-    )};base64,${mediaData.toString('base64')}`;
+    // const fileBase64 = `data:${msg.mimetype.replace(
+    //   / /g,
+    //   '',
+    // )};base64,${mediaData.toString('base64')}`;
 
     res.setHeader('Content-Type', msg.mimetype.split(';')[0]);
     res.setHeader('Content-Length', mediaData.length);
