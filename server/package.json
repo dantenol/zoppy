@@ -8,11 +8,11 @@
   "scripts": {
     "lint": "eslint .",
     "start": "node .",
-    "posttest": "npm run lint"
+    "custom-key": "sed -i 's@openwa.web.app@demoapi.projetomarvin.com/api@' node_modules/@open-wa/wa-automate/package.json",
+    "default-key": "sed -i 's@demoapi.projetomarvin.com/api@openwa.web.app@' node_modules/@open-wa/wa-automate/package.json"
   },
   "dependencies": {
     "@open-wa/wa-automate": "^1.9.76",
-    "axios-debug-log": "^0.7.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "express-fileupload": "^1.1.7-alpha.3",
@@ -27,6 +27,7 @@
     "strong-error-handler": "^3.4.0"
   },
   "devDependencies": {
+    "axios-debug-log": "^0.7.0",
     "eslint": "^7.3.0",
     "eslint-config-loopback": "^13.1.0",
     "eslint-config-prettier": "^6.11.0",
