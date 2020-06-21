@@ -1,24 +1,25 @@
 'use strict';
 const moment = require('moment');
+const sharp = require('sharp');
 const wa = require('@open-wa/wa-automate');
 
-require('axios-debug-log')({
-  request: function(debug, config) {
-    debug('Request with ', config);
-  },
-  response: function(debug, response) {
-    debug('Response with ' + response.data, 'from ' + response.config.url);
-  },
-  error: function(debug, error) {
-    // Read https://www.npmjs.com/package/axios#handling-errors for more info
-    debug('Boom', error);
-  },
-});
+// require('axios-debug-log')({
+//   request: function(debug, config) {
+//     debug('Request with ', config);
+//   },
+//   response: function(debug, response) {
+//     debug('Response with ' + response.data, 'from ' + response.config.url);
+//   },
+//   error: function(debug, error) {
+//     // Read https://www.npmjs.com/package/axios#handling-errors for more info
+//     debug('Boom', error);
+//   },
+// });
 
 let model, wp;
 
 wa.create({
-  licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
+  licenseKey: true,
   headless: false, // Headless chrome
   devtools: false, // Open devtools by default
   useChrome: true, // If false will use Chromium instance
@@ -30,7 +31,7 @@ async function start(wpp) {
   wp = wpp;
 
   wpp.onAnyMessage(async (msg) => {
-    console.log(msg);
+    // console.log(msg);
     saveMsg(msg);
   });
 
@@ -57,7 +58,7 @@ async function saveMsg(msg) {
   } else {
     await chat.updateAttributes({lastMessageAt: new Date(msg.t * 1000)});
   }
-  await Message.create({
+  const savedMsg = await Message.create({
     messageId: msg.id,
     chatId: msg.chat.id,
     body: msg.body,
@@ -71,6 +72,7 @@ async function saveMsg(msg) {
     mimetype: msg.mimetype,
     caption: msg.caption,
   });
+  console.log(savedMsg);
 }
 
 async function loadAllMessages(client) {
@@ -140,7 +142,7 @@ async function setSeen(id) {
   return sen;
 }
 
-module.exports = function(Chat) {
+module.exports = function (Chat) {
   Chat.disableRemoteMethodByName('prototype.__delete__messages');
   Chat.disableRemoteMethodByName('prototype.__destroyById__messages');
   Chat.disableRemoteMethodByName('prototype.__findById__messages');
@@ -358,9 +360,16 @@ module.exports = function(Chat) {
     //   '',
     // )};base64,${mediaData.toString('base64')}`;
 
+    console.log(mediaData);
+    if (msg.type === 'sticker') {
+      const img = await sharp('image.webp').png().toBuffer();
+      console.log(img);
+    }
+
     res.setHeader('Content-Type', msg.mimetype.split(';')[0]);
     res.setHeader('Content-Length', mediaData.length);
 
+    // console.log(mediaData.toString('base64'));
     res.send(mediaData);
   };
 

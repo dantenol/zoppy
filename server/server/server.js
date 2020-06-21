@@ -1,17 +1,24 @@
 'use strict';
+require('dotenv').config();
 const loopback = require('loopback');
 const boot = require('loopback-boot');
-
+const https = require('https');
 const fileUpload = require('express-fileupload');
-const app = module.exports = loopback();
 
+const certs = require('./ssl/certs');
+const app = (module.exports = loopback());
 app.use(fileUpload());
-app.start = function() {
+
+app.start = async function () {
+  const options = await certs();
+
+  const server = https.createServer(options, app);
   // start the web server
-  return app.listen(function() {
-    app.emit('started');
-    const baseUrl = app.get('url').replace(/\/$/, '');
-    console.log('Web server listening at: %s', baseUrl);
+  return server.listen(app.get('port'), function () {
+    const baseUrl = 'https://' + app.get('host') + ':' + app.get('port');
+    app.emit('started', baseUrl);
+    console.log('LoopBack server listening @ %s%s', baseUrl, '/');
+
     if (app.get('loopback-component-explorer')) {
       const explorerPath = app.get('loopback-component-explorer').mountPath;
       console.log('Browse your REST API at %s%s', baseUrl, explorerPath);
@@ -21,10 +28,9 @@ app.start = function() {
 
 // Bootstrap the application, configure models, datasources and middleware.
 // Sub-apps like REST API are mounted via boot scripts.
-boot(app, __dirname, function(err) {
+boot(app, __dirname, function (err) {
   if (err) throw err;
 
   // start the server if `$ node server.js`
-  if (require.main === module)
-    app.start();
+  if (require.main === module) app.start();
 });

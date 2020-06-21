@@ -1,18 +1,12 @@
 {
-  "db": {
-    "name": "db",
-    "localStorage": "",
-    "file": "db.json",
-    "connector": "memory"
-  },
   "mongodb": {
     "host": "localhost",
     "port": 27017,
     "url": "",
     "database": "whatsapp",
-    "password": "",
+    "password": "pass",
     "name": "mongodb",
-    "user": "",
+    "user": "root",
     "connector": "mongodb"
   }
 }
