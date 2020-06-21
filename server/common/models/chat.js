@@ -20,7 +20,7 @@ let model, wp;
 
 wa.create({
   licenseKey: true,
-  headless: false, // Headless chrome
+  headless: true, // Headless chrome
   devtools: false, // Open devtools by default
   useChrome: true, // If false will use Chromium instance
   debug: true, // Opens a debug session
