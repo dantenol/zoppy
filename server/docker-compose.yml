@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  server:
+    container_name: SERVER
+    build: "."
+    volumes:
+      - ./:/usr/src/app
+      # - ./node_modules:/node-app/node_modules
+    environment:
+      NODE_ENV: development
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: pass
+    depends_on:
+      - db
+    links:
+      - db
+    ports:
+      - '3001:3001'
+
+  db:
+    image: 'mongo'
+    container_name: MONGO
+    # ports:
+    #   - '27017:27017'
+    # volumes:
+    #   - /data/zoppydb:/data/db
+    command: --quiet
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: root
+    #   MONGO_INITDB_ROOT_PASSWORD: pass

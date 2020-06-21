@@ -1,0 +1,42 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "server/server.js",
+  "engines": {
+    "node": ">=4"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "start": "node .",
+    "custom-key": "sed -i 's@openwa.web.app@demoapi.projetomarvin.com/api@' node_modules/@open-wa/wa-automate/package.json",
+    "default-key": "sed -i 's@demoapi.projetomarvin.com/api@openwa.web.app@' node_modules/@open-wa/wa-automate/package.json"
+  },
+  "dependencies": {
+    "@open-wa/wa-automate": "^1.9.76",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "express-fileupload": "^1.1.7-alpha.3",
+    "helmet": "^3.23.1",
+    "loopback": "^3.27.0",
+    "loopback-boot": "^3.3.1",
+    "loopback-component-explorer": "^6.5.1",
+    "loopback-connector-mongodb": "^5.2.3",
+    "mime-types": "^2.1.27",
+    "moment": "^2.27.0",
+    "serve-favicon": "^2.5.0",
+    "strong-error-handler": "^3.4.0"
+  },
+  "devDependencies": {
+    "axios-debug-log": "^0.7.0",
+    "eslint": "^7.3.0",
+    "eslint-config-loopback": "^13.1.0",
+    "eslint-config-prettier": "^6.11.0",
+    "prettier": "^2.0.5"
+  },
+  "repository": {
+    "type": "",
+    "url": ""
+  },
+  "license": "UNLICENSED",
+  "description": "server"
+}
