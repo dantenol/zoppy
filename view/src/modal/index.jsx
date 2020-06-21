@@ -3,6 +3,8 @@ import Lightbox from "react-image-lightbox";
 import classNames from "classnames";
 import NumberFormat from "react-number-format";
 
+import { url } from "../connector.json";
+
 import "react-image-lightbox/style.css";
 import styles from "./modal.module.css";
 
@@ -42,7 +44,7 @@ const Modal = ({ file, onClose, handleSendImage, handleNewChat }) => {
     return (
       <Lightbox
         imagePadding={32}
-        mainSrc={`http://localhost:3001/api/chats/download/${file.id}`}
+        mainSrc={`${url}chats/download/${file.id}`}
         onCloseRequest={onClose}
       />
     );
@@ -52,7 +54,7 @@ const Modal = ({ file, onClose, handleSendImage, handleNewChat }) => {
         <div onClick={onClose} className={styles.modalBackground} />
         <div className={styles.modal}>
           <video
-            src={`http://localhost:3001/api/chats/download/${file.id}`}
+            src={`${url}chats/download/${file.id}`}
             alt="Vídeo"
             autoPlay
           />
@@ -106,7 +108,7 @@ const Modal = ({ file, onClose, handleSendImage, handleNewChat }) => {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
-          <button disabled={buttonDisabled} onClick={sendImage}>
+          <button disabled={buttonDisabled} onClick={sendNewChat}>
             {buttonDisabled ? (
               <img src={loading} alt="loading spinner" />
             ) : (

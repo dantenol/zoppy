@@ -31,7 +31,6 @@
   width: 56px;
   height: 56px;
   border-radius: 28px;
-  margin-right: 16px;
 }
 
 .header .name {
@@ -55,6 +54,7 @@
   background-repeat: no-repeat;
   background-size: 16px;
   background-position: center right;
+  max-width: 50vw;
 }
 
 .header .camera:hover {
@@ -72,6 +72,7 @@
   position: absolute;
   z-index: 1;
   width: 256px;
+  max-width: 50vw;
   text-align: center;
   color: #636363;
 }
@@ -88,4 +89,12 @@
 	border-top: 0;
 	margin-left: -9px;
 	margin-top: -9px;
+}
+
+.arrow {
+  background-color: transparent;
+}
+
+.arrow img {
+  width: 20px;
 }

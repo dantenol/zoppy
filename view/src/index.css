@@ -53,3 +53,32 @@ code {
   border-radius: 5px;
   background-color: #8a8a8a;
 }
+
+
+@media screen and (max-width: 600px) {
+  .mobile-only {
+    display: inherit;
+  }
+
+  .no-mobile {
+    display: none;
+  }
+
+  .mobile-fullwidth {
+    width: 100vw !important;
+  }
+
+  .true {
+    display: initial;
+  }
+
+  .false {
+    display: none !important;
+  }
+}
+
+@media screen and (min-width: 600px) {
+  .mobile-only {
+    display: none;
+  }
+}

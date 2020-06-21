@@ -1,12 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import classNames from "classnames";
 
 import classes from "./index.module.css";
 import camera from "../assets/images/camera.svg";
+import back from "../assets/images/back.svg";
 
-const Header = ({ data, handleUpload, handleChangeName }) => {
+const Header = ({ data, handleUpload, handleChangeName, handleBack }) => {
   const [name, setName] = useState(data.displayName);
   const [showHint, setShowHint] = useState(false);
   const [savedName, setSavedName] = useState(data.displayName);
+
+  useEffect(() => {
+    setName(data.displayName);
+    setSavedName(data.displayName);
+  }, [data]);
 
   const enterListener = async (e) => {
     if (e.keyCode === 13) {
@@ -28,6 +35,12 @@ const Header = ({ data, handleUpload, handleChangeName }) => {
 
   return (
     <div className={classes.header}>
+      <button
+        onClickCapture={handleBack}
+        className={classNames(classes.arrow, "mobile-only")}
+      >
+        <img src={back} alt="back" />
+      </button>
       <img className={classes.profilePic} src={data.profilePic} alt="Foto" />
       <div className={classes.name}>
         <input

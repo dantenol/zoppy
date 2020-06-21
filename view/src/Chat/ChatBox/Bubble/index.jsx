@@ -5,6 +5,7 @@ import classes from "./index.module.css";
 import PureText from "./PureText";
 import Image from "./Image";
 import VoiceMessage from "./VoiceMessage";
+import Sticker from "./Sticker";
 
 const Bubble = ({ message, isGroup, showMedia }) => {
   const side = message.mine ? classes.right : classes.left;
@@ -14,6 +15,8 @@ const Bubble = ({ message, isGroup, showMedia }) => {
     BubbleComponent = PureText;
   } else if (message.type === "image") {
     BubbleComponent = Image;
+  } else if (message.type === "sticker") {
+    BubbleComponent = Sticker;
   } else if (message.type === "ptt") {
     BubbleComponent = VoiceMessage;
   }

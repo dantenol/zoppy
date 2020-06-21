@@ -3,7 +3,7 @@ import moment from "moment";
 
 import classes from "./index.module.css";
 
-export default ({ message, isGroup, showMedia }) => (
+const Image = ({ message, isGroup, showMedia }) => (
   <div>
     <div className={classes.message}>
       {isGroup && !message.mine && <p>{message.sender}</p>}
@@ -26,3 +26,5 @@ export default ({ message, isGroup, showMedia }) => (
     </div>
   </div>
 );
+
+export default Image;

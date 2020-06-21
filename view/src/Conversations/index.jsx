@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import classNames from "classnames";
 
 import classes from "./index.module.css";
 import Search from "./Search";
@@ -9,6 +10,7 @@ const Conversations = ({
   handleQuery,
   handleSelectChat,
   handleNewContactModal,
+  showing,
 }) => {
   const [query, setQuery] = useState("");
 
@@ -18,7 +20,9 @@ const Conversations = ({
   };
 
   return (
-    <div className={classes.container}>
+    <div
+      className={classNames(classes.container, "mobile-fullwidth", showing)}
+    >
       <Search
         value={query}
         handleNewContact={handleNewContactModal}

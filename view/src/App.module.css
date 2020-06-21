@@ -4,8 +4,8 @@
   background-color: #e5ddd5;
   background: linear-gradient(
     180deg,
-    rgba(0, 150, 136, 1) 0%,
-    rgba(0, 150, 136, 1) 127px,
+    rgb(201, 255, 209) 0%,
+    rgb(201, 255, 209) 127px,
     rgba(229, 221, 213, 1) 127px
   );
   padding: 24px 0;

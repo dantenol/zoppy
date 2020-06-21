@@ -1,4 +1,5 @@
 import React from "react";
+import classNames from "classnames";
 
 import Header from "./Header";
 import ChatBox from "./ChatBox";
@@ -13,13 +14,22 @@ const Chat = ({
   handleLoadMore,
   handleUpload,
   showMedia,
+  showing,
+  handleBack,
 }) => {
   if (chat) {
     return (
-      <div className={classes.chatContainer}>
+      <div
+        className={classNames(
+          classes.chatContainer,
+          "mobile-fullwidth",
+          showing
+        )}
+      >
         <Header
           handleUpload={handleUpload}
           data={chat}
+          handleBack={handleBack}
           handleChangeName={handleChangeName}
         />
         <ChatBox
@@ -34,7 +44,7 @@ const Chat = ({
       </div>
     );
   } else {
-    return <NoChat />;
+    return <NoChat showing={showing} />;
   }
 };
 

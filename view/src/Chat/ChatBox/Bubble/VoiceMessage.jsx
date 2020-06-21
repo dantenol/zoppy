@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import moment from "moment";
 import classNames from "classnames";
 
+import { url } from "../../../connector.json";
+
 import classes from "./index.module.css";
 
 const VoiceMessage = ({ message, isGroup }) => {
@@ -16,7 +18,7 @@ const VoiceMessage = ({ message, isGroup }) => {
     try {
       setAudio(
         new Audio(
-          `http://localhost:3001/api/chats/download/${message.messageId}`
+          `${url}chats/download/${message.messageId}`
         )
       );
     } catch (error) {

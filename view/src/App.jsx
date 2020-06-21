@@ -3,6 +3,8 @@ import axios from "axios";
 import _ from "lodash";
 import "moment/locale/pt-br";
 
+import { url } from "./connector.json";
+
 import classes from "./App.module.css";
 import Conversations from "./Conversations";
 import notificationSound from "./assets/audio/notification.ogg";
@@ -26,11 +28,12 @@ const App = () => {
   const [selectedChatIndex, setSelectedChatIndex] = useState();
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [modal, setModal] = useState(null);
+  const [page, setPage] = useState("conversations");
   const isMobile = window.innerWidth <= 600;
   const audio = new Audio(notificationSound);
 
   const loadChats = async () => {
-    const res = await axios("http://localhost:3001/api/chats/all");
+    const res = await axios(`${url}chats/all`);
 
     res.data.forEach((c) => {
       const image = colors[Math.floor(Math.random() * 6)];
@@ -45,7 +48,7 @@ const App = () => {
 
   const getLatestMsgs = async () => {
     const msgs = await axios(
-      `http://localhost:3001/api/chats/latest/${lastUpdate.valueOf()}`
+      `${url}chats/latest/${lastUpdate.valueOf()}`
     );
 
     if (msgs.data) {
@@ -81,17 +84,18 @@ const App = () => {
     setSelectedChatIndex(idx);
     const curr = chats[idx];
     setCurrentChat(curr.chatId);
+    setPage("chat");
 
     if (curr.firstClick) {
       const msgs = await loadMessages(curr.chatId);
-      const url = await axios(
-        `http://localhost:3001/api/chats/${curr.chatId}/profilePic`
+      const pic = await axios(
+        `${url}chats/${curr.chatId}/profilePic`
       );
 
       updateChat(
         {
           messages: msgs,
-          profilePic: url.data || curr.profilePic,
+          profilePic: pic.data || curr.profilePic,
           firstClick: false,
           unread: 0,
         },
@@ -100,12 +104,12 @@ const App = () => {
     } else {
       updateChat({ unread: 0 }, curr.chatId);
     }
-    await axios.patch(`http://localhost:3001/api/chats/${curr.chatId}/seen`);
+    await axios.patch(`${url}chats/${curr.chatId}/seen`);
   };
 
   const handleChangeName = async (name) => {
     try {
-      await axios.patch(`http://localhost:3001/api/chats/${currentChat}/name`, {
+      await axios.patch(`${url}chats/${currentChat}/name`, {
         name,
       });
 
@@ -119,7 +123,7 @@ const App = () => {
   };
 
   const loadMessages = async (id) => {
-    const msgs = await axios(`http://localhost:3001/api/chats/${id}/messages`);
+    const msgs = await axios(`${url}chats/${id}/messages`);
     return msgs.data;
   };
 
@@ -165,7 +169,7 @@ const App = () => {
     const curr = [...chats];
     const msgsNumber = curr[idx].messages.length;
     const msgs = await axios(
-      `http://localhost:3001/api/chats/${currentChat}/messages?filter={"skip":${msgsNumber}}`
+      `${url}chats/${currentChat}/messages?filter={"skip":${msgsNumber}}`
     );
     console.log(curr, msgs.data);
 
@@ -174,7 +178,7 @@ const App = () => {
   };
 
   const send = async (message, to = currentChat) => {
-    const msg = await axios.post(`http://localhost:3001/api/chats/${to}/send`, {
+    const msg = await axios.post(`${url}chats/${to}/send`, {
       message,
     });
 
@@ -218,7 +222,7 @@ const App = () => {
     formData.append("caption", caption);
 
     const msg = await axios.post(
-      `http://localhost:3001/api/chats/${currentChat}/sendMedia`,
+      `${url}chats/${currentChat}/sendMedia`,
       formData,
       {
         headers: {
@@ -228,7 +232,7 @@ const App = () => {
       }
     );
 
-    let curr = cloneArray(chats) // TODO achar maneira mais inteligente de evitar referência
+    let curr = cloneArray(chats); // TODO achar maneira mais inteligente de evitar referência
     const idx = findIdxById(currentChat);
     curr[idx].messages.unshift(msg.data);
 
@@ -247,12 +251,15 @@ const App = () => {
       />
       <div className={classes.container}>
         <Conversations
+          showing={String(isMobile && page === "conversations")}
           data={chats}
           handleQuery={() => {}}
           handleSelectChat={selectChat}
           handleNewContactModal={handleNewContactModal}
         />
         <Chat
+          handleBack={() => setPage("conversations")}
+          showing={String(isMobile && page === "chat")}
           handleUpload={handleUploadModal}
           showMedia={handleShowMedia}
           handleSend={send}
