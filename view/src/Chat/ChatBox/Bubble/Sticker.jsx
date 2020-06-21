@@ -1,6 +1,5 @@
 import React from "react";
 import moment from "moment";
-import Image from "react-image-webp";
 
 import { url } from "../../../connector.json";
 
@@ -12,8 +11,8 @@ const Sticker = ({ message, isGroup }) => (
       {isGroup && !message.mine && <p>{message.sender}</p>}
       <div className={classes.image}>
         <picture>
-          <Image
-            webp={`${url}chats/download/${message.messageId}`}
+          <source
+            srcSet={`${url}chats/download/${message.messageId}`}
           />
         </picture>
       </div>
