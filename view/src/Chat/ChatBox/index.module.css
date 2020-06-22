@@ -136,7 +136,7 @@
 }
 
 @media screen and (max-width: 600px) {
-  .container {
+  .chat .container {
     max-width: 100vw;
     overflow-y: scroll;
   }
