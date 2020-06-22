@@ -79,21 +79,25 @@ async function loadAllMessages(client) {
   const Message = model.app.models.Message;
   const chats = await client.getAllChats();
 
-  await model.deleteAll();
-  await Message.deleteAll();
+  // await model.deleteAll();
+  // await Message.deleteAll();
 
   await Promise.all(
     chats.map(async (chat) => {
       const chatId = chat.id;
 
-      await model.create({
-        chatId,
-        name: chat.name || chat.contact.pushname || chat.formattedTitle,
-        type: chat.kind,
-        lastMessageAt: chat.t * 1000,
-        mute: Boolean(chat.mute),
-        pin: chat.pin,
-      });
+      try {
+        await model.create({
+          chatId,
+          name: chat.name || chat.contact.pushname || chat.formattedTitle,
+          type: chat.kind,
+          lastMessageAt: chat.t * 1000,
+          mute: Boolean(chat.mute),
+          pin: chat.pin,
+        });
+      } catch (error) {
+        console.log(error);
+      }
 
       let allMessages = await client.getAllMessagesInChat(chatId, true);
       console.log(chatId, allMessages.length);
