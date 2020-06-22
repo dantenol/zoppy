@@ -327,7 +327,7 @@ const App = () => {
   const handleQuery = (string, pinned) => {
     const curr = cloneArray(chats);
     const queried = curr.map((c) => {
-      const lowerStr = string.toLowerCase()
+      const lowerStr = string.toLowerCase();
       let str = true;
       let pin = true;
       if (string) {
