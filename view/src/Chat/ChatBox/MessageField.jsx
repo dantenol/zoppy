@@ -53,7 +53,7 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
       )}
       <div className={classes.input}>
         <label htmlFor="upload-button">
-          <img className={classes.camera} src={camera} alt="photo" />
+          <img className={classes.camera} src={camera} alt="upload" />
         </label>
         <input
           type="file"

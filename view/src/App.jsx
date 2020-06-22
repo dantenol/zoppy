@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import _ from "lodash";
 import "moment/locale/pt-br";
 
 import { url, params } from "./connector";
@@ -8,7 +7,7 @@ import { url, params } from "./connector";
 import classes from "./App.module.css";
 import Conversations from "./Conversations";
 import notificationSound from "./assets/audio/notification.ogg";
-import { compareArrays, cloneArray, deepDiff } from "./hooks/helpers";
+import { cloneArray, deepDiff } from "./hooks/helpers";
 
 import useInterval from "./hooks/useInterval";
 import red from "./assets/images/red.svg";
@@ -320,7 +319,7 @@ const App = () => {
     } catch (error) {
       console.log(error);
       alert("Algo deu errado ao tentar associar a conversa");
-      throw "error";
+      throw new Error("error");
     }
   };
 

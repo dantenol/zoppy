@@ -28,7 +28,6 @@ const VoiceMessage = ({ message, isGroup }) => {
 
   useEffect(() => {
     if (audio) {
-      console.log(audio);
       try {
         playing ? audio.play() : audio.pause();
         audio.addEventListener("ended", () => setPlaying(false));
@@ -41,7 +40,7 @@ const VoiceMessage = ({ message, isGroup }) => {
         console.log(e);
       }
     }
-  }, [playing]);
+  }, [playing, audio]);
 
   return (
     <div>
