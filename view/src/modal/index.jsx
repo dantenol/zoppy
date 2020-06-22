@@ -3,7 +3,7 @@ import Lightbox from "react-image-lightbox";
 import classNames from "classnames";
 import NumberFormat from "react-number-format";
 
-import { url } from "../connector.json";
+import { url } from "../connector";
 
 import "react-image-lightbox/style.css";
 import styles from "./modal.module.css";
@@ -44,7 +44,7 @@ const Modal = ({ file, onClose, handleSendImage, handleNewChat }) => {
     return (
       <Lightbox
         imagePadding={32}
-        mainSrc={`${url}chats/download/${file.id}`}
+        mainSrc={`${url}chats/download/${file.id}?access_token=${localStorage.access_token}`}
         onCloseRequest={onClose}
       />
     );
@@ -53,11 +53,7 @@ const Modal = ({ file, onClose, handleSendImage, handleNewChat }) => {
       <>
         <div onClick={onClose} className={styles.modalBackground} />
         <div className={styles.modal}>
-          <video
-            src={`${url}chats/download/${file.id}`}
-            alt="Vídeo"
-            autoPlay
-          />
+          <video src={`${url}chats/download/${file.id}`} alt="Vídeo" autoPlay />
         </div>
       </>
     );

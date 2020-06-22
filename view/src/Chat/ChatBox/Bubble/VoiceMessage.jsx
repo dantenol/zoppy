@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import moment from "moment";
 import classNames from "classnames";
 
-import { url } from "../../../connector.json";
+import { url } from "../../../connector";
 
 import classes from "./index.module.css";
 
@@ -18,7 +18,7 @@ const VoiceMessage = ({ message, isGroup }) => {
     try {
       setAudio(
         new Audio(
-          `${url}chats/download/${message.messageId}`
+          `${url}chats/download/${message.messageId}?access_token=${localStorage.access_token}`
         )
       );
     } catch (error) {

@@ -3,7 +3,7 @@ import axios from "axios";
 import _ from "lodash";
 import "moment/locale/pt-br";
 
-import { url } from "./connector.json";
+import { url, params } from "./connector";
 
 import classes from "./App.module.css";
 import Conversations from "./Conversations";
@@ -33,7 +33,7 @@ const App = () => {
   const audio = new Audio(notificationSound);
 
   const loadChats = async () => {
-    const res = await axios(`${url}chats/all`);
+    const res = await axios(`${url}chats/all`, params);
 
     res.data.forEach((c) => {
       const image = colors[Math.floor(Math.random() * 6)];
@@ -48,7 +48,8 @@ const App = () => {
 
   const getLatestMsgs = async () => {
     const msgs = await axios(
-      `${url}chats/latest/${lastUpdate.valueOf()}`
+      `${url}chats/latest/${lastUpdate.valueOf()}`,
+      params
     );
 
     if (msgs.data) {
@@ -88,9 +89,7 @@ const App = () => {
 
     if (curr.firstClick) {
       const msgs = await loadMessages(curr.chatId);
-      const pic = await axios(
-        `${url}chats/${curr.chatId}/profilePic`
-      );
+      const pic = await axios(`${url}chats/${curr.chatId}/profilePic`, params);
 
       updateChat(
         {
@@ -104,14 +103,18 @@ const App = () => {
     } else {
       updateChat({ unread: 0 }, curr.chatId);
     }
-    await axios.patch(`${url}chats/${curr.chatId}/seen`);
+    await axios.patch(`${url}chats/${curr.chatId}/seen`, params);
   };
 
   const handleChangeName = async (name) => {
     try {
-      await axios.patch(`${url}chats/${currentChat}/name`, {
-        name,
-      });
+      await axios.patch(
+        `${url}chats/${currentChat}/name`,
+        {
+          name,
+        },
+        params
+      );
 
       const idx = findIdxById(currentChat);
       const curr = [...chats];
@@ -169,7 +172,8 @@ const App = () => {
     const curr = [...chats];
     const msgsNumber = curr[idx].messages.length;
     const msgs = await axios(
-      `${url}chats/${currentChat}/messages?filter={"skip":${msgsNumber}}`
+      `${url}chats/${currentChat}/messages?filter={"skip":${msgsNumber}}`,
+      params
     );
     console.log(curr, msgs.data);
 
@@ -178,9 +182,13 @@ const App = () => {
   };
 
   const send = async (message, to = currentChat) => {
-    const msg = await axios.post(`${url}chats/${to}/send`, {
-      message,
-    });
+    const msg = await axios.post(
+      `${url}chats/${to}/send`,
+      {
+        message,
+      },
+      params
+    );
 
     if (to === currentChat) {
       const curr = cloneArray(chats); // TODO achar maneira mais inteligente de evitar referência
@@ -225,6 +233,7 @@ const App = () => {
       `${url}chats/${currentChat}/sendMedia`,
       formData,
       {
+        ...params,
         headers: {
           accept: "application/json",
           "Content-Type": "application/form-data",
