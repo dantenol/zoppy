@@ -163,7 +163,11 @@ const App = () => {
       if (idx !== currentChat) {
         const newMsgs = entry.messages.filter((m) => !m.mine);
         console.log(newMsgs.length);
-        curr[idx].unread += newMsgs.length || newMsgs.length;
+        if (curr[idx].unread) {
+          curr[idx].unread += newMsgs.length;
+        } else {
+          curr[idx].unread = newMsgs.length;
+        }
       }
     });
 

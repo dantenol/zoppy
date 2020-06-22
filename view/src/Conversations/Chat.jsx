@@ -50,6 +50,9 @@ const Chat = ({ data, handleClick }) => {
         <div className={classes.message}>
           {sent && <img src={sentImg} alt="Enviado" />}
           <p>{msg}</p>
+          {data.agentLetter && (
+            <span className={classes.letter}>{data.agentLetter}</span>
+          )}
           {data.unread > 0 && (
             <span className={classes.unread}>{data.unread}</span>
           )}
