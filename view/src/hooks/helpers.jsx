@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 export const compareArrays = (x, y) => {
-  return _(x).differenceWith(y, _.isEqual).isEmpty();
+  return _(x).xorWith(y, _.isEqual).isEmpty();
 };
 
 export const cloneArray = (arr) => _.map(arr, _.clone);
