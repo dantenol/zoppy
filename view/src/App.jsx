@@ -40,6 +40,7 @@ const App = () => {
         const image = colors[Math.floor(Math.random() * 6)];
         c.profilePic = c.profilePic || image;
         c.firstClick = true;
+        c.filtered = true;
         c.displayName = c.customName || c.name;
       });
 
@@ -150,6 +151,7 @@ const App = () => {
         entry.profilePic = colors[Math.floor(Math.random() * 6)];
         entry.displayName = entry.name;
         entry.unread = 1;
+        entry.filtered = true;
         curr.unshift(entry);
         return;
       }
@@ -322,6 +324,25 @@ const App = () => {
     }
   };
 
+  const handleQuery = (string, pinned) => {
+    const curr = cloneArray(chats);
+    const queried = curr.map((c) => {
+      let str = true;
+      let pin = true;
+      if (string) {
+        str = c.displayName.includes(string);
+      }
+      if (pinned) {
+        pin = c.agentId === localStorage.userId;
+      }
+      c.filtered = str && pin;
+      return c;
+    });
+
+    console.log(queried);
+    setChats(queried);
+  };
+
   return (
     <main className={classes.main}>
       <Modal
@@ -335,7 +356,7 @@ const App = () => {
         <Conversations
           showing={String(isMobile && page === "conversations")}
           data={chats}
-          handleQuery={() => {}}
+          handleQuery={handleQuery}
           handleSelectChat={selectChat}
           handleNewContactModal={handleNewContactModal}
         />

@@ -1,4 +1,5 @@
 .container {
+  min-width: 420px;
   width: 420px;
   height: 100%;
   box-shadow: 0 0 3px 0px #cccccc;
@@ -44,6 +45,18 @@
 .searchContainer button:hover {
   background-color: #cccccc;
   border-radius: 16px;
+}
+
+.searchContainer .pin {
+  mask: url("../assets/images/pin.svg");
+  background-color: #ccc;
+  mask-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.searchContainer .pin.true {
+  background-color: aquamarine;
 }
 
 .searchContainer img {

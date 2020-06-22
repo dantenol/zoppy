@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import classNames from "classnames";
 
 import classes from "./index.module.css";
@@ -12,24 +12,17 @@ const Conversations = ({
   handleNewContactModal,
   showing,
 }) => {
-  const [query, setQuery] = useState("");
-
-  const handleChangeQuery = (val) => {
-    setQuery(val);
-    handleQuery(val);
-  };
 
   return (
     <div
       className={classNames(classes.container, "mobile-fullwidth", showing)}
     >
       <Search
-        value={query}
         handleNewContact={handleNewContactModal}
-        handleChange={handleChangeQuery}
+        handleQuery={handleQuery}
       />
       <div className={classes.chatsList}>
-        {data.map((chat, i) => (
+        {data.filter(c => c.filtered).map((chat, i) => (
           <Chat
             key={chat.chatId}
             data={chat}
