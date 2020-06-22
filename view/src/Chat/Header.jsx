@@ -2,10 +2,9 @@ import React, { useState, useEffect } from "react";
 import classNames from "classnames";
 
 import classes from "./index.module.css";
-import camera from "../assets/images/camera.svg";
 import back from "../assets/images/back.svg";
 
-const Header = ({ data, handleUpload, handleChangeName, handleBack }) => {
+const Header = ({ data, handleChangeName, handleBack }) => {
   const [name, setName] = useState(data.displayName);
   const [showHint, setShowHint] = useState(false);
   const [savedName, setSavedName] = useState(data.displayName);
@@ -58,17 +57,6 @@ const Header = ({ data, handleUpload, handleChangeName, handleBack }) => {
           </div>
         )}
       </div>
-      <label htmlFor="upload-button">
-        <img className={classes.camera} src={camera} alt="photo" />
-      </label>
-      <input
-        type="file"
-        accept="image/*"
-        capture
-        id="upload-button"
-        style={{ display: "none" }}
-        onChange={handleUpload}
-      />
     </div>
   );
 };

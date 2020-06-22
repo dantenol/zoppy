@@ -97,6 +97,22 @@
   animation: indeterminate_second 1.5s infinite ease-in;
 }
 
+.input .camera {
+  margin: 12px 8px;
+  opacity: 0.6;
+  cursor: pointer;
+  background: none;
+  transition: all ease 0.1s;
+}
+
+.input .camera:hover {
+  opacity: 1;
+  background: #e4e4e4;
+  padding: 8px;
+  margin-right: 8px;
+  border-radius: 8px;
+}
+
 @keyframes indeterminate_first {
   0% {
       left: -100%;

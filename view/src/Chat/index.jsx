@@ -27,12 +27,12 @@ const Chat = ({
         )}
       >
         <Header
-          handleUpload={handleUpload}
           data={chat}
           handleBack={handleBack}
           handleChangeName={handleChangeName}
-        />
+          />
         <ChatBox
+          handleUpload={handleUpload}
           showMedia={showMedia}
           handleLoadMore={handleLoadMore}
           send={handleSend}

@@ -2,8 +2,9 @@ import React, { useState } from "react";
 
 import classes from "./index.module.css";
 import sendImg from "../../assets/images/send.svg";
+import camera from "../../assets/images/camera.svg";
 
-const MessageField = ({ message, handleChangeMessage, send }) => {
+const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
   const [rows, setRows] = useState(1);
   const [sending, setSending] = useState(false);
 
@@ -51,6 +52,17 @@ const MessageField = ({ message, handleChangeMessage, send }) => {
         </div>
       )}
       <div className={classes.input}>
+        <label htmlFor="upload-button">
+          <img className={classes.camera} src={camera} alt="photo" />
+        </label>
+        <input
+          type="file"
+          accept="image/*"
+          capture
+          id="upload-button"
+          style={{ display: "none" }}
+          onChange={handleUpload}
+        />
         <textarea
           type="text"
           rows={rows}

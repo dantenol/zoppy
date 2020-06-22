@@ -12,6 +12,7 @@ const Chat = ({
   loading,
   chatId,
   handleLoadMore,
+  handleUpload,
   send,
   showMedia,
 }) => {
@@ -72,6 +73,7 @@ const Chat = ({
         )}
       </div>
       <MessageField
+        handleUpload={handleUpload}
         message={message}
         handleChangeMessage={setMessage}
         send={send}
