@@ -21,7 +21,7 @@
 
 .chat .container:hover {
   overflow-y: scroll;
-  padding-right: 0
+  padding-right: 0;
 }
 
 .chat .input {
@@ -82,7 +82,7 @@
 }
 
 .indeterminate:before {
-  content: '';
+  content: "";
   position: absolute;
   height: 100%;
   background-color: #24d755;
@@ -90,7 +90,7 @@
 }
 
 .indeterminate:after {
-  content: '';
+  content: "";
   position: absolute;
   height: 100%;
   background-color: #24d755;
@@ -109,25 +109,30 @@
   opacity: 1;
 }
 
+.emojiContainer {
+  position: absolute;
+  bottom: 60px;
+}
+
 @keyframes indeterminate_first {
   0% {
-      left: -100%;
-      width: 100%;
+    left: -100%;
+    width: 100%;
   }
   100% {
-      left: 100%;
-      width: 10%;
+    left: 100%;
+    width: 10%;
   }
 }
 
 @keyframes indeterminate_second {
   0% {
-      left: -150%;
-      width: 100%;
+    left: -150%;
+    width: 100%;
   }
   100% {
-      left: 100%;
-      width: 10%;
+    left: 100%;
+    width: 10%;
   }
 }
 

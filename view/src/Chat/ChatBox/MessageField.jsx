@@ -1,12 +1,16 @@
 import React, { useState } from "react";
+import "emoji-mart/css/emoji-mart.css";
+import { Picker } from "emoji-mart";
 
 import classes from "./index.module.css";
 import sendImg from "../../assets/images/send.svg";
+import emojiFace from "../../assets/images/emoji.svg";
 import camera from "../../assets/images/camera.svg";
 
 const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
   const [rows, setRows] = useState(1);
   const [sending, setSending] = useState(false);
+  const [emoji, setEmoji] = useState();
 
   const enterListener = async (e) => {
     if (e.keyCode === 13 && !e.shiftKey) {
@@ -44,11 +48,31 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
     setRows(currentRows < maxRows ? currentRows : maxRows);
   };
 
+  const toggleEmoji = () => {
+    setEmoji(!emoji);
+  };
+
+  const addEmoji = (e) => {
+    handleChangeMessage(message + e.native);
+    //TODO corigir erro de envio, desativar se clicar fora
+  };
+
   return (
     <>
       {sending && (
         <div className={classes.linearActivity}>
           <div className={classes.indeterminate}></div>
+        </div>
+      )}
+      {emoji && (
+        <div className={classes.emojiContainer}>
+          <Picker
+            showPreview={false}
+            showSkinTones={false}
+            title="Emoji"
+            set="apple"
+            onSelect={addEmoji}
+          />
         </div>
       )}
       <div className={classes.input}>
@@ -63,6 +87,9 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
           style={{ display: "none" }}
           onChange={handleUpload}
         />
+        <button onClick={toggleEmoji}>
+          <img src={emojiFace} alt="Emoji" />
+        </button>
         <textarea
           type="text"
           rows={rows}
@@ -71,7 +98,7 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
           onChange={handleChange}
           placeholder="Digite uma mensagem"
         ></textarea>
-        <button onClick={send}>
+        <button onClick={() => send(message)}>
           <img src={sendImg} alt="Enviar" />
         </button>
       </div>
