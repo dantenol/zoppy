@@ -3,23 +3,23 @@ const moment = require('moment');
 const sharp = require('sharp');
 const wa = require('@open-wa/wa-automate');
 
-// require('axios-debug-log')({
-//   request: function(debug, config) {
-//     debug('Request with ', config);
-//   },
-//   response: function(debug, response) {
-//     debug('Response with ' + response.data, 'from ' + response.config.url);
-//   },
-//   error: function(debug, error) {
-//     // Read https://www.npmjs.com/package/axios#handling-errors for more info
-//     debug('Boom', error);
-//   },
-// });
+require('axios-debug-log')({
+  request: function (debug, config) {
+    debug('Request with ', config);
+  },
+  response: function (debug, response) {
+    debug('Response with ' + response.data, 'from ' + response.config.url);
+  },
+  error: function (debug, error) {
+    // Read https://www.npmjs.com/package/axios#handling-errors for more info
+    debug('Boom', error);
+  },
+});
 
 let model, wp;
 
 wa.create({
-  licenseKey: true,
+  licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
   headless: true, // Headless chrome
   devtools: false, // Open devtools by default
   useChrome: true, // If false will use Chromium instance
@@ -427,5 +427,31 @@ module.exports = function (Chat) {
     description: 'Send media to chat',
     returns: {root: true},
     http: {path: '/:chatId/sendMedia', verb: 'post'},
+  });
+
+  Chat.claimChat = async (req, chatId) => {
+    const Agent = model.app.models.Agent;
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+      throw 'Invalid chatId';
+    }
+    const usr = await Agent.findById(req.accessToken.userId);
+
+    const upd = await chat.updateAttributes({
+      agentId: req.accessToken.userId,
+      agentLetter: usr.firstLetter,
+    });
+
+    return upd;
+  };
+
+  Chat.remoteMethod('claimChat', {
+    accepts: [
+      {arg: 'req', type: 'object', http: {source: 'req'}},
+      {arg: 'chatId', type: 'string', required: true},
+    ],
+    description: 'Claim chat',
+    returns: {root: true},
+    http: {path: '/:chatId/claim', verb: 'patch'},
   });
 };

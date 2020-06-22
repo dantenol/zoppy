@@ -35,13 +35,19 @@
     },
     "mute": {
       "type": "boolean"
-    }
+    },
+    "agentLetter": "string"
   },
   "validations": [],
   "relations": {
     "messages": {
       "type": "hasMany",
       "model": "message",
+      "foreignKey": ""
+    },
+    "agent": {
+      "type": "belongsTo",
+      "model": "agent",
       "foreignKey": ""
     }
   },
