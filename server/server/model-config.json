@@ -13,6 +13,21 @@
       "./mixins"
     ]
   },
+  "AccessToken": {
+    "dataSource": "mongodb",
+    "public": false
+  },
+  "RoleMapping": {
+    "dataSource": "mongodb",
+    "public": false,
+    "options": {
+      "strictObjectIDCoercion": true
+    }
+  },
+  "Role": {
+    "dataSource": "mongodb",
+    "public": false
+  },
   "chat": {
     "dataSource": "mongodb",
     "public": true,
@@ -37,5 +52,19 @@
   "message": {
     "dataSource": "mongodb",
     "public": false
+  },
+  "agent": {
+    "dataSource": "mongodb",
+    "public": true,
+    "options": {
+      "remoting": {
+        "sharedMethods": {
+          "*": false,
+          "create": true,
+          "login": true,
+          "logout": true
+        }
+      }
+    }
   }
 }

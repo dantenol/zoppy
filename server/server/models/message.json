@@ -9,25 +9,37 @@
     "order": "timestamp DESC"
   },
   "properties": {
-    "sender": "string",
+    "sender": {
+      "type": "string"
+    },
     "timestamp": {
       "type": "date",
       "required": true
     },
-    "body": "string",
+    "body": {
+      "type": "string"
+    },
     "type": {
       "type": "string",
       "required": true
     },
-    "mine": "boolean",
+    "mine": {
+      "type": "boolean"
+    },
     "messageId": {
       "type": "string",
       "id": true,
       "required": true
     },
-    "clientUrl": "string",
-    "mediaKey": "string",
-    "mimetype": "string"
+    "clientUrl": {
+      "type": "string"
+    },
+    "mediaKey": {
+      "type": "string"
+    },
+    "mimetype": {
+      "type": "string"
+    }
   },
   "validations": [],
   "relations": {
