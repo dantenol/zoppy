@@ -125,3 +125,9 @@
   width: 16px;
   margin-right: 8px;
 }
+
+@media screen and (max-width: 600px) {
+  .chatsList {
+    overflow-y: auto;
+  }
+}

@@ -8,11 +8,19 @@ import { url } from "../connector";
 import "react-image-lightbox/style.css";
 import styles from "./modal.module.css";
 
+import logo from "../assets/images/logo.png";
 import loading from "../assets/images/loading.gif";
 
-const Modal = ({ file, onClose, handleSendImage, handleNewChat }) => {
+const Modal = ({
+  file,
+  onClose,
+  handleSendImage,
+  handleNewChat,
+  handleLogin,
+}) => {
   const [message, setMessage] = useState("");
   const [number, setNumber] = useState("");
+  const [password, setPassword] = useState("");
   const [buttonDisabled, setButtonDisabled] = useState(false);
 
   const sendImage = () => {
@@ -24,6 +32,7 @@ const Modal = ({ file, onClose, handleSendImage, handleNewChat }) => {
     setButtonDisabled(false);
     setMessage("");
     setNumber("");
+    setPassword("");
   }, [file]);
   const sendNewChat = () => {
     if (!number.match(/^\(\d{2}\) \d{5}-\d{4}$/g)) {
@@ -38,6 +47,10 @@ const Modal = ({ file, onClose, handleSendImage, handleNewChat }) => {
     const parsed = number.substring(0, 5) + number.substring(6, number.length);
     const to = "55" + parsed.replace(/\D/g, "") + "@c.us";
     handleNewChat(message, to);
+  };
+
+  const login = () => {
+    handleLogin(message, password);
   };
 
   if (file && file.type === "image") {
@@ -109,6 +122,35 @@ const Modal = ({ file, onClose, handleSendImage, handleNewChat }) => {
               <img src={loading} alt="loading spinner" />
             ) : (
               "Enviar"
+            )}
+          </button>
+        </div>
+      </>
+    );
+  } else if (file && file.type === "login") {
+    return (
+      <>
+        <div className={styles.modalBackground} />
+        <div className={classNames(styles.modal, styles.opaque)}>
+          <img className={styles.logo} src={logo} alt="Zoppy"/>
+          <h2>Você precisa logar primeiro!</h2>
+          <input
+            type="email"
+            placeholder="email"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="senha"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button disabled={buttonDisabled} onClick={login}>
+            {buttonDisabled ? (
+              <img src={loading} alt="loading spinner" />
+            ) : (
+              "Entrar"
             )}
           </button>
         </div>

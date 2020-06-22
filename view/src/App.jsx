@@ -33,17 +33,21 @@ const App = () => {
   const audio = new Audio(notificationSound);
 
   const loadChats = async () => {
-    const res = await axios(`${url}chats/all`, params);
+    try {
+      const res = await axios(`${url}chats/all`, params);
 
-    res.data.forEach((c) => {
-      const image = colors[Math.floor(Math.random() * 6)];
-      c.profilePic = c.profilePic || image;
-      c.firstClick = true;
-      c.displayName = c.customName || c.name;
-    });
+      res.data.forEach((c) => {
+        const image = colors[Math.floor(Math.random() * 6)];
+        c.profilePic = c.profilePic || image;
+        c.firstClick = true;
+        c.displayName = c.customName || c.name;
+      });
 
-    setChats(res.data);
-    setLastUpdate(new Date());
+      setChats(res.data);
+      setLastUpdate(new Date());
+    } catch (error) {
+      console.log("Algo deu errado no login. Tente novamente mais tarde");
+    }
   };
 
   const getLatestMsgs = async () => {
@@ -63,7 +67,13 @@ const App = () => {
   }, 5000);
 
   useEffect(() => {
-    loadChats();
+    if (localStorage.access_token) {
+      loadChats();
+    } else {
+      setModal({
+        type: "login",
+      });
+    }
   }, []);
 
   const findIdxById = (id) => {
@@ -204,11 +214,11 @@ const App = () => {
     }
   };
 
-  const handleShowMedia = async (type, id) => {
+  const handleShowMedia = (type, id) => {
     setModal({ type, id });
   };
 
-  const handleUploadModal = async (e) => {
+  const handleUploadModal = (e) => {
     e.persist();
     setModal({
       data: e.target.files[0],
@@ -217,7 +227,7 @@ const App = () => {
     e.target.value = null;
   };
 
-  const handleNewContactModal = async () => {
+  const handleNewContactModal = () => {
     setModal({
       type: "newChat",
     });
@@ -250,6 +260,22 @@ const App = () => {
     return true;
   };
 
+  const login = async (email, pwd) => {
+    try {
+      const res = await axios.post(`${url}agents/login`, {
+        email,
+        password: pwd,
+      });
+      console.log(res);
+      localStorage.setItem("access_token", res.data.id);
+      setModal(false);
+      loadChats();
+    } catch (error) {
+      console.log(error);
+      alert("Email ou senha incorreto");
+    }
+  };
+
   return (
     <main className={classes.main}>
       <Modal
@@ -257,6 +283,7 @@ const App = () => {
         onClose={() => setModal(false)}
         handleSendImage={handleSendImage}
         handleNewChat={send}
+        handleLogin={login}
       />
       <div className={classes.container}>
         <Conversations
