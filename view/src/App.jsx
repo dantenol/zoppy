@@ -136,7 +136,7 @@ const App = () => {
   };
 
   const loadMessages = async (id) => {
-    const msgs = await axios(`${url}chats/${id}/messages`);
+    const msgs = await axios(`${url}chats/${id}/messages`, params);
     return msgs.data;
   };
 
