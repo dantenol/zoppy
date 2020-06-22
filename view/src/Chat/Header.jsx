@@ -3,10 +3,12 @@ import classNames from "classnames";
 
 import classes from "./index.module.css";
 import back from "../assets/images/back.svg";
+// import pin from "../assets/images/pin.svg";
 
-const Header = ({ data, handleChangeName, handleBack }) => {
+const Header = ({ data, handleChangeName, handlePin, handleBack }) => {
   const [name, setName] = useState(data.displayName);
   const [showHint, setShowHint] = useState(false);
+  const [pinned, setPinned] = useState(data.agentId === localStorage.userId);
   const [savedName, setSavedName] = useState(data.displayName);
 
   useEffect(() => {
@@ -30,6 +32,11 @@ const Header = ({ data, handleChangeName, handleBack }) => {
   const handleBlur = () => {
     setName(savedName);
     setShowHint(false);
+  };
+
+  const togglePin = async () => {
+    const r = await handlePin(pinned);
+    setPinned(r);
   };
 
   return (
@@ -57,6 +64,10 @@ const Header = ({ data, handleChangeName, handleBack }) => {
           </div>
         )}
       </div>
+      <button
+        onClick={togglePin}
+        className={classNames(classes.pinContainer, pinned && classes.active)}
+      ></button>
     </div>
   );
 };

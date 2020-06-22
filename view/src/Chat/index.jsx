@@ -15,6 +15,7 @@ const Chat = ({
   handleUpload,
   showMedia,
   showing,
+  handlePin,
   handleBack,
 }) => {
   if (chat) {
@@ -30,6 +31,7 @@ const Chat = ({
           data={chat}
           handleBack={handleBack}
           handleChangeName={handleChangeName}
+          handlePin={handlePin}
           />
         <ChatBox
           handleUpload={handleUpload}

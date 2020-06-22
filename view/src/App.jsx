@@ -281,6 +281,34 @@ const App = () => {
     }
   };
 
+  const handleSetAgent = async (val) => {
+    try {
+      const { data } = await axios.patch(
+        `${url}chats/${currentChat}/claim`,
+        {
+          remove: val,
+        },
+        params
+      );
+
+      const { agentId, agentLetter } = data;
+      console.log(data);
+      updateChat(
+        {
+          agentId,
+          agentLetter,
+        },
+        currentChat
+      );
+
+      return Boolean(agentId);
+    } catch (error) {
+      console.log(error);
+      alert("Algo deu errado ao tentar associar a conversa");
+      throw "error";
+    }
+  };
+
   return (
     <main className={classes.main}>
       <Modal
@@ -307,6 +335,7 @@ const App = () => {
           handleChangeName={handleChangeName}
           handleLoadMore={loadOldMessages}
           chat={chats[selectedChatIndex]}
+          handlePin={handleSetAgent}
         />
       </div>
     </main>

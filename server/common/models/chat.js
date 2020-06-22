@@ -429,7 +429,7 @@ module.exports = function (Chat) {
     http: {path: '/:chatId/sendMedia', verb: 'post'},
   });
 
-  Chat.claimChat = async (req, chatId) => {
+  Chat.claimChat = async (req, chatId, remove) => {
     const Agent = model.app.models.Agent;
     const chat = await Chat.findById(chatId);
     if (!chat) {
@@ -437,10 +437,18 @@ module.exports = function (Chat) {
     }
     const usr = await Agent.findById(req.accessToken.userId);
 
-    const upd = await chat.updateAttributes({
-      agentId: req.accessToken.userId,
-      agentLetter: usr.firstLetter,
-    });
+    let upd;
+    if (remove) {
+      upd = await chat.updateAttributes({
+        agentId: null,
+        agentLetter: null,
+      });
+    } else {
+      upd = await chat.updateAttributes({
+        agentId: req.accessToken.userId,
+        agentLetter: usr.firstLetter,
+      });
+    }
 
     return upd;
   };
@@ -449,6 +457,7 @@ module.exports = function (Chat) {
     accepts: [
       {arg: 'req', type: 'object', http: {source: 'req'}},
       {arg: 'chatId', type: 'string', required: true},
+      {arg: 'remove', type: 'boolean'},
     ],
     description: 'Claim chat',
     returns: {root: true},
