@@ -23,18 +23,21 @@ const Modal = ({
   const [password, setPassword] = useState("");
   const [buttonDisabled, setButtonDisabled] = useState(false);
 
-  const sendImage = () => {
-    setButtonDisabled(true);
-    handleSendImage(message);
-  };
-
   useEffect(() => {
     setButtonDisabled(false);
     setMessage("");
     setNumber("");
     setPassword("");
   }, [file]);
-  const sendNewChat = () => {
+
+  const sendImage = (e) => {
+    e.preventDefault();
+    setButtonDisabled(true);
+    handleSendImage(message);
+  };
+
+  const sendNewChat = (e) => {
+    e.preventDefault();
     if (!number.match(/^\(\d{2}\) \d{5}-\d{4}$/g)) {
       alert("Número inválido");
       return;
@@ -49,7 +52,8 @@ const Modal = ({
     handleNewChat(message, to);
   };
 
-  const login = () => {
+  const login = (e) => {
+    e.preventDefault();
     handleLogin(message, password);
   };
 
@@ -79,12 +83,15 @@ const Modal = ({
             &times;
           </div>
           <img src={URL.createObjectURL(file.data)} alt="Imagem" />
-          <input
-            type="text"
-            placeholder="Mensagem"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
+          <form onSubmit={sendImage}>
+            <input
+              type="text"
+              placeholder="Mensagem"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <input type="submit" hidden />
+          </form>
           <button disabled={buttonDisabled} onClick={sendImage}>
             {buttonDisabled ? (
               <img src={loading} alt="loading spinner" />
@@ -103,20 +110,22 @@ const Modal = ({
           <div onClick={onClose} className={styles.close}>
             &times;
           </div>
-
-          <NumberFormat
-            type="tel"
-            placeholder="Celular"
-            format="(##) #####-####"
-            value={number}
-            onValueChange={({ formattedValue }) => setNumber(formattedValue)}
-          />
-          <input
-            type="text"
-            placeholder="Mensagem"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
+          <form onSubmit={sendNewChat}>
+            <NumberFormat
+              type="tel"
+              placeholder="Celular"
+              format="(##) #####-####"
+              value={number}
+              onValueChange={({ formattedValue }) => setNumber(formattedValue)}
+            />
+            <input
+              type="text"
+              placeholder="Mensagem"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <input type="submit" hidden />
+          </form>
           <button disabled={buttonDisabled} onClick={sendNewChat}>
             {buttonDisabled ? (
               <img src={loading} alt="loading spinner" />
@@ -132,20 +141,23 @@ const Modal = ({
       <>
         <div className={styles.modalBackground} />
         <div className={classNames(styles.modal, styles.opaque)}>
-          <img className={styles.logo} src={logo} alt="Zoppy"/>
+          <img className={styles.logo} src={logo} alt="Zoppy" />
           <h2>Você precisa logar primeiro!</h2>
-          <input
-            type="email"
-            placeholder="email"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-          <input
-            type="password"
-            placeholder="senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <form onSubmit={login}>
+            <input
+              type="email"
+              placeholder="email"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <input
+              type="password"
+              placeholder="senha"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <input type="submit" hidden />
+          </form>
           <button disabled={buttonDisabled} onClick={login}>
             {buttonDisabled ? (
               <img src={loading} alt="loading spinner" />
@@ -153,6 +165,7 @@ const Modal = ({
               "Entrar"
             )}
           </button>
+          <form action=""></form>
         </div>
       </>
     );
