@@ -113,7 +113,7 @@ const App = () => {
     } else {
       updateChat({ unread: 0 }, curr.chatId);
     }
-    await axios.patch(`${url}chats/${curr.chatId}/seen`, params);
+    axios.patch(`${url}chats/${curr.chatId}/seen`, {}, params);
   };
 
   const handleChangeName = async (name) => {
