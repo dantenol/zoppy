@@ -17,6 +17,10 @@
     "dataSource": "mongodb",
     "public": false
   },
+  "ACL": {
+    "dataSource": "mongodb",
+    "public": false
+  },
   "RoleMapping": {
     "dataSource": "mongodb",
     "public": false,
@@ -44,7 +48,8 @@
           "sendMessage": true,
           "checkRecentMessages": true,
           "loadFile": true,
-          "uploadMedia": true
+          "uploadMedia": true,
+          "claimChat": true
         }
       }
     }
