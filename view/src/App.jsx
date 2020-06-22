@@ -46,7 +46,7 @@ const App = () => {
       setChats(res.data);
       setLastUpdate(new Date());
     } catch (error) {
-      console.log("Algo deu errado no login. Tente novamente mais tarde");
+      alert("Algo deu errado no login. Tente novamente mais tarde");
     }
   };
 
