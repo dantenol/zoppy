@@ -51,6 +51,7 @@ const App = () => {
   };
 
   const getLatestMsgs = async () => {
+    if (!localStorage.access_token) return;
     const msgs = await axios(
       `${url}chats/latest/${lastUpdate.valueOf()}`,
       params
@@ -288,8 +289,9 @@ const App = () => {
       console.log(res);
       localStorage.setItem("access_token", res.data.id);
       localStorage.setItem("userId", res.data.userId);
-      setModal(false);
-      loadChats();
+      // setModal(false);
+      // loadChats(res.data.id);
+      window.location.reload();
     } catch (error) {
       console.log(error);
       alert("Email ou senha incorreto");
