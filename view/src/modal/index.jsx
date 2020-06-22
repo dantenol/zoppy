@@ -6,7 +6,7 @@ import NumberFormat from "react-number-format";
 import { url } from "../connector";
 
 import "react-image-lightbox/style.css";
-import styles from "./modal.module.css";
+import classes from "./modal.module.css";
 
 import logo from "../assets/images/logo.png";
 import loading from "../assets/images/loading.gif";
@@ -65,11 +65,20 @@ const Modal = ({
         onCloseRequest={onClose}
       />
     );
+  } else if (file && file.type === "qr") {
+      return (
+        <>
+          <div onClick={onClose} className={classes.modalBackground} />
+          <div className={classes.modal}>
+            <img className={classes.qr} src={`${url}chats/qr?access_token=${file.token}`} alt="QR code" />
+          </div>
+        </>
+      );
   } else if (file && file.type === "video") {
     return (
       <>
-        <div onClick={onClose} className={styles.modalBackground} />
-        <div className={styles.modal}>
+        <div onClick={onClose} className={classes.modalBackground} />
+        <div className={classes.modal}>
           <video src={`${url}chats/download/${file.id}`} alt="Vídeo" autoPlay />
         </div>
       </>
@@ -77,9 +86,9 @@ const Modal = ({
   } else if (file && file.type === "photoUpload") {
     return (
       <>
-        <div onClick={onClose} className={styles.modalBackground} />
-        <div className={classNames(styles.modal, styles.opaque)}>
-          <div onClick={onClose} className={styles.close}>
+        <div onClick={onClose} className={classes.modalBackground} />
+        <div className={classNames(classes.modal, classes.opaque)}>
+          <div onClick={onClose} className={classes.close}>
             &times;
           </div>
           <img src={URL.createObjectURL(file.data)} alt="Imagem" />
@@ -105,9 +114,9 @@ const Modal = ({
   } else if (file && file.type === "newChat") {
     return (
       <>
-        <div onClick={onClose} className={styles.modalBackground} />
-        <div className={classNames(styles.modal, styles.opaque)}>
-          <div onClick={onClose} className={styles.close}>
+        <div onClick={onClose} className={classes.modalBackground} />
+        <div className={classNames(classes.modal, classes.opaque)}>
+          <div onClick={onClose} className={classes.close}>
             &times;
           </div>
           <form onSubmit={sendNewChat}>
@@ -139,9 +148,9 @@ const Modal = ({
   } else if (file && file.type === "login") {
     return (
       <>
-        <div className={styles.modalBackground} />
-        <div className={classNames(styles.modal, styles.opaque)}>
-          <img className={styles.logo} src={logo} alt="Zoppy" />
+        <div className={classes.modalBackground} />
+        <div className={classNames(classes.modal, classes.opaque)}>
+          <img className={classes.logo} src={logo} alt="Zoppy" />
           <h2>Você precisa logar primeiro!</h2>
           <form onSubmit={login}>
             <input

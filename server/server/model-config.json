@@ -13,6 +13,10 @@
       "./mixins"
     ]
   },
+  "User": {
+    "dataSource": "mongodb",
+    "public": false
+  },
   "AccessToken": {
     "dataSource": "mongodb",
     "public": false
@@ -49,7 +53,10 @@
           "checkRecentMessages": true,
           "loadFile": true,
           "uploadMedia": true,
-          "claimChat": true
+          "claimChat": true,
+          "setup": true,
+          "loadQR": true,
+          "isSet": true
         }
       }
     }

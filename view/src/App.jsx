@@ -286,12 +286,46 @@ const App = () => {
         email,
         password: pwd,
       });
-      console.log(res);
       localStorage.setItem("access_token", res.data.id);
       localStorage.setItem("userId", res.data.userId);
-      // setModal(false);
-      // loadChats(res.data.id);
-      window.location.reload();
+      const isSetup = (
+        await axios(`${url}chats/online`, {
+          params: {
+            access_token: res.data.id,
+          },
+        })
+      ).data;
+      console.log(isSetup);
+      if (isSetup) {
+        window.location.reload();
+      } else {
+        await axios.post(
+          `${url}chats/init`,
+          {},
+          {
+            params: {
+              access_token: res.data.id,
+            },
+          }
+        );
+        setInterval(async () => {
+          setModal({
+            type: "qr",
+            token: res.data.id,
+            update: Math.random(),
+          });
+          const check = (
+            await axios(`${url}chats/online`, {
+              params: {
+                access_token: res.data.id,
+              },
+            })
+          ).data;
+          if (check) {
+            window.location.reload();
+          }
+        }, 2000);
+      }
     } catch (error) {
       console.log(error);
       alert("Email ou senha incorreto");

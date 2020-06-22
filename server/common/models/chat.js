@@ -4,28 +4,19 @@ const sharp = require('sharp');
 const wa = require('@open-wa/wa-automate');
 
 require('axios-debug-log')({
-  request: function(debug, config) {
+  request: function (debug, config) {
     debug('Request with ', config);
   },
-  response: function(debug, response) {
+  response: function (debug, response) {
     debug('Response with ' + response.data, 'from ' + response.config.url);
   },
-  error: function(debug, error) {
+  error: function (debug, error) {
     // Read https://www.npmjs.com/package/axios#handling-errors for more info
     debug('Boom', error);
   },
 });
 
-let model, wp;
-
-wa.create({
-  licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
-  headless: true, // Headless chrome
-  devtools: false, // Open devtools by default
-  useChrome: true, // If false will use Chromium instance
-  debug: true, // Opens a debug session
-  logQR: true,
-}).then((client) => start(client));
+let model, wp, QRbuffer;
 
 function start(wpp) {
   wp = wpp;
@@ -41,6 +32,14 @@ function start(wpp) {
 
   loadAllMessages(wpp);
 }
+
+wa.ev.on('qr.**', async (qrcode) => {
+  QRbuffer = Buffer.from(
+    qrcode.replace('data:image/png;base64,', ''),
+    'base64',
+  );
+  console.log(QRbuffer);
+});
 
 async function saveMsg(msg) {
   const Message = model.app.models.Message;
@@ -153,7 +152,8 @@ async function setSeen(id) {
   return sen;
 }
 
-module.exports = function(Chat) {
+module.exports = function (Chat) {
+  model = Chat;
   Chat.disableRemoteMethodByName('prototype.__delete__messages');
   Chat.disableRemoteMethodByName('prototype.__destroyById__messages');
   Chat.disableRemoteMethodByName('prototype.__findById__messages');
@@ -162,7 +162,55 @@ module.exports = function(Chat) {
   Chat.disableRemoteMethodByName('prototype.__updateById__messages');
   Chat.disableRemoteMethodByName('prototype.__count__messages');
 
-  model = Chat;
+  Chat.isSet = async () => {
+    return Boolean(wp);
+  };
+
+  Chat.remoteMethod('isSet', {
+    description: 'Checks if whatsapp is set',
+    returns: {root: true},
+    http: {path: '/online', verb: 'get'},
+  });
+
+  Chat.setup = async () => {
+    if (wp) {
+      throw new Error('WhatApp already set');
+    }
+    wa.create({
+      licenseKey: true,
+      headless: true, // Headless chrome
+      devtools: false, // Open devtools by default
+      useChrome: true, // If false will use Chromium instance
+      debug: true, // Opens a debug session
+      logQR: true,
+    }).then((client) => start(client));
+  };
+
+  Chat.remoteMethod('setup', {
+    description: 'Start whatsapp web',
+    returns: {root: true},
+    http: {path: '/init', verb: 'post'},
+  });
+
+  Chat.loadQR = async (res) => {
+    if (wp) {
+      throw new Error('WhatApp already set');
+    }
+
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Length', QRbuffer.length);
+
+    res.send(QRbuffer);
+  };
+
+  Chat.remoteMethod('loadQR', {
+    description: 'Retrieves QR code for setup',
+    accepts: [
+      {arg: 'res', type: 'object', required: true, http: {source: 'res'}},
+    ],
+    returns: {root: true},
+    http: {path: '/qr', verb: 'get'},
+  });
   Chat.getAll = async () => {
     const unread = await getUnreadChats();
 
