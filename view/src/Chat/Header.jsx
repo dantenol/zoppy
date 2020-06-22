@@ -3,18 +3,21 @@ import classNames from "classnames";
 
 import classes from "./index.module.css";
 import back from "../assets/images/back.svg";
-// import pin from "../assets/images/pin.svg";
 
 const Header = ({ data, handleChangeName, handlePin, handleBack }) => {
   const [name, setName] = useState(data.displayName);
   const [showHint, setShowHint] = useState(false);
-  const [pinned, setPinned] = useState(data.agentId === localStorage.userId);
+  const [pinned, setPinned] = useState(false);
   const [savedName, setSavedName] = useState(data.displayName);
 
   useEffect(() => {
     setName(data.displayName);
     setSavedName(data.displayName);
-  }, [data]);
+  }, [data.displayName]);
+
+  useEffect(() => {
+    setPinned(data.agentId);
+  }, [data.agentId])
 
   const enterListener = async (e) => {
     if (e.keyCode === 13) {
@@ -35,8 +38,7 @@ const Header = ({ data, handleChangeName, handlePin, handleBack }) => {
   };
 
   const togglePin = async () => {
-    const r = await handlePin(pinned);
-    setPinned(r);
+    handlePin(pinned);
   };
 
   return (
