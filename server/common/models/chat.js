@@ -4,13 +4,13 @@ const sharp = require('sharp');
 const wa = require('@open-wa/wa-automate');
 
 require('axios-debug-log')({
-  request: function (debug, config) {
+  request: function(debug, config) {
     debug('Request with ', config);
   },
-  response: function (debug, response) {
+  response: function(debug, response) {
     debug('Response with ' + response.data, 'from ' + response.config.url);
   },
-  error: function (debug, error) {
+  error: function(debug, error) {
     // Read https://www.npmjs.com/package/axios#handling-errors for more info
     debug('Boom', error);
   },
@@ -27,10 +27,10 @@ wa.create({
   logQR: true,
 }).then((client) => start(client));
 
-async function start(wpp) {
+function start(wpp) {
   wp = wpp;
 
-  wpp.onAnyMessage(async (msg) => {
+  wpp.onAnyMessage((msg) => {
     // console.log(msg);
     saveMsg(msg);
   });
@@ -39,7 +39,7 @@ async function start(wpp) {
     wpp.close();
   });
 
-  await loadAllMessages(wpp);
+  loadAllMessages(wpp);
 }
 
 async function saveMsg(msg) {
@@ -85,18 +85,25 @@ async function loadAllMessages(client) {
   await Promise.all(
     chats.map(async (chat) => {
       const chatId = chat.id;
+      const currChat = await model.findById(chatId);
 
-      try {
-        await model.create({
-          chatId,
-          name: chat.name || chat.contact.pushname || chat.formattedTitle,
-          type: chat.kind,
-          lastMessageAt: chat.t * 1000,
-          mute: Boolean(chat.mute),
-          pin: chat.pin,
-        });
-      } catch (error) {
-        console.log(error);
+      console.log(currChat);
+
+      if (currChat) {
+        currChat.updateAttributes({lastMessageAt: chat.t * 1000});
+      } else {
+        try {
+          await model.create({
+            chatId,
+            name: chat.name || chat.contact.pushname || chat.formattedTitle,
+            type: chat.kind,
+            lastMessageAt: chat.t * 1000,
+            mute: Boolean(chat.mute),
+            pin: chat.pin,
+          });
+        } catch (error) {
+          console.log(error);
+        }
       }
 
       let allMessages = await client.getAllMessagesInChat(chatId, true);
@@ -146,7 +153,7 @@ async function setSeen(id) {
   return sen;
 }
 
-module.exports = function (Chat) {
+module.exports = function(Chat) {
   Chat.disableRemoteMethodByName('prototype.__delete__messages');
   Chat.disableRemoteMethodByName('prototype.__destroyById__messages');
   Chat.disableRemoteMethodByName('prototype.__findById__messages');
