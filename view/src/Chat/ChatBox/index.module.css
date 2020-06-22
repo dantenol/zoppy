@@ -102,15 +102,11 @@
   opacity: 0.6;
   cursor: pointer;
   background: none;
-  transition: all ease 0.1s;
+  transition: all ease 0.3s;
 }
 
 .input .camera:hover {
   opacity: 1;
-  background: #e4e4e4;
-  padding: 8px;
-  margin-right: 8px;
-  border-radius: 8px;
 }
 
 @keyframes indeterminate_first {
