@@ -272,6 +272,7 @@ const App = () => {
       });
       console.log(res);
       localStorage.setItem("access_token", res.data.id);
+      localStorage.setItem("userId", res.data.userId);
       setModal(false);
       loadChats();
     } catch (error) {
