@@ -292,7 +292,6 @@ const App = () => {
       );
 
       const { agentId, agentLetter } = data;
-      console.log(data);
       updateChat(
         {
           agentId,
