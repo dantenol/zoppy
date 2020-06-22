@@ -8,7 +8,7 @@ import { url, params } from "./connector";
 import classes from "./App.module.css";
 import Conversations from "./Conversations";
 import notificationSound from "./assets/audio/notification.ogg";
-import { compareArrays, cloneArray } from "./hooks/helpers";
+import { compareArrays, cloneArray, deepDiff } from "./hooks/helpers";
 
 import useInterval from "./hooks/useInterval";
 import red from "./assets/images/red.svg";
@@ -76,8 +76,8 @@ const App = () => {
     }
   }, []);
 
-  const findIdxById = (id) => {
-    return chats.findIndex((c) => c.chatId === id);
+  const findIdxById = (id, chatsArr = chats) => {
+    return chatsArr.findIndex((c) => c.chatId === id);
   };
 
   const updateChat = (obj, id) => {
@@ -142,6 +142,7 @@ const App = () => {
 
   const addMessagesToConversations = (data) => {
     const curr = cloneArray(chats);
+    let sound;
 
     data.forEach((entry) => {
       const idx = findIdxById(entry.chatId);
@@ -158,11 +159,19 @@ const App = () => {
           curr[idx].messages.findIndex((m) => m.messageId === msg.messageId) < 0
       );
 
+      if (!sound && entry.chatId !== currentChat) {
+        const notifyable = recievedMsgs.filter((m) => {
+          return !m.mine && (!m.agentId || m.agentId === localStorage.userId);
+        });
+        if (notifyable.length) {
+          sound = true;
+        }
+      }
+
       curr[idx].messages.unshift(...recievedMsgs);
       curr[idx].lastMessageAt = entry.lastMessageAt;
       if (idx !== currentChat) {
         const newMsgs = entry.messages.filter((m) => !m.mine);
-        console.log(newMsgs.length);
         if (curr[idx].unread) {
           curr[idx].unread += newMsgs.length;
         } else {
@@ -172,12 +181,13 @@ const App = () => {
     });
 
     curr.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
-    if (!compareArrays(curr, chats)) {
+    if (deepDiff(curr, chats).length > 0) {
       setChats(curr);
 
-      const newIdx = findIdxById(currentChat);
+      const newIdx = findIdxById(currentChat, curr);
       setSelectedChatIndex(newIdx);
-      audio.play();
+      console.log(newIdx);
+      sound && audio.play();
     }
   };
 
@@ -210,10 +220,14 @@ const App = () => {
       curr[idx].lastMessageAt = msg.data.timestamp;
       curr[idx].messages.unshift(msg.data);
 
+      if (!curr[idx].agentLetter) {
+        handleSetAgent();
+      }
       setChats(curr);
       return true;
     } else {
       setModal(false);
+      handleSetAgent(false, to);
       return false;
     }
   };
@@ -281,12 +295,12 @@ const App = () => {
     }
   };
 
-  const handleSetAgent = async (val) => {
+  const handleSetAgent = async (val, chat = currentChat) => {
     try {
       const { data } = await axios.patch(
-        `${url}chats/${currentChat}/claim`,
+        `${url}chats/${chat}/claim`,
         {
-          remove: val,
+          remove: !!val,
         },
         params
       );
