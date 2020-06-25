@@ -1,12 +1,12 @@
 {
   "mongodb": {
-    "host": "localhost",
+    "host": "0.0.0.0",
     "port": 27017,
     "url": "",
     "database": "whatsapp",
     "password": "pass",
     "name": "mongodb",
-    "user": "root",
+    "authSource": "whatsapp",
     "connector": "mongodb"
   }
 }

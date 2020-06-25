@@ -1,28 +1,35 @@
-FROM node:lts-slim
+FROM ubuntu:bionic
 
 ENV TZ=America/Sao_Paulo \
-    PUPPETEER_SKIP_DOWNLOAD=true
+    DEBIAN_FRONTEND=noninteractive \
+    PUPPETEER_SKIP_DOWNLOAD=true \
+    CHROME_VERSION=81.0.4044.138-1
 
-# Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
-# Note: this installs the necessary libs to make the bundled version of Chromium that Puppeteer
-# installs, work.
-RUN apt-get update -y \
-    && apt-get install wget gnupg2 -y \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+
+RUN echo "CHROME"
+
+RUN apt-get update \
+    && apt-get install wget gnupg curl --yes \
+    && wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && wget -q --no-check-certificate https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb \
+    && dpkg -i google-chrome-stable_${CHROME_VERSION}_amd64.deb || apt-get -y -f install \
+    && rm google-chrome-stable_${CHROME_VERSION}_amd64.deb \
+    && apt-get autoremove --yes \
+    && apt-get --fix-broken install
+
+RUN echo "MONGO"
+
+RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add - \
+    && echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.2.list \
     && apt-get update \
-    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf \
-    --no-install-recommends \
-    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -fr /tmp/* && \
-    apt-get clean
+    && apt-get install -y mongodb-org \
+    && mkdir /data \
+    && mkdir /data/db
 
-# If running Docker >= 1.13.0 use docker run's --init arg to reap zombie processes, otherwise
-# uncomment the following lines to have dumb-init as PID 1
-# ADD https://github.com/Yelp/dumb-init/releases/download/v1.2.0/dumb-init_1.2.0_amd64 /usr/local/bin/dumb-init
-# RUN chmod +x /usr/local/bin/dumb-init
-# ENTRYPOINT ["dumb-init", "--"]
+RUN echo "NODE"
+
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - \
+    && apt-get install -y nodejs
 
 COPY package.json /app/
 
@@ -30,13 +37,12 @@ WORKDIR /app
 
 RUN npm install
 
-# TODO: Remove after fix "browser.setMaxListeners method not found"
-RUN sed -i "s/browser.setMaxListeners(30)//" /app/node_modules/puppeteer-extra-plugin-stealth/index.js
-
 COPY . .
 
-RUN chown -R node:root . && chmod -R g=u .
 
-CMD npm start
+EXPOSE 443
+EXPOSE 27017
 
-USER node
+CMD mongod --fork --logpath /var/log/mongod.log \
+    && sleep 5 \
+    && npm start
