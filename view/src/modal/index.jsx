@@ -69,8 +69,10 @@ const Modal = ({
       return (
         <>
           <div onClick={onClose} className={classes.modalBackground} />
-          <div className={classes.modal}>
-            <img className={classes.qr} src={`${url}chats/qr?access_token=${file.token}`} alt="QR code" />
+          <div className={classNames(classes.modal, classes.opaque)}>
+            <p>{file.update}</p>
+            <h2>Escaneie o QR code pelo WhatsApp</h2>
+            <img className={classes.qr} src={`${url}chats/qr?access_token=${file.token}&${file.update}`} alt="QR code" />
           </div>
         </>
       );

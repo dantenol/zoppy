@@ -40,7 +40,7 @@ RUN npm install
 COPY . .
 
 
-EXPOSE 443
+EXPOSE 3001
 EXPOSE 27017
 
 CMD mongod --fork --logpath /var/log/mongod.log \

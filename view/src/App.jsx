@@ -64,11 +64,14 @@ const App = () => {
   };
 
   useInterval(() => {
-    getLatestMsgs();
+    if (localStorage.connected) {
+      getLatestMsgs();
+    }
   }, 5000);
 
   useEffect(() => {
-    if (localStorage.access_token) {
+    // Verificar se tá configurado
+    if (localStorage.access_token && localStorage.connected) {
       loadChats();
     } else {
       setModal({
@@ -322,6 +325,7 @@ const App = () => {
             })
           ).data;
           if (check) {
+            localStorage.setItem("connected", true);
             window.location.reload();
           }
         }, 2000);

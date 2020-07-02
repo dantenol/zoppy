@@ -4,25 +4,33 @@ const sharp = require('sharp');
 const wa = require('@open-wa/wa-automate');
 
 require('axios-debug-log')({
-  request: function (debug, config) {
+  request: function(debug, config) {
     debug('Request with ', config);
   },
-  response: function (debug, response) {
+  response: function(debug, response) {
     debug('Response with ' + response.data, 'from ' + response.config.url);
   },
-  error: function (debug, error) {
+  error: function(debug, error) {
     // Read https://www.npmjs.com/package/axios#handling-errors for more info
     debug('Boom', error);
   },
 });
 
-let model, wp, QRbuffer;
+let model, wp, QRbuffer, myNumber;
 
-function start(wpp) {
+const validMsgTypes = [
+  'chat',
+  'image',
+  'ptt',
+  'video',
+];
+
+async function start(wpp) {
   wp = wpp;
 
+  myNumber = (await wpp.getMe()).wid;
+  console.log('My number %s', myNumber);
   wpp.onAnyMessage((msg) => {
-    // console.log(msg);
     saveMsg(msg);
   });
 
@@ -59,11 +67,11 @@ async function saveMsg(msg) {
   }
   const savedMsg = await Message.create({
     messageId: msg.id,
-    chatId: msg.chat.id,
+    chatId: msg.chatId,
     body: msg.body,
     sender: msg.sender && msg.sender.formattedName,
     type: msg.type,
-    mine: msg.fromMe,
+    mine: msg.sender && msg.sender.isMe,
     timestamp: msg.t * 1000,
     quote: msg.quotedMsg || undefined,
     clientUrl: msg.clientUrl,
@@ -86,8 +94,6 @@ async function loadAllMessages(client) {
       const chatId = chat.id;
       const currChat = await model.findById(chatId);
 
-      console.log(currChat);
-
       if (currChat) {
         currChat.updateAttributes({lastMessageAt: chat.t * 1000});
       } else {
@@ -101,7 +107,7 @@ async function loadAllMessages(client) {
             pin: chat.pin,
           });
         } catch (error) {
-          console.log(error);
+          console.log('duplicated %s', chatId);
         }
       }
 
@@ -110,7 +116,6 @@ async function loadAllMessages(client) {
 
       if (!allMessages.length) {
         allMessages = await client.loadEarlierMessages(chatId);
-        console.log(chatId, allMessages.length);
       }
 
       await Promise.all(
@@ -122,7 +127,7 @@ async function loadAllMessages(client) {
               body: msg.body,
               sender: msg.sender && msg.sender.formattedName,
               type: msg.type,
-              mine: msg.fromMe,
+              mine: msg.sender && msg.sender.isMe,
               timestamp: msg.t * 1000,
               quote: msg.quotedMsg || undefined,
               clientUrl: msg.clientUrl,
@@ -131,7 +136,7 @@ async function loadAllMessages(client) {
               caption: msg.caption,
             });
           } catch (error) {
-            console.log(error);
+            console.log('duplicated %s', msg.id);
           }
         }),
       );
@@ -152,7 +157,7 @@ async function setSeen(id) {
   return sen;
 }
 
-module.exports = function (Chat) {
+module.exports = function(Chat) {
   model = Chat;
   Chat.disableRemoteMethodByName('prototype.__delete__messages');
   Chat.disableRemoteMethodByName('prototype.__destroyById__messages');
@@ -195,6 +200,8 @@ module.exports = function (Chat) {
   Chat.loadQR = async (res) => {
     if (wp) {
       throw new Error('WhatApp already set');
+    } else if (!QRbuffer) {
+      return false;
     }
 
     res.setHeader('Content-Type', 'image/png');
@@ -332,7 +339,7 @@ module.exports = function (Chat) {
               body: m.body,
               sender: m.sender && m.sender.formattedName,
               type: m.type,
-              mine: m.fromMe,
+              mine: m.sender && m.sender.isMe,
               timestamp: m.t * 1000,
               quote: m.quotedMsg || undefined,
               clientUrl: m.clientUrl,
@@ -419,7 +426,7 @@ module.exports = function (Chat) {
     //   '',
     // )};base64,${mediaData.toString('base64')}`;
 
-    console.log(mediaData);
+    // console.log(mediaData);
     if (msg.type === 'sticker') {
       const img = await sharp('image.webp').png().toBuffer();
       console.log(img);
