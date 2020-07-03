@@ -28,3 +28,23 @@ export const asyncLocalStorage = {
     return Promise.resolve().then(localStorage.getItem(key));
   },
 };
+
+
+export function parseText(text) {
+  const strong = /\*(.+?)\*/g;
+  const italic = /\_(.+?)\_/g;
+
+  let str;
+  if (typeof text === 'string') {
+    str = text
+  } else {
+    str = text[0]
+  }
+  if (typeof str !== 'string') {
+    return str
+  } else {
+    return str
+    .replace(italic, '<i>$1</i>')
+    .replace(strong, '<b>$1</b>')
+  }
+}

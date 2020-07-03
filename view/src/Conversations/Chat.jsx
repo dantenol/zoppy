@@ -4,6 +4,7 @@ import moment from "moment";
 import classes from "./index.module.css";
 
 import sentImg from "../assets/images/share.svg";
+import { parseText } from "../hooks/helpers";
 
 const calendarTexts = {
   sameDay: "HH:mm",
@@ -49,7 +50,7 @@ const Chat = ({ data, handleClick }) => {
         </div>
         <div className={classes.message}>
           {sent && <img src={sentImg} alt="Enviado" />}
-          <p>{msg}</p>
+          <p dangerouslySetInnerHTML={{__html: parseText(msg)}}></p>
           {data.agentLetter && (
             <span className={classes.letter}>{data.agentLetter}</span>
           )}
