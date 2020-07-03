@@ -1,6 +1,8 @@
 'use strict';
 const moment = require('moment');
 const sharp = require('sharp');
+const fs = require('fs');
+const path = require('path');
 const wa = require('@open-wa/wa-automate');
 
 require('axios-debug-log')({
@@ -182,6 +184,8 @@ module.exports = function(Chat) {
       throw new Error('WhatApp already set');
     }
     wa.create({
+      killProcessOnBrowserClose: false,
+      restartOnCrash: start,
       licenseKey: true,
       headless: true, // Headless chrome
       devtools: false, // Open devtools by default
@@ -324,6 +328,20 @@ module.exports = function(Chat) {
     description: 'Indicate contact that you saw the message',
     returns: {root: true},
     http: {path: '/:chatId/name', verb: 'patch'},
+  });
+
+  Chat.kill = async () => {
+    fs.unlinkSync(path.resolve(__dirname, '../../session.data.json'));
+    await wp.kill();
+    wp = undefined;
+
+    return true;
+  };
+
+  Chat.remoteMethod('kill', {
+    description: 'Stops the WA server',
+    returns: {root: true},
+    http: {path: '/stop', verb: 'post'},
   });
 
   Chat.loadMore = async (chatId) => {

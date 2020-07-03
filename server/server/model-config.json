@@ -56,7 +56,8 @@
           "claimChat": true,
           "setup": true,
           "loadQR": true,
-          "isSet": true
+          "isSet": true,
+          "kill": true
         }
       }
     }
