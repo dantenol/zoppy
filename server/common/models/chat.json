@@ -36,7 +36,9 @@
     "mute": {
       "type": "boolean"
     },
-    "agentLetter": "string"
+    "agentLetter": {
+      "type": "string"
+    }
   },
   "validations": [],
   "relations": {
@@ -63,6 +65,13 @@
       "principalType": "ROLE",
       "principalId": "$authenticated",
       "permission": "ALLOW"
+    },
+    {
+      "accessType": "EXECUTE",
+      "principalType": "ROLE",
+      "principalId": "$everyone",
+      "permission": "ALLOW",
+      "property": "setup"
     }
   ],
   "methods": {}
