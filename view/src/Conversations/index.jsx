@@ -12,23 +12,33 @@ const Conversations = ({
   handleNewContactModal,
   showing,
 }) => {
-
   return (
-    <div
-      className={classNames(classes.container, "mobile-fullwidth", showing)}
-    >
+    <div className={classNames(classes.container, "mobile-fullwidth", showing)}>
       <Search
         handleNewContact={handleNewContactModal}
         handleQuery={handleQuery}
       />
       <div className={classes.chatsList}>
-        {data.filter(c => c.filtered).map((chat, i) => (
-          <Chat
-            key={chat.chatId}
-            data={chat}
-            handleClick={() => handleSelectChat(i)}
-          />
-        ))}
+        {data.length ? (
+          data
+            .filter((c) => c.filtered)
+            .map((chat, i) => (
+              <Chat
+                key={chat.chatId}
+                data={chat}
+                handleClick={() => handleSelectChat(i)}
+              />
+            ))
+        ) : (
+          <a
+            onClick={() => {
+              window.localStorage.clear();
+              window.location.reload();
+            }}
+          >
+            Clique aqui se estiver tendo problemas para entrar
+          </a>
+        )}
       </div>
     </div>
   );

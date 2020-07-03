@@ -13,6 +13,9 @@ const NoChat = ({ showing }) => (
     )}
   >
     <h1>Selecione uma conversa no chat ao lado</h1>
+    <a onClick={() => {window.localStorage.clear();window.location.reload()}}>
+      Clique aqui se estiver tendo problemas para entrar
+    </a>
   </div>
 );
 

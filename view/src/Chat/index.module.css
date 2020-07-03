@@ -16,6 +16,7 @@
   background-color: #f7f7f7;
   color: darkgrey;
   padding: 24px;
+  flex-direction: column;
 }
 
 .header {
