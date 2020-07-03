@@ -46,7 +46,14 @@ const App = () => {
       setChats(res.data);
       setLastUpdate(new Date());
     } catch (error) {
-      alert("Algo deu errado no login. Tente novamente mais tarde");
+      console.log(error.response);
+      if (error.response.status === 401) {
+        alert("Fizemos alguns ajustes por aqui, e você vai ter que logar novamente");
+        localStorage.clear();
+        window.location.reload();
+      } else {
+        alert("Algo deu errado no login. Tente novamente mais tarde");
+      }
     }
   };
 
@@ -71,7 +78,7 @@ const App = () => {
 
   useEffect(() => {
     // Verificar se tá configurado
-    if (localStorage.access_token && localStorage.connected) {
+    if (localStorage.access_token) {
       loadChats();
     } else {
       setModal({
@@ -300,6 +307,7 @@ const App = () => {
       ).data;
       console.log(isSetup);
       if (isSetup) {
+        localStorage.setItem("connected", true);
         window.location.reload();
       } else {
         await axios.post(
