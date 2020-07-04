@@ -19,26 +19,15 @@ const Conversations = ({
         handleQuery={handleQuery}
       />
       <div className={classes.chatsList}>
-        {data.length ? (
-          data
-            .filter((c) => c.filtered)
-            .map((chat, i) => (
-              <Chat
-                key={chat.chatId}
-                data={chat}
-                handleClick={() => handleSelectChat(i)}
-              />
-            ))
-        ) : (
-          <a
-            onClick={() => {
-              window.localStorage.clear();
-              window.location.reload();
-            }}
-          >
-            Clique aqui se estiver tendo problemas para entrar
-          </a>
-        )}
+        {data
+          .filter((c) => c.filtered)
+          .map((chat) => (
+            <Chat
+              key={chat.chatId}
+              data={chat}
+              handleClick={() => handleSelectChat(chat.chatId)}
+            />
+          ))}
       </div>
     </div>
   );

@@ -57,7 +57,8 @@
           "setup": true,
           "loadQR": true,
           "isSet": true,
-          "kill": true
+          "kill": true,
+          "forceReloadChat": true
         }
       }
     }
@@ -75,7 +76,8 @@
           "*": false,
           "create": true,
           "login": true,
-          "logout": true
+          "logout": true,
+          "loadAgentsObj": true
         }
       }
     }

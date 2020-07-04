@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
 
@@ -6,23 +6,35 @@ import classes from "./index.module.css";
 import sendImg from "../../assets/images/send.svg";
 import emojiFace from "../../assets/images/emoji.svg";
 import camera from "../../assets/images/camera.svg";
+import outslideClickListener from "../../hooks/outslideClickListener";
 
 const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
   const [rows, setRows] = useState(1);
   const [sending, setSending] = useState(false);
   const [emoji, setEmoji] = useState();
+  const emojiRef = useRef();
 
-  const enterListener = async (e) => {
+  const closeEmoji = () => {
+    setEmoji(false);
+  }
+
+  outslideClickListener(emojiRef, closeEmoji);
+
+  const enterListener = (e) => {
     if (e.keyCode === 13 && !e.shiftKey) {
       e.preventDefault();
       if (message) {
-        setSending(true);
-        await send(message);
-        handleChangeMessage("");
-        setSending(false);
+        handlesendButton();
       }
     }
   };
+  
+  const handlesendButton = async () => {
+    setSending(true);
+    await send(message);
+    handleChangeMessage("");
+    setSending(false);
+  }
 
   const handleChange = (e) => {
     e.persist();
@@ -54,7 +66,6 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
 
   const addEmoji = (e) => {
     handleChangeMessage(message + e.native);
-    //TODO corigir erro de envio, desativar se clicar fora
   };
 
   return (
@@ -65,7 +76,7 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
         </div>
       )}
       {emoji && (
-        <div className={classes.emojiContainer}>
+        <div className={classes.emojiContainer} ref={emojiRef}>
           <Picker
             showPreview={false}
             showSkinTones={false}
@@ -91,6 +102,7 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
           <img src={emojiFace} alt="Emoji" />
         </button>
         <textarea
+          autoFocus
           type="text"
           rows={rows}
           value={message}
@@ -98,7 +110,7 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
           onChange={handleChange}
           placeholder="Digite uma mensagem"
         ></textarea>
-        <button onClick={() => send(message)}>
+        <button onClick={() => handlesendButton()}>
           <img src={sendImg} alt="Enviar" />
         </button>
       </div>

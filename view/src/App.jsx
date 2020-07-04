@@ -30,9 +30,68 @@ const App = () => {
   const [page, setPage] = useState("conversations");
   const isMobile = window.innerWidth <= 600;
   const audio = new Audio(notificationSound);
+  const me = localStorage.userId;
+
+  const checkOnline = async () => {
+    try {
+      const isSetup = (await axios(`${url}chats/online`, params)).data;
+      if (isSetup) {
+        loadChats();
+      } else {
+        alert(
+          "Ops, sua conexão foi perdida. Continue para sincronizar novamente."
+        );
+        window.localStorage.clear();
+        window.location.reload();
+      }
+    } catch (error) {}
+  };
+
+  const getLatestMsgs = async () => {
+    if (!localStorage.access_token) return;
+    try {
+      const msgs = await axios(
+        `${url}chats/latest/${lastUpdate.valueOf() - 10000}`,
+        params
+      );
+
+      if (msgs.data) {
+        addMessagesToConversations(msgs.data);
+      }
+      setLastUpdate(new Date());
+    } catch (error) {
+      if (error.response.status === 401) {
+        alert(
+          "Sua conta está sendo utilizada em outro lugar. Entre novamente."
+        );
+        localStorage.clear();
+        window.location.reload();
+      }
+    }
+  };
+
+  useInterval(() => {
+    if (localStorage.connected) {
+      getLatestMsgs();
+    }
+  }, 5000);
+
+  useEffect(() => {
+    if (localStorage.access_token) {
+      checkOnline();
+    } else {
+      setModal({
+        type: "login",
+      });
+    }
+    window.addEventListener("load", function () {
+      window.history.pushState({ noBackExitsApp: true }, "");
+    });
+  }, []);
 
   const loadChats = async () => {
     try {
+      loadAgents();
       const res = await axios(`${url}chats/all`, params);
 
       res.data.forEach((c) => {
@@ -48,7 +107,9 @@ const App = () => {
     } catch (error) {
       console.log(error.response);
       if (error.response.status === 401) {
-        alert("Fizemos alguns ajustes por aqui, e você vai ter que logar novamente");
+        alert(
+          "Fizemos alguns ajustes por aqui, e você vai ter que logar novamente"
+        );
         localStorage.clear();
         window.location.reload();
       } else {
@@ -56,36 +117,6 @@ const App = () => {
       }
     }
   };
-
-  const getLatestMsgs = async () => {
-    if (!localStorage.access_token) return;
-    const msgs = await axios(
-      `${url}chats/latest/${lastUpdate.valueOf()}`,
-      params
-    );
-
-    if (msgs.data) {
-      addMessagesToConversations(msgs.data);
-    }
-    setLastUpdate(new Date());
-  };
-
-  useInterval(() => {
-    if (localStorage.connected) {
-      getLatestMsgs();
-    }
-  }, 5000);
-
-  useEffect(() => {
-    // Verificar se tá configurado
-    if (localStorage.access_token) {
-      loadChats();
-    } else {
-      setModal({
-        type: "login",
-      });
-    }
-  }, []);
 
   const findIdxById = (id, chatsArr = chats) => {
     return chatsArr.findIndex((c) => c.chatId === id);
@@ -102,9 +133,10 @@ const App = () => {
     setChats(newChats);
   };
 
-  const selectChat = async (idx) => {
-    setSelectedChatIndex(idx);
-    const curr = chats[idx];
+  const selectChat = async (id) => {
+    let index = findIdxById(id);
+    setSelectedChatIndex(index);
+    const curr = chats[index];
     setCurrentChat(curr.chatId);
     setPage("chat");
 
@@ -160,20 +192,28 @@ const App = () => {
       if (idx < 0) {
         entry.profilePic = colors[Math.floor(Math.random() * 6)];
         entry.displayName = entry.name;
+        entry.firstClick = true;
         entry.unread = 1;
         entry.filtered = true;
         curr.unshift(entry);
         return;
       }
 
-      const recievedMsgs = entry.messages.filter(
-        (msg) =>
-          curr[idx].messages.findIndex((m) => m.messageId === msg.messageId) < 0
-      );
+      const recievedMsgs = entry.messages.filter((msg) => {
+        return !curr[idx].messages.find(
+          (m) =>
+            m.messageId === msg.messageId || (msg.mine && msg.agentId === me)
+        );
+      });
+
+      console.log(recievedMsgs);
+      if (!recievedMsgs.length) {
+        return;
+      }
 
       if (!sound && entry.chatId !== currentChat) {
         const notifyable = recievedMsgs.filter((m) => {
-          return !m.mine && (!m.agentId || m.agentId === localStorage.userId);
+          return !m.mine && (!m.agentId || m.agentId === me);
         });
         if (notifyable.length) {
           sound = true;
@@ -182,7 +222,7 @@ const App = () => {
 
       curr[idx].messages.unshift(...recievedMsgs);
       curr[idx].lastMessageAt = entry.lastMessageAt;
-      if (idx !== currentChat) {
+      if (idx !== selectedChatIndex) {
         const newMsgs = entry.messages.filter((m) => !m.mine);
         if (curr[idx].unread) {
           curr[idx].unread += newMsgs.length;
@@ -198,7 +238,6 @@ const App = () => {
 
       const newIdx = findIdxById(currentChat, curr);
       setSelectedChatIndex(newIdx);
-      console.log(newIdx);
       sound && audio.play();
     }
   };
@@ -227,7 +266,7 @@ const App = () => {
     );
 
     if (to === currentChat) {
-      const curr = cloneArray(chats); // TODO achar maneira mais inteligente de evitar referência
+      const curr = cloneArray(chats);
       const idx = findIdxById(currentChat);
       curr[idx].lastMessageAt = msg.data.timestamp;
       curr[idx].messages.unshift(msg.data);
@@ -239,7 +278,7 @@ const App = () => {
       return true;
     } else {
       setModal(false);
-      handleSetAgent(false, to);
+      // handleSetAgent(false, to);
       return false;
     }
   };
@@ -358,7 +397,6 @@ const App = () => {
       updateChat(
         {
           agentId,
-          agentLetter,
         },
         currentChat
       );
@@ -368,6 +406,16 @@ const App = () => {
       console.log(error);
       alert("Algo deu errado ao tentar associar a conversa");
       throw new Error("error");
+    }
+  };
+
+  const loadAgents = async () => {
+    try {
+      const { data } = await axios(`${url}agents/list`, params);
+      data.wpp = { fullName: "WhatsApp" };
+      localStorage.setItem("agents", JSON.stringify(data));
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -381,7 +429,7 @@ const App = () => {
         str = c.displayName.toLowerCase().includes(lowerStr);
       }
       if (pinned) {
-        pin = c.agentId === localStorage.userId;
+        pin = c.agentId === me;
       }
       c.filtered = str && pin;
       return c;

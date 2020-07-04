@@ -50,7 +50,7 @@ const Chat = ({ data, handleClick }) => {
         </div>
         <div className={classes.message}>
           {sent && <img src={sentImg} alt="Enviado" />}
-          <p dangerouslySetInnerHTML={{__html: parseText(msg)}}></p>
+          <p dangerouslySetInnerHTML={{__html: parseText(msg, false)}}></p>
           {data.agentLetter && (
             <span className={classes.letter}>{data.agentLetter}</span>
           )}

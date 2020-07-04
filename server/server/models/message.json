@@ -47,6 +47,11 @@
       "type": "belongsTo",
       "model": "chat",
       "foreignKey": ""
+    },
+    "agent": {
+      "type": "belongsTo",
+      "model": "agent",
+      "foreignKey": ""
     }
   },
   "acls": [],

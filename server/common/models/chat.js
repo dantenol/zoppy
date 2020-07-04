@@ -5,27 +5,22 @@ const fs = require('fs');
 const path = require('path');
 const wa = require('@open-wa/wa-automate');
 
-require('axios-debug-log')({
-  request: function(debug, config) {
-    debug('Request with ', config);
-  },
-  response: function(debug, response) {
-    debug('Response with ' + response.data, 'from ' + response.config.url);
-  },
-  error: function(debug, error) {
-    // Read https://www.npmjs.com/package/axios#handling-errors for more info
-    debug('Boom', error);
-  },
-});
+// require('axios-debug-log')({
+//   request: function(debug, config) {
+//     debug('Request with ', config);
+//   },
+//   response: function(debug, response) {
+//     debug('Response with ' + response.data, 'from ' + response.config.url);
+//   },
+//   error: function(debug, error) {
+//     // Read https://www.npmjs.com/package/axios#handling-errors for more info
+//     debug('Boom', error);
+//   },
+// });
 
 let model, wp, QRbuffer, myNumber;
 
-const validMsgTypes = [
-  'chat',
-  'image',
-  'ptt',
-  'video',
-];
+const validMsgTypes = ['chat', 'image', 'ptt', 'video', 'ciphertext'];
 
 async function start(wpp) {
   wp = wpp;
@@ -51,45 +46,79 @@ wa.ev.on('qr.**', async (qrcode) => {
   console.log(QRbuffer);
 });
 
-async function saveMsg(msg) {
+async function createMessage(msg, latest) {
   const Message = model.app.models.Message;
+  const waMsg = await wp.getMessageById(msg.id);
+  if (!validMsgTypes.includes(msg.type)) {
+    return;
+  }
+  let time = waMsg.t;
+  if (latest) {
+    time = new Date().valueOf() / 1000;
+  }
+  try {
+    const savedMsg = await Message.create({
+      messageId: waMsg.id,
+      chatId: waMsg.chatId._serialized,
+      body: waMsg.body,
+      sender:
+        waMsg.sender.pushname ||
+        waMsg.sender.formattedName ||
+        waMsg.sender.id ||
+        waMsg.sender,
+      type: waMsg.type,
+      mine: waMsg.sender.id === myNumber || waMsg.fromMe,
+      timestamp: time * 1000,
+      quote: waMsg.quotedMsg || undefined,
+      clientUrl: waMsg.clientUrl,
+      mediaKey: waMsg.mediaKey,
+      mimetype: waMsg.mimetype,
+      caption: waMsg.caption,
+    });
+    return savedMsg;
+  } catch (error) {
+    console.log('duplicated %s', waMsg.id);
+  }
+}
+
+async function saveMsg(msg) {
   const chat = await model.findById(msg.chatId);
   if (!chat) {
-    const chat = msg.chat;
+    const waMsg = await wp.getMessageById(msg.id);
+    const wpChat = waMsg.chat;
+    console.log('new chat:', wpChat);
     await model.create({
-      chatId: chat.id,
-      name: chat.name || chat.contact.formattedName || chat.formattedTitle,
-      type: chat.kind,
-      lastMessageAt: msg.t * 1000,
+      chatId: msg.chatId,
+      name:
+        wpChat.name ||
+        wpChat.pushname ||
+        wpChat.contact.verifiedName ||
+        wpChat.contact.formattedName ||
+        wpChat.formattedTitle,
+      type: wpChat.kind,
+      lastMessageAt: wpChat.t * 1000,
       mute: false,
       pin: false,
     });
   } else {
     await chat.updateAttributes({lastMessageAt: new Date(msg.t * 1000)});
   }
-  const savedMsg = await Message.create({
-    messageId: msg.id,
-    chatId: msg.chatId,
-    body: msg.body,
-    sender: msg.sender,
-    type: msg.type,
-    mine: msg.sender === myNumber,
-    timestamp: msg.t * 1000,
-    quote: msg.quotedMsg || undefined,
-    clientUrl: msg.clientUrl,
-    mediaKey: msg.mediaKey,
-    mimetype: msg.mimetype,
-    caption: msg.caption,
-  });
-  console.log(savedMsg);
+  await createMessage(msg, true);
+  const loaded = await wp.getAmountOfLoadedMessages();
+  if (loaded > 3000) {
+    console.log(loaded);
+    await wp.cutMsgCache();
+  }
 }
 
 async function loadAllMessages(client) {
   const Message = model.app.models.Message;
   const chats = await client.getAllChats();
 
-  // await model.deleteAll();
-  // await Message.deleteAll();
+  if (process.env.RESET === 'true') {
+    await model.deleteAll();
+    await Message.deleteAll();
+  }
 
   await Promise.all(
     chats.map(async (chat) => {
@@ -105,6 +134,7 @@ async function loadAllMessages(client) {
             name: chat.name || chat.contact.pushname || chat.formattedTitle,
             type: chat.kind,
             lastMessageAt: chat.t * 1000,
+            profilePic: chat.contact.profilePicThumbObj.eurl,
             mute: Boolean(chat.mute),
             pin: chat.pin,
           });
@@ -114,7 +144,7 @@ async function loadAllMessages(client) {
       }
 
       let allMessages = await client.getAllMessagesInChat(chatId, true);
-      console.log(chatId, allMessages.length);
+      console.log('loaded %d messages on chat %s', allMessages.length, chatId);
 
       if (!allMessages.length) {
         allMessages = await client.loadEarlierMessages(chatId);
@@ -123,20 +153,7 @@ async function loadAllMessages(client) {
       await Promise.all(
         allMessages.map(async (msg) => {
           try {
-            await Message.create({
-              messageId: msg.id,
-              chatId,
-              body: msg.body,
-              sender: msg.sender,
-              type: msg.type,
-              mine: msg.sender === myNumber,
-              timestamp: msg.t * 1000,
-              quote: msg.quotedMsg || undefined,
-              clientUrl: msg.clientUrl,
-              mediaKey: msg.mediaKey,
-              mimetype: msg.mimetype,
-              caption: msg.caption,
-            });
+            await createMessage(msg);
           } catch (error) {
             console.log('duplicated %s', msg.id);
           }
@@ -159,7 +176,7 @@ async function setSeen(id) {
   return sen;
 }
 
-module.exports = function(Chat) {
+module.exports = function (Chat) {
   model = Chat;
   Chat.disableRemoteMethodByName('prototype.__delete__messages');
   Chat.disableRemoteMethodByName('prototype.__destroyById__messages');
@@ -187,6 +204,7 @@ module.exports = function(Chat) {
       killProcessOnBrowserClose: false,
       restartOnCrash: start,
       licenseKey: true,
+      sessionDataPath: './session',
       headless: true, // Headless chrome
       devtools: false, // Open devtools by default
       useChrome: true, // If false will use Chromium instance
@@ -345,35 +363,18 @@ module.exports = function(Chat) {
   });
 
   Chat.loadMore = async (chatId) => {
-    const Message = model.app.models.Message;
     const earlierMsgs = await wp.loadEarlierMessages(chatId);
     if (earlierMsgs && earlierMsgs.length) {
       await Promise.all(
         earlierMsgs.map(async (m) => {
           try {
-            const msg = await Message.create({
-              messageId: m.id,
-              chatId,
-              body: m.body,
-              sender: m.sender,
-              type: m.type,
-              mine: m.sender === myNumber,
-              timestamp: m.t * 1000,
-              quote: m.quotedMsg || undefined,
-              clientUrl: m.clientUrl,
-              mediaKey: m.mediaKey,
-              mimetype: m.mimetype,
-              caption: m.caption,
-            });
+            const msg = await createMessage(m);
             return msg;
           } catch (error) {
             console.log(error);
           }
         }),
       );
-
-      // TODO clear cache if its over 2000 messages
-      // getAmountOfLoadedMessages and cutMsgCache
     }
   };
 
@@ -384,19 +385,62 @@ module.exports = function(Chat) {
     http: {path: '/:chatId/loadMore', verb: 'get'},
   });
 
-  Chat.sendMessage = async (to, message) => {
+  Chat.forceReloadChat = async (chatId) => {
+    const messages = await wp.getAllMessagesInChat(chatId, true);
+    messages.forEach((m) => {
+      console.log(m);
+      // usar upsert
+    });
+  };
+
+  Chat.remoteMethod('forceReloadChat', {
+    accepts: [{arg: 'chatId', type: 'string', required: true}],
+    description: 'Force reload all messages on chat looking for missing ones',
+    returns: {root: true},
+    http: {path: '/:chatId/reload', verb: 'post'},
+  });
+
+  Chat.sendMessage = async (req, to, message) => {
     const Message = model.app.models.Message;
     const wpMsg = await wp.sendText(to, message);
-    if (wpMsg) {
+    if (typeof wpMsg === 'string') {
       const msg = await Message.findById(wpMsg);
-
-      return msg;
+      if (msg) {
+        const newMsg = msg.updateAttributes({agentId: req.accessToken.userId});
+        return newMsg;
+      }
+    } else {
+      try {
+        const msg = await new Promise((resolve) => {
+          const started = new Date();
+          const interval = setInterval(async () => {
+            const tryMsg = await Message.findOne({where: {chatId: to}});
+            console.log('trying...');
+            if (tryMsg) {
+              clearInterval(interval);
+              console.log('took me %d ms', new Date() - started);
+              resolve(tryMsg);
+            } else if (new Date() - started > 1000) {
+              clearInterval(interval);
+              resolve(false);
+            }
+          }, 100);
+        });
+        console.log('MESSAGE: ', msg);
+        if (msg) {
+          msg.updateAttributes({agentId: req.accessToken.userId});
+          await model.claimChat(req, to);
+        }
+      } catch (error) {
+        console.log(error);
+      }
     }
     return true;
   };
 
   Chat.remoteMethod('sendMessage', {
     accepts: [
+      {arg: 'req', type: 'object', http: {source: 'req'}},
       {arg: 'chatId', type: 'string', required: true},
       {arg: 'message', type: 'string', required: true},
     ],

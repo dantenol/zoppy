@@ -30,9 +30,15 @@ export const asyncLocalStorage = {
 };
 
 
-export function parseText(text) {
+export function parseText(text, enter = true) {
   const strong = /\*(.+?)\*/g;
-  const italic = /\_(.+?)\_/g;
+  const italic = /_(.+?)_/g;
+  const newLine = /\n/g;
+  let lineBreak = '<br />';
+
+  if (!enter) {
+    lineBreak = '&nbsp;'
+  }
 
   let str;
   if (typeof text === 'string') {
@@ -45,6 +51,7 @@ export function parseText(text) {
   } else {
     return str
     .replace(italic, '<i>$1</i>')
+    .replace(newLine, lineBreak)
     .replace(strong, '<b>$1</b>')
   }
 }

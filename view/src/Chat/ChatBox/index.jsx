@@ -31,6 +31,9 @@ const Chat = ({
             {messages.map((m, i) => {
               const last = lastDay;
               const current = m.timestamp;
+              if (m.mine && !m.agentId) {
+                m.agentId = "wpp";
+              }
               lastDay = current;
               if (!moment(last).isSame(lastDay, "day")) {
                 return (
