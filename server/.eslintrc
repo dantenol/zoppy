@@ -1,5 +1,5 @@
 {
-  "extends": ["loopback", "eslint:recommended"],
+  "extends": ["loopback", "eslint:recommended", "plugin:prettier/recommended"],
   "parserOptions": {
     "ecmaVersion": 2018,
     "ecmaFeatures": {
