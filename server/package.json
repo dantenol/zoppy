@@ -8,6 +8,7 @@
   "scripts": {
     "lint": "eslint .",
     "start": "node .",
+    "preupdate-front": "sed -i 's@\".*/api/\"@\"/api/\"@' ../view/src/connector.jsx",
     "update-front": "cd ../view && npm run build && cp -a ./build/* ../server/client",
     "custom-key": "sed -i 's@openwa.web.app@demoapi.projetomarvin.com/api@' node_modules/@open-wa/wa-automate/package.json",
     "default-key": "sed -i 's@demoapi.projetomarvin.com/api@openwa.web.app@' node_modules/@open-wa/wa-automate/package.json"
