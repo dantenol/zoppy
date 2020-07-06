@@ -1,5 +1,7 @@
 import _ from "lodash";
 
+const urlRegex = /([-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*))/g;
+
 export const compareArrays = (x, y) => {
   return _(x).xorWith(y, _.isEqual).isEmpty();
 };
@@ -29,29 +31,48 @@ export const asyncLocalStorage = {
   },
 };
 
+function urlify(txt) {
+  return txt
+    .split(" ")
+    .map((part, i) => {
+      if (part.match(urlRegex)) {
+        const url = part.startsWith("http") ? part : "http://" + part;
+        return (
+          `<a key=${i} rel="noopener noreferrer" target="_blank" href=${url}>` +
+          part +
+          "</a>"
+        );
+      }
+      return part;
+    })
+    .join(" ");
+}
 
 export function parseText(text, enter = true) {
   const strong = /\*(.+?)\*/g;
   const italic = /_(.+?)_/g;
   const newLine = /\n/g;
-  let lineBreak = '<br />';
+  let lineBreak = "<br />";
+  let str;
+  if (typeof text === "string") {
+    str = text;
+  } else if (Array.isArray(text)) {
+    str = text.join(" ");
+  }
+  console.log(text, str);
 
   if (!enter) {
-    lineBreak = '&nbsp;'
+    lineBreak = "&nbsp;";
+  } else {
+    str = urlify(str);
   }
 
-  let str;
-  if (typeof text === 'string') {
-    str = text
-  } else {
-    str = text[0]
-  }
-  if (typeof str !== 'string') {
-    return str
+  if (typeof str !== "string") {
+    return str;
   } else {
     return str
-    .replace(italic, '<i>$1</i>')
-    .replace(newLine, lineBreak)
-    .replace(strong, '<b>$1</b>')
+      .replace(italic, "<i>$1</i>")
+      .replace(newLine, lineBreak)
+      .replace(strong, "<b>$1</b>");
   }
 }

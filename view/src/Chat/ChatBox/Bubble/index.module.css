@@ -88,9 +88,13 @@
 }
 
 div.message p {
-  margin: 8px 0;
+  margin: 4px 0;
   font-weight: bold;
   text-align: end;
+}
+
+.left div.message p {
+  text-align: start;
 }
 
 .message span {
