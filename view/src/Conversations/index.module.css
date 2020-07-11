@@ -6,8 +6,12 @@
   z-index: 2;
 }
 
+.container button {
+  background-color: transparent;
+}
+
 .chatsList {
-  height: calc(100% - 72px);
+  height: calc(100% - 216px);
   overflow: hidden;
 }
 
@@ -146,6 +150,46 @@
 .message img {
   width: 16px;
   margin-right: 8px;
+}
+
+.lowBattery {
+  font-weight: bold;
+  background-color: #ffa3a3;
+  text-align: center;
+  cursor: default;
+}
+
+.lowBattery:hover {
+  cursor: default;
+  background-color: #ffa3a3;
+}
+
+.header {
+  background-color: #4FB36B;
+  padding: 16px;
+  display: inline-flex;
+  width: 100%;
+  color: white;
+  height: 72px;
+}
+
+.header img {
+  padding: 6px;
+  width: 40px;
+  height: 40px;
+}
+
+.header img.bg {
+  background-color: white;
+  border-radius: 8px;
+}
+
+.header p{
+  flex-grow: 1;
+  font-size: 20px;
+  margin: 8px;
+  margin-top: 6px;
+  font-weight: bold;
 }
 
 @media screen and (max-width: 600px) {

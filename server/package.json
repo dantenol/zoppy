@@ -14,8 +14,8 @@
     "default-key": "sed -i 's@demoapi.projetomarvin.com/api@openwa.web.app@' node_modules/@open-wa/wa-automate/package.json"
   },
   "dependencies": {
-    "@open-wa/wa-automate": "^1.9.96",
-    "aws-sdk": "^2.709.0",
+    "@open-wa/wa-automate": "^1.9.97",
+    "aws-sdk": "^2.713.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
@@ -24,7 +24,7 @@
     "loopback": "^3.27.0",
     "loopback-boot": "^3.3.1",
     "loopback-component-explorer": "^6.5.1",
-    "loopback-connector-mongodb": "^5.2.3",
+    "loopback-connector-mongodb": "^5.3.0",
     "mime-types": "^2.1.27",
     "moment": "^2.27.0",
     "serve-favicon": "^2.5.0",

@@ -31,6 +31,13 @@ module.exports = function (Agent) {
     body.createdAt = new Date();
   });
 
+  Agent.afterRemote('create', async (ctx, data) => {
+    const res = data.toJSON();
+    if (!res.username) {
+      data.updateAttributes({username: `${res.id}`})
+    }
+  });
+
   Agent.beforeRemote('login', async (ctx) => {
     const body = ctx.req.body;
     body.ttl = 31540000;
@@ -44,14 +51,11 @@ module.exports = function (Agent) {
       skip: 1,
     });
 
-    console.log(tokens);
     tokens.forEach(t => t.destroy());
   });
 
   Agent.loadAgentsObj = async () => {
-    const agents = await Agent.find({
-      fields: {id: true, fullName: true, firstLetter: true, color: true},
-    });
+    const agents = await Agent.find();
 
     const agentsObj = {};
     agents.forEach((a) => {
@@ -59,6 +63,7 @@ module.exports = function (Agent) {
         fullName: a.fullName,
         firstLetter: a.firstLetter,
         color: a.color,
+        username: a.username,
       };
     });
 

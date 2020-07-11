@@ -38,6 +38,7 @@ const Chat = ({
           showMedia={showMedia}
           handleLoadMore={handleLoadMore}
           send={handleSend}
+          more={chat.more}
           chatId={chat.chatId}
           handleChangeName={handleChangeName}
           messages={chat.messages}

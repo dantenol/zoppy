@@ -59,7 +59,6 @@ export function parseText(text, enter = true) {
   } else if (Array.isArray(text)) {
     str = text.join(" ");
   }
-  console.log(text, str);
 
   if (!enter) {
     lineBreak = "&nbsp;";

@@ -12,7 +12,8 @@
   width: auto;
   font-size: 14px;
   position: relative;
-  display: inline-flex;
+  display: flex;
+  height: fit-content;
 }
 
 .left + .right,
@@ -99,6 +100,7 @@ div.message p {
 
 .message span {
   line-height: 19px;
+  line-break: anywhere;
 }
 
 .message .buffer {

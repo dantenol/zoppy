@@ -10,8 +10,16 @@
       "type": "string",
       "required": true
     },
+    "email": {
+      "type": "string",
+      "required": false
+    },
     "firstLetter": {
       "type": "string"
+    },
+    "isSalesAgent": {
+      "type": "boolean",
+      "default": true
     },
     "createdAt": {
       "type": "date"
@@ -53,7 +61,10 @@
       "principalType": "ROLE",
       "principalId": "$authenticated",
       "permission": "ALLOW",
-      "property": "loadAgentsObj"
+      "property": [
+        "loadAgentsObj",
+        "updateAttributes"
+      ]
     }
   ],
   "methods": {}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Lightbox from "react-image-lightbox";
 import classNames from "classnames";
 import NumberFormat from "react-number-format";
+import _ from "lodash";
 
 import { url } from "../connector";
 
@@ -11,23 +12,33 @@ import classes from "./modal.module.css";
 import logo from "../assets/images/logo.png";
 import loading from "../assets/images/loading.gif";
 
+const localSettings = JSON.parse(localStorage.settings || 1);
+
 const Modal = ({
   file,
   onClose,
   handleSendImage,
   handleNewChat,
   handleLogin,
+  selectUser,
+  handleChangeSettings,
 }) => {
   const [message, setMessage] = useState("");
   const [number, setNumber] = useState("");
   const [password, setPassword] = useState("");
   const [buttonDisabled, setButtonDisabled] = useState(false);
+  const [settings, setSettings] = useState(
+    (file && file.settings) || localSettings
+  );
 
   useEffect(() => {
     setButtonDisabled(false);
     setMessage("");
     setNumber("");
     setPassword("");
+    if (file && file.newNumber) {
+      setNumber(file.newNumber);
+    }
   }, [file]);
 
   const sendImage = (e) => {
@@ -36,7 +47,7 @@ const Modal = ({
     handleSendImage(message);
   };
 
-  const sendNewChat = (e) => {
+  const addContact = (e) => {
     e.preventDefault();
     if (!number.match(/^\(\d{2}\) \d{5}-\d{4}$/g)) {
       alert("Número inválido");
@@ -54,7 +65,27 @@ const Modal = ({
 
   const login = (e) => {
     e.preventDefault();
+    if (!message || !password) {
+      alert("Insira seu usuário e senha!");
+      return;
+    }
     handleLogin(message, password);
+  };
+
+  const handlePickUser = () => {
+    if (message) {
+      selectUser(message);
+    } else {
+      alert("Você deve selecionar um(a) vendedor(a)");
+    }
+  };
+
+  const changeSettings = ({ target }) => {
+    console.log(target.name, target.checked);
+    const newSettings = { ...settings, [target.name]: target.checked };
+    console.log(newSettings);
+    setSettings(newSettings);
+    handleChangeSettings(newSettings);
   };
 
   if (file && file.type === "image") {
@@ -66,22 +97,37 @@ const Modal = ({
       />
     );
   } else if (file && file.type === "qr") {
-      return (
-        <>
-          <div onClick={onClose} className={classes.modalBackground} />
-          <div className={classNames(classes.modal, classes.opaque)}>
-            <p>{file.update}</p>
-            <h2>Escaneie o QR code pelo WhatsApp</h2>
-            <img className={classes.qr} src={`${url}chats/qr?access_token=${file.token}&${file.update}`} alt="QR code" />
-          </div>
-        </>
-      );
+    return (
+      <>
+        <div onClick={onClose} className={classes.modalBackground} />
+        <div className={classNames(classes.modal, classes.opaque)}>
+          <p>{file.update}</p>
+          <h2>Escaneie o QR code pelo WhatsApp</h2>
+          <img
+            className={classes.qr}
+            src={`${url}chats/qr?access_token=${file.token}&${file.update}`}
+            alt="QR code"
+          />
+        </div>
+      </>
+    );
   } else if (file && file.type === "video") {
     return (
       <>
         <div onClick={onClose} className={classes.modalBackground} />
         <div className={classes.modal}>
           <video src={`${url}chats/download/${file.id}`} alt="Vídeo" autoPlay />
+        </div>
+      </>
+    );
+  } else if (file && file.type === "offline") {
+    return (
+      <>
+        <div className={classes.modalBackground} />
+        <div className={classNames(classes.modal, classes.opaque)}>
+          <h1>
+            Parece que o celular principal não está online. Verifique e aguarde.
+          </h1>
         </div>
       </>
     );
@@ -121,7 +167,8 @@ const Modal = ({
           <div onClick={onClose} className={classes.close}>
             &times;
           </div>
-          <form onSubmit={sendNewChat}>
+          <h2>Iniciar nova conversa</h2>
+          <form onSubmit={addContact}>
             <NumberFormat
               type="tel"
               placeholder="Celular"
@@ -131,19 +178,64 @@ const Modal = ({
             />
             <input
               type="text"
-              placeholder="Mensagem"
+              placeholder="Nome"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
             <input type="submit" hidden />
           </form>
-          <button disabled={buttonDisabled} onClick={sendNewChat}>
+          <button disabled={buttonDisabled} onClick={addContact}>
             {buttonDisabled ? (
               <img src={loading} alt="loading spinner" />
             ) : (
-              "Enviar"
+              "Salvar"
             )}
           </button>
+        </div>
+      </>
+    );
+  } else if (file && file.type === "selectUser") {
+    let options;
+    if (localStorage.agents) {
+      options = [];
+      _.forEach(JSON.parse(localStorage.agents), (a) => {
+        if (a.username && a.isSalesAgent) {
+          options.push([a.username, a.fullName]);
+        }
+      });
+    }
+
+    return (
+      <>
+        <div className={classes.modalBackground} onClick={onclose} />
+        <div className={classNames(classes.modal, classes.opaque)}>
+          <div onClick={onClose} className={classes.close}>
+            &times;
+          </div>
+          <h2>vendedor(a)</h2>
+          <form action="null">
+            <select
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            >
+              <option value="" disabled>
+                Selecione...
+              </option>
+              {options.map((a) => (
+                <option value={a[0]} key={a[0]}>
+                  {a[1]}
+                </option>
+              ))}
+            </select>
+          </form>
+          <button disabled={buttonDisabled} onClick={handlePickUser}>
+            {buttonDisabled ? (
+              <img src={loading} alt="loading spinner" />
+            ) : (
+              "Entrar"
+            )}
+          </button>
+          <form action=""></form>
         </div>
       </>
     );
@@ -153,11 +245,11 @@ const Modal = ({
         <div className={classes.modalBackground} />
         <div className={classNames(classes.modal, classes.opaque)}>
           <img className={classes.logo} src={logo} alt="Zoppy" />
-          <h2>Você precisa logar primeiro!</h2>
-          <form onSubmit={login}>
+          <h2>Acesse sua conta</h2>
+          <form onSubmit={login} noValidate>
             <input
               type="email"
-              placeholder="email"
+              placeholder="usuário"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
@@ -177,6 +269,47 @@ const Modal = ({
             )}
           </button>
           <form action=""></form>
+        </div>
+      </>
+    );
+  } else if (file && file.type === "settings") {
+    return (
+      <>
+        <div onClick={onClose} className={classes.modalBackground} />
+        <div className={classNames(classes.modal, classes.opaque)}>
+          <div onClick={onClose} className={classes.close}>
+            &times;
+          </div>
+          <div className={classes.settings}>
+            <h2>Configurações</h2>
+            <label>
+              Selecionar vendedor
+              <input
+                type="checkbox"
+                name="manageUsersLocally"
+                checked={settings.manageUsersLocally}
+                onChange={changeSettings}
+              />
+            </label>
+            <br />
+            <br />
+            <label>
+              Mostrar opções de conversão
+              <input
+                type="checkbox"
+                name="salesOptions"
+                checked={settings.salesOptions}
+                onChange={changeSettings}
+              />
+            </label>
+          </div>
+          <button disabled={buttonDisabled} onClick={onClose}>
+            {buttonDisabled ? (
+              <img src={loading} alt="loading spinner" />
+            ) : (
+              "Salvar"
+            )}
+          </button>
         </div>
       </>
     );

@@ -58,7 +58,9 @@
           "loadQR": true,
           "isSet": true,
           "kill": true,
-          "forceReloadChat": true
+          "forceReloadChat": true,
+          "checkNum": true,
+          "status": true
         }
       }
     }
@@ -73,7 +75,7 @@
     "options": {
       "remoting": {
         "sharedMethods": {
-          "*": false,
+          "*": true,
           "create": true,
           "login": true,
           "logout": true,

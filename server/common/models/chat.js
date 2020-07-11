@@ -18,7 +18,7 @@ const wa = require('@open-wa/wa-automate');
 //   },
 // });
 
-let model, wp, QRbuffer, myNumber;
+let model, wp, QRbuffer, myNumber, battery, charging, startedSetup;
 
 const validMsgTypes = ['chat', 'image', 'ptt', 'video', 'ciphertext'];
 
@@ -29,6 +29,30 @@ async function start(wpp) {
   console.log('My number %s', myNumber);
   wpp.onAnyMessage((msg) => {
     saveMsg(msg);
+  });
+
+  wpp.onBattery((b) => {
+    console.log(b);
+    battery = b;
+  });
+  wpp.onPlugged((b) => {
+    console.log(b);
+    charging = b;
+  });
+
+  wpp.onStateChanged((s) => {
+    console.log(s);
+    switch (s) {
+      case 'CONFLICT':
+        wpp.forceRefocus();
+        break;
+      case 'UNPAIRED':
+        model.kill();
+        model.setup();
+        break;
+      default:
+        break;
+    }
   });
 
   process.on('SIGINT', () => {
@@ -86,7 +110,7 @@ async function saveMsg(msg) {
   if (!chat) {
     const waMsg = await wp.getMessageById(msg.id);
     const wpChat = waMsg.chat;
-    console.log('new chat:', wpChat);
+    // console.log('new chat:', wpChat);
     await model.create({
       chatId: msg.chatId,
       name:
@@ -199,11 +223,17 @@ module.exports = function (Chat) {
   Chat.setup = async () => {
     if (wp) {
       throw new Error('WhatApp already set');
+    } else if (startedSetup) {
+      startedSetup = false;
+      // await wa.kill();
+      return Chat.setup();
     }
+    startedSetup = true;
     wa.create({
       killProcessOnBrowserClose: false,
       restartOnCrash: start,
       licenseKey: true,
+      disableSpins: true,
       sessionDataPath: './session',
       headless: true, // Headless chrome
       devtools: false, // Open devtools by default
@@ -248,7 +278,7 @@ module.exports = function (Chat) {
       unreadObj[chat.id] = chat.indicatedNewMessages.length;
     });
 
-    const conversatoins = await Chat.find({
+    const conversations = await Chat.find({
       order: 'lastMessageAt DESC',
       include: {
         relation: 'messages',
@@ -259,13 +289,13 @@ module.exports = function (Chat) {
       },
     });
 
-    conversatoins.forEach((c, i) => {
+    conversations.forEach((c, i) => {
       if (unreadObj[c.chatId]) {
-        conversatoins[i].unread = unreadObj[c.chatId];
+        conversations[i].unread = unreadObj[c.chatId];
       }
     });
 
-    return conversatoins;
+    return conversations;
   };
 
   Chat.remoteMethod('getAll', {
@@ -349,7 +379,12 @@ module.exports = function (Chat) {
   });
 
   Chat.kill = async () => {
-    fs.unlinkSync(path.resolve(__dirname, '../../session.data.json'));
+    //TODO try catch
+    try {
+      fs.unlinkSync(path.resolve(__dirname, '../../session.data.json'));
+    } catch (error) {
+      console.log(error);
+    }
     await wp.kill();
     wp = undefined;
 
@@ -400,13 +435,15 @@ module.exports = function (Chat) {
     http: {path: '/:chatId/reload', verb: 'post'},
   });
 
-  Chat.sendMessage = async (req, to, message) => {
+  Chat.sendMessage = async (req, to, message, from) => {
     const Message = model.app.models.Message;
     const wpMsg = await wp.sendText(to, message);
+    console.log(wpMsg);
     if (typeof wpMsg === 'string') {
       const msg = await Message.findById(wpMsg);
+      console.log(msg);
       if (msg) {
-        const newMsg = msg.updateAttributes({agentId: req.accessToken.userId});
+        const newMsg = msg.updateAttributes({agentId: from || req.accessToken.userId});
         return newMsg;
       }
     } else {
@@ -414,7 +451,9 @@ module.exports = function (Chat) {
         const msg = await new Promise((resolve) => {
           const started = new Date();
           const interval = setInterval(async () => {
-            const tryMsg = await Message.findOne({where: {chatId: to}});
+            const tryMsg = await Message.findOne({
+              where: {chatId: to, mine: true},
+            });
             console.log('trying...');
             if (tryMsg) {
               clearInterval(interval);
@@ -428,7 +467,7 @@ module.exports = function (Chat) {
         });
         console.log('MESSAGE: ', msg);
         if (msg) {
-          msg.updateAttributes({agentId: req.accessToken.userId});
+          msg.updateAttributes({agentId: from || req.accessToken.userId});
           await model.claimChat(req, to);
         }
       } catch (error) {
@@ -443,6 +482,7 @@ module.exports = function (Chat) {
       {arg: 'req', type: 'object', http: {source: 'req'}},
       {arg: 'chatId', type: 'string', required: true},
       {arg: 'message', type: 'string', required: true},
+      {arg: 'from', type: 'string', required: true},
     ],
     description: 'Send message to chat',
     returns: {root: true},
@@ -590,5 +630,30 @@ module.exports = function (Chat) {
     description: 'Claim chat',
     returns: {root: true},
     http: {path: '/:chatId/claim', verb: 'patch'},
+  });
+
+  Chat.checkNum = async (chatId) => {
+    return (await wp.checkNumberStatus(chatId)).canReceiveMessage;
+  };
+
+  Chat.remoteMethod('checkNum', {
+    accepts: [{arg: 'chatId', type: 'string', required: true}],
+    description: 'Validate WhatsApp number',
+    returns: {root: true},
+    http: {path: '/:chatId/check', verb: 'get'},
+  });
+
+  Chat.status = async () => {
+    return {
+      battery,
+      charging,
+      online: await wp.isConnected(),
+    };
+  };
+
+  Chat.remoteMethod('status', {
+    description: 'Get device status',
+    returns: {root: true},
+    http: {path: '/status', verb: 'get'},
   });
 };

@@ -21,7 +21,7 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
   outslideClickListener(emojiRef, closeEmoji);
 
   const enterListener = (e) => {
-    if (e.keyCode === 13 && !e.shiftKey) {
+    if (e.keyCode === 13 && !e.shiftKey && !sending) {
       e.preventDefault();
       if (message) {
         handlesendButton();
@@ -102,6 +102,7 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
           <img src={emojiFace} alt="Emoji" />
         </button>
         <textarea
+          readOnly={sending}
           autoFocus
           type="text"
           rows={rows}
