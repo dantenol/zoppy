@@ -4,6 +4,8 @@
   height: 100%;
   box-shadow: 0 0 3px 0px #cccccc;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
 }
 
 .container button {
@@ -11,7 +13,7 @@
 }
 
 .chatsList {
-  height: calc(100% - 216px);
+  flex-grow: 1;
   overflow: hidden;
 }
 

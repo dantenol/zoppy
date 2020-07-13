@@ -34,7 +34,7 @@ module.exports = function (Agent) {
   Agent.afterRemote('create', async (ctx, data) => {
     const res = data.toJSON();
     if (!res.username) {
-      data.updateAttributes({username: `${res.id}`})
+      data.updateAttributes({username: `${res.id}`});
     }
   });
 
@@ -51,7 +51,7 @@ module.exports = function (Agent) {
       skip: 1,
     });
 
-    tokens.forEach(t => t.destroy());
+    tokens.forEach((t) => t.destroy());
   });
 
   Agent.loadAgentsObj = async () => {
@@ -63,6 +63,7 @@ module.exports = function (Agent) {
         fullName: a.fullName,
         firstLetter: a.firstLetter,
         color: a.color,
+        isSalesAgent: a.isSalesAgent,
         username: a.username,
       };
     });
@@ -74,5 +75,21 @@ module.exports = function (Agent) {
     description: 'Loads an object of agents with necessary props',
     returns: {root: true},
     http: {path: '/list', verb: 'get'},
+  });
+
+  Agent.setSalesAgent = async (id, bool) => {
+    const agent = await Agent.findById(id);
+    const changed = await agent.updateAttributes({isSalesAgent: bool});
+    return changed;
+  };
+
+  Agent.remoteMethod('setSalesAgent', {
+    description: 'sets config for agent being a sales agent or not',
+    accepts: [
+      {arg: 'chatId', type: 'string', required: true},
+      {arg: 'isSales', type: 'boolean', required: true},
+    ],
+    returns: {root: true},
+    http: {path: '/salesAgent', verb: 'patch'},
   });
 };

@@ -198,9 +198,9 @@ const Modal = ({
     let options;
     if (localStorage.agents) {
       options = [];
-      _.forEach(JSON.parse(localStorage.agents), (a) => {
+      _.forEach(JSON.parse(localStorage.agents), (a, k) => {
         if (a.username && a.isSalesAgent) {
-          options.push([a.username, a.fullName]);
+          options.push([k, a.fullName]);
         }
       });
     }
@@ -212,7 +212,7 @@ const Modal = ({
           <div onClick={onClose} className={classes.close}>
             &times;
           </div>
-          <h2>vendedor(a)</h2>
+          <h2>Vendedor(a)</h2>
           <form action="null">
             <select
               value={message}

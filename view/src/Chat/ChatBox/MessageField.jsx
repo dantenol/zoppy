@@ -16,7 +16,7 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
 
   const closeEmoji = () => {
     setEmoji(false);
-  }
+  };
 
   outslideClickListener(emojiRef, closeEmoji);
 
@@ -28,13 +28,14 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
       }
     }
   };
-  
+
   const handlesendButton = async () => {
     setSending(true);
     await send(message);
     handleChangeMessage("");
     setSending(false);
-  }
+    setRows(1);
+  };
 
   const handleChange = (e) => {
     e.persist();

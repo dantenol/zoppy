@@ -37,6 +37,8 @@ WORKDIR /app
 
 RUN npm install
 
+RUN npm run custom-key
+
 COPY . .
 
 

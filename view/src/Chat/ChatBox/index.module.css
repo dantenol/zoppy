@@ -19,6 +19,8 @@
   width: 100%;
   position: absolute;
   bottom: 0;
+  height: 100%;
+  overflow-y: scroll;
   padding: 32px 0;
   padding-right: 2px;
   display: flex;

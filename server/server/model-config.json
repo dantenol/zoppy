@@ -75,11 +75,12 @@
     "options": {
       "remoting": {
         "sharedMethods": {
-          "*": true,
+          "*": false,
           "create": true,
           "login": true,
           "logout": true,
-          "loadAgentsObj": true
+          "loadAgentsObj": true,
+          "setSalesAgent": true
         }
       }
     }

@@ -18,8 +18,7 @@
       "type": "string"
     },
     "isSalesAgent": {
-      "type": "boolean",
-      "default": true
+      "type": "boolean"
     },
     "createdAt": {
       "type": "date"
@@ -63,7 +62,8 @@
       "permission": "ALLOW",
       "property": [
         "loadAgentsObj",
-        "updateAttributes"
+        "updateAttributes",
+        "setSalesAgent"
       ]
     }
   ],

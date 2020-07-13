@@ -5,18 +5,18 @@ const fs = require('fs');
 const path = require('path');
 const wa = require('@open-wa/wa-automate');
 
-// require('axios-debug-log')({
-//   request: function(debug, config) {
-//     debug('Request with ', config);
-//   },
-//   response: function(debug, response) {
-//     debug('Response with ' + response.data, 'from ' + response.config.url);
-//   },
-//   error: function(debug, error) {
-//     // Read https://www.npmjs.com/package/axios#handling-errors for more info
-//     debug('Boom', error);
-//   },
-// });
+require('axios-debug-log')({
+  request: function(debug, config) {
+    debug('Request with ', config);
+  },
+  response: function(debug, response) {
+    debug('Response with ' + response.data, 'from ' + response.config.url);
+  },
+  error: function(debug, error) {
+    // Read https://www.npmjs.com/package/axios#handling-errors for more info
+    debug('Boom', error);
+  },
+});
 
 let model, wp, QRbuffer, myNumber, battery, charging, startedSetup;
 
@@ -240,6 +240,8 @@ module.exports = function (Chat) {
       useChrome: true, // If false will use Chromium instance
       debug: true, // Opens a debug session
       logQR: true,
+      qrRefreshS: 15,
+      qrTimeout: 40
     }).then((client) => start(client));
   };
 
@@ -270,6 +272,7 @@ module.exports = function (Chat) {
     returns: {root: true},
     http: {path: '/qr', verb: 'get'},
   });
+
   Chat.getAll = async () => {
     const unread = await getUnreadChats();
 
@@ -381,7 +384,7 @@ module.exports = function (Chat) {
   Chat.kill = async () => {
     //TODO try catch
     try {
-      fs.unlinkSync(path.resolve(__dirname, '../../session.data.json'));
+      fs.unlinkSync(path.resolve(__dirname, '../../session/session.data.json'));
     } catch (error) {
       console.log(error);
     }
@@ -482,7 +485,7 @@ module.exports = function (Chat) {
       {arg: 'req', type: 'object', http: {source: 'req'}},
       {arg: 'chatId', type: 'string', required: true},
       {arg: 'message', type: 'string', required: true},
-      {arg: 'from', type: 'string', required: true},
+      {arg: 'from', type: 'string', required: false},
     ],
     description: 'Send message to chat',
     returns: {root: true},
@@ -597,13 +600,13 @@ module.exports = function (Chat) {
     http: {path: '/:chatId/sendMedia', verb: 'post'},
   });
 
-  Chat.claimChat = async (req, chatId, remove) => {
+  Chat.claimChat = async (req, chatId, remove, customId) => {
     const Agent = model.app.models.Agent;
     const chat = await Chat.findById(chatId);
     if (!chat) {
       throw 'Invalid chatId';
     }
-    const usr = await Agent.findById(req.accessToken.userId);
+    const usr = await Agent.findById(customId || req.accessToken.userId);
 
     let upd;
     if (remove) {
@@ -613,7 +616,7 @@ module.exports = function (Chat) {
       });
     } else {
       upd = await chat.updateAttributes({
-        agentId: req.accessToken.userId,
+        agentId: usr.id,
         agentLetter: usr.firstLetter,
       });
     }
@@ -626,6 +629,7 @@ module.exports = function (Chat) {
       {arg: 'req', type: 'object', http: {source: 'req'}},
       {arg: 'chatId', type: 'string', required: true},
       {arg: 'remove', type: 'boolean'},
+      {arg: 'customId', type: 'string'},
     ],
     description: 'Claim chat',
     returns: {root: true},

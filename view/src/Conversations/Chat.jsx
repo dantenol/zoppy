@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import moment from "moment";
+import _ from "lodash";
 
 import classes from "./index.module.css";
 
@@ -17,6 +18,16 @@ const calendarTexts = {
 const Chat = ({ data, handleClick }) => {
   const [msg, setMsg] = useState("");
   const [sent, setSent] = useState();
+  const agents = localStorage.agents;
+  let backgroundColor = 'initial';
+  if (agents) {
+    const parsed = JSON.parse(agents);
+    _.forEach(parsed, (a, k) => {
+      if (k === data.agentId) {
+        backgroundColor = a.color;
+      }
+    });
+  }
 
   const loadMsgText = () => {
     const lastMsg = data.messages[0];
@@ -50,9 +61,11 @@ const Chat = ({ data, handleClick }) => {
         </div>
         <div className={classes.message}>
           {sent && <img src={sentImg} alt="Enviado" />}
-          <p dangerouslySetInnerHTML={{__html: parseText(msg, false)}}></p>
+          <p dangerouslySetInnerHTML={{ __html: parseText(msg, false) }}></p>
           {data.agentLetter && (
-            <span className={classes.letter}>{data.agentLetter}</span>
+            <span className={classes.letter} style={{ backgroundColor }}>
+              {data.agentLetter}
+            </span>
           )}
           {data.unread > 0 && (
             <span className={classes.unread}>{data.unread}</span>

@@ -100,7 +100,7 @@ div.message p {
 
 .message span {
   line-height: 19px;
-  line-break: anywhere;
+  line-break: auto;
 }
 
 .message .buffer {

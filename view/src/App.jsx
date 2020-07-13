@@ -152,6 +152,7 @@ const App = () => {
       setModal({
         type: "login",
       });
+      return;
     }
     if (!localStorage.settings) {
       localStorage.setItem(
@@ -162,6 +163,8 @@ const App = () => {
         })
       );
       window.location.reload();
+    } else {
+      setModal({ type: "selectUser" });
     }
     window.addEventListener("load", function () {
       window.history.pushState({ noBackExitsApp: true }, "");
@@ -176,6 +179,7 @@ const App = () => {
       handleChangeName(newChat.displayName, newChat.chatId);
       setNewChat(false);
     } else if (chats.length && !urlChecked) {
+      setUrlChecked(false);
       checkUrl();
     }
     cacheConversations();
@@ -241,7 +245,6 @@ const App = () => {
       return;
     }
     const number = /^55(\d{2})([89]?)(\d{4})(\d{4})$/g.exec(url);
-    window.location.pathname = "";
     if (!number) {
       return;
     }
@@ -258,7 +261,7 @@ const App = () => {
         newNumber: formatted,
       });
     }
-    setUrlChecked(true);
+    window.history.pushState({}, "Zoppy", "/");
   };
 
   const selectChat = async (id) => {
@@ -484,6 +487,8 @@ const App = () => {
 
   const selectUser = (user) => {
     sessionStorage.setItem("user", user);
+    const thisUser = JSON.parse(localStorage.agents)[user];
+    sessionStorage.setItem("userProfile", JSON.stringify(thisUser));
     setModal(false);
   };
 
@@ -547,6 +552,7 @@ const App = () => {
             },
           }
         );
+        localStorage.removeItem("chats");
         setInterval(async () => {
           setModal({
             type: "qr",
@@ -578,7 +584,7 @@ const App = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("connected");
   };
-  
+
   const logout = async (force) => {
     if (settings.manageUsersLocally && !force) {
       setModal({ type: "selectUser" });
@@ -595,6 +601,7 @@ const App = () => {
         `${url}chats/${chat}/claim`,
         {
           remove: !!val,
+          customId: sessionStorage.user,
         },
         params
       );
@@ -603,6 +610,7 @@ const App = () => {
       updateChat(
         {
           agentId,
+          agentLetter,
         },
         currentChat
       );

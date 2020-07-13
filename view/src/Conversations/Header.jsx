@@ -7,8 +7,15 @@ import settings from "../assets/images/gear.svg";
 import classes from "./index.module.css";
 
 const Header = ({ logout, handleSettings }) => {
-  const agent = JSON.parse(localStorage.agents)[localStorage.userId];
+  let agent;
+  if (sessionStorage.userProfile) {
+    agent = JSON.parse(sessionStorage.userProfile);
+  } else {
+    agent = JSON.parse(localStorage.agents)[localStorage.userId];
+  }
+
   const fullName = (agent && agent.fullName) || "";
+
   return (
     <div className={classNames(classes.header)}>
       <img className={classes.bg} src={logo} alt="Zoppy" />
@@ -16,7 +23,7 @@ const Header = ({ logout, handleSettings }) => {
       <button onClick={handleSettings}>
         <img src={settings} alt="change settings" />
       </button>
-      <button onClick={logout}>
+      <button onClick={() => logout()}>
         <img src={change} alt="change user" />
       </button>
     </div>
