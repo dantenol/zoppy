@@ -18,5 +18,6 @@
       "js": ["saveUrl.js"]
     }
   ],
-  "permissions": ["storage", "tabs"]
+  "permissions": ["storage", "tabs"],
+  "icons": { "32": "icon32.png", "128": "icon128.png" }
 }
