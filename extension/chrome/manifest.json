@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+
+  "name": "Zoppy",
+  "description": "Extensão para configuração automática do Zoppy para conversas de WhatsApp",
+  "version": "1.0",
+
+  "browser_action": {
+    "default_icon": "icon.png"
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*.zoppy.app/*", "https://*.zoppy.app/"],
+      "exclude_matches": ["https://z.zopppy.app/"],
+      "js": ["saveUrl.js"]
+    }
+  ],
+  "permissions": ["storage", "tabs"]
+}
