@@ -29,11 +29,9 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
     }
   };
 
-  const handlesendButton = async () => {
-    setSending(true);
-    await send(message);
+  const handlesendButton = () => {
+    send(message);
     handleChangeMessage("");
-    setSending(false);
     setRows(1);
   };
 
@@ -71,11 +69,6 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
 
   return (
     <>
-      {sending && (
-        <div className={classes.linearActivity}>
-          <div className={classes.indeterminate}></div>
-        </div>
-      )}
       {emoji && (
         <div className={classes.emojiContainer} ref={emojiRef}>
           <Picker
@@ -103,7 +96,6 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
           <img src={emojiFace} alt="Emoji" />
         </button>
         <textarea
-          readOnly={sending}
           autoFocus
           type="text"
           rows={rows}

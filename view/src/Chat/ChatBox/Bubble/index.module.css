@@ -75,7 +75,12 @@
   color: rgba(0, 0, 0, 0.45);
   position: absolute;
   right: 6px;
+  display: flex;
   bottom: 6px;
+}
+
+.time img {
+  opacity: 0.5;
 }
 
 .message {

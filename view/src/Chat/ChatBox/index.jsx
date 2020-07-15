@@ -24,8 +24,8 @@ const Chat = ({
   let lastDay = new Date(messages[0].timestamp);
 
   const scrollToBottom = () => {
-    messagesEndRef.current.scrollIntoView()
-  }
+    messagesEndRef.current.scrollIntoView();
+  };
 
   useEffect(scrollToBottom, [messages]);
   return (
@@ -33,18 +33,16 @@ const Chat = ({
       <div className={classes.scroll}>
         <div className={classes.container}>
           <div ref={messagesEndRef} />
-          {loading ? (
-            <Spinner />
-          ) : (
-            <>
-              {messages.map((m, i) => {
+          <>
+            {messages.length &&
+              messages.map((m, i) => {
                 const last = lastDay;
                 const current = m.timestamp;
                 if (m.mine && !m.agentId) {
                   m.agentId = "wpp";
                 }
                 lastDay = current;
-                if (m === 'none') {
+                if (m === "none") {
                   return;
                 }
                 if (!moment(last).isSame(lastDay, "day")) {
@@ -81,13 +79,14 @@ const Chat = ({
                   );
                 }
               })}
-              {more && (
-                <div onClick={handleLoadMore} className={classes.loadMore}>
-                  Carregar mais
-                </div>
-              )}
-            </>
-          )}
+            {loading ? (
+              <Spinner />
+            ) : (
+              <div onClick={handleLoadMore} className={classes.loadMore}>
+                Carregar mais
+              </div>
+            )}
+          </>
         </div>
       </div>
       <MessageField

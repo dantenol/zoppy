@@ -163,7 +163,7 @@ const App = () => {
         })
       );
       window.location.reload();
-    } else {
+    } else if (JSON.parse(localStorage.settings).manageUsersLocally) {
       setModal({ type: "selectUser" });
     }
     window.addEventListener("load", function () {
@@ -206,6 +206,9 @@ const App = () => {
         c.filtered = true;
         c.more = true;
         c.displayName = c.customName || c.name;
+        if (c.messages.length && c.messages[0].mine) {
+          c.unread = 0;
+        }
       });
 
       setChats(res.data);
@@ -362,8 +365,10 @@ const App = () => {
       curr[idx].lastMessageAt = entry.lastMessageAt;
       if (idx !== selectedChatIndex) {
         const newMsgs = entry.messages.filter((m) => !m.mine);
-        if (curr[idx].unread) {
+        if (curr[idx].unread && !curr[idx].messages[0].mine) {
           curr[idx].unread += newMsgs.length;
+        } else if (curr[idx].unread && curr[idx].messages[0].mine) {
+          curr[idx].unread = 0;
         } else {
           curr[idx].unread = newMsgs.length;
         }
@@ -434,11 +439,31 @@ const App = () => {
       from = sessionStorage.user;
     }
     console.log("sending");
+    let id = new Date().valueOf();
+    if (to === currentChat) {
+      const curr = cloneArray(chats);
+      const idx = findIdxById(currentChat);
+      const data = {
+        messageId: id,
+        customId: id,
+        mine: true,
+        agentId: sessionStorage.user || localStorage.userId,
+        body: message,
+        timestamp: id,
+        sending: true,
+        type: "chat",
+        sender: "Você",
+        chatId: to,
+      };
+      curr[idx].messages.unshift(data);
+      setChats(curr);
+    }
     const msg = await axios.post(
       `${url}chats/${to}/send`,
       {
         message,
         from,
+        customId: id,
       },
       params
     );
@@ -447,11 +472,17 @@ const App = () => {
       const curr = cloneArray(chats);
       const idx = findIdxById(currentChat);
       curr[idx].lastMessageAt = msg.data.timestamp;
-      if (curr[idx].messages[0].messageId === msg.data.messageId) {
-        curr[idx].messages[0] = msg.data;
+      let thisMsg =
+        curr[idx].messages.findIndex((m) => m.customId === msg.data.customId) + 1 ||
+        curr[idx].messages.findIndex((m) => m.messageId === msg.data.messageId) + 1;
+
+      delete msg.data.customId;
+      if (thisMsg > 0) {
+        curr[idx].messages[thisMsg - 1] = msg.data;
       } else {
         curr[idx].messages.unshift(msg.data);
       }
+      curr[idx].lastMessageAt = msg.data.timestamp;
       setChats(curr);
 
       if (!curr[idx].agentLetter) {

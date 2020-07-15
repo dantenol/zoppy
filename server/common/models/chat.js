@@ -6,13 +6,13 @@ const path = require('path');
 const wa = require('@open-wa/wa-automate');
 
 require('axios-debug-log')({
-  request: function(debug, config) {
+  request: function (debug, config) {
     debug('Request with ', config);
   },
-  response: function(debug, response) {
+  response: function (debug, response) {
     debug('Response with ' + response.data, 'from ' + response.config.url);
   },
-  error: function(debug, error) {
+  error: function (debug, error) {
     // Read https://www.npmjs.com/package/axios#handling-errors for more info
     debug('Boom', error);
   },
@@ -241,7 +241,7 @@ module.exports = function (Chat) {
       debug: true, // Opens a debug session
       logQR: true,
       qrRefreshS: 15,
-      qrTimeout: 40
+      qrTimeout: 40,
     }).then((client) => start(client));
   };
 
@@ -438,7 +438,7 @@ module.exports = function (Chat) {
     http: {path: '/:chatId/reload', verb: 'post'},
   });
 
-  Chat.sendMessage = async (req, to, message, from) => {
+  Chat.sendMessage = async (req, to, message, from, customId) => {
     const Message = model.app.models.Message;
     const wpMsg = await wp.sendText(to, message);
     console.log(wpMsg);
@@ -446,7 +446,10 @@ module.exports = function (Chat) {
       const msg = await Message.findById(wpMsg);
       console.log(msg);
       if (msg) {
-        const newMsg = msg.updateAttributes({agentId: from || req.accessToken.userId});
+        const newMsg = await msg.updateAttributes({
+          agentId: from || req.accessToken.userId,
+        });
+        newMsg.customId = customId;
         return newMsg;
       }
     } else {
@@ -486,6 +489,7 @@ module.exports = function (Chat) {
       {arg: 'chatId', type: 'string', required: true},
       {arg: 'message', type: 'string', required: true},
       {arg: 'from', type: 'string', required: false},
+      {arg: 'customId', type: 'number', required: false},
     ],
     description: 'Send message to chat',
     returns: {root: true},

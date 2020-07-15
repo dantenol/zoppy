@@ -77,19 +77,19 @@ module.exports = function (Agent) {
     http: {path: '/list', verb: 'get'},
   });
 
-  Agent.setSalesAgent = async (id, bool) => {
-    const agent = await Agent.findById(id);
-    const changed = await agent.updateAttributes({isSalesAgent: bool});
+  Agent.patchAgentData = async (agent, data) => {
+    const thisAgent = await Agent.findById(agent);
+    const changed = await thisAgent.updateAttributes(data);
     return changed;
   };
 
-  Agent.remoteMethod('setSalesAgent', {
-    description: 'sets config for agent being a sales agent or not',
+  Agent.remoteMethod('patchAgentData', {
+    description: 'Patches the agent with new data',
     accepts: [
-      {arg: 'chatId', type: 'string', required: true},
-      {arg: 'isSales', type: 'boolean', required: true},
+      {arg: 'agent', type: 'string', required: true},
+      {arg: 'data', type: 'object', required: true, http: {source: 'body'}},
     ],
     returns: {root: true},
-    http: {path: '/salesAgent', verb: 'patch'},
+    http: {path: '/update/:agent', verb: 'patch'},
   });
 };

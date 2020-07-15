@@ -80,7 +80,7 @@
           "login": true,
           "logout": true,
           "loadAgentsObj": true,
-          "setSalesAgent": true
+          "patchAgentData": true
         }
       }
     }

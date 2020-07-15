@@ -18,11 +18,11 @@ const calendarTexts = {
 const Chat = ({ data, handleClick }) => {
   const [msg, setMsg] = useState("");
   const [sent, setSent] = useState();
-  const agents = localStorage.agents;
+  let agents = localStorage.agents;
   let backgroundColor = 'initial';
   if (agents) {
-    const parsed = JSON.parse(agents);
-    _.forEach(parsed, (a, k) => {
+    agents = JSON.parse(agents);
+    _.forEach(agents, (a, k) => {
       if (k === data.agentId) {
         backgroundColor = a.color;
       }
@@ -62,9 +62,9 @@ const Chat = ({ data, handleClick }) => {
         <div className={classes.message}>
           {sent && <img src={sentImg} alt="Enviado" />}
           <p dangerouslySetInnerHTML={{ __html: parseText(msg, false) }}></p>
-          {data.agentLetter && (
+          {data.agentId && (
             <span className={classes.letter} style={{ backgroundColor }}>
-              {data.agentLetter}
+              {agents[data.agentId].firstLetter}
             </span>
           )}
           {data.unread > 0 && (

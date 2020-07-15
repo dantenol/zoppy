@@ -63,7 +63,7 @@
       "property": [
         "loadAgentsObj",
         "updateAttributes",
-        "setSalesAgent"
+        "patchAgentData"
       ]
     }
   ],
