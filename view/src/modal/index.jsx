@@ -52,15 +52,12 @@ const Modal = ({
     if (!number.match(/^\(\d{2}\) \d{5}-\d{4}$/g)) {
       alert("Número inválido");
       return;
-    } else if (!message) {
-      alert("Você precisa digitar uma mensagem");
-      return;
     }
 
     setButtonDisabled(true);
     const parsed = number.substring(0, 5) + number.substring(6, number.length);
     const to = "55" + parsed.replace(/\D/g, "") + "@c.us";
-    handleNewChat(message, to);
+    handleNewChat(number, to);
   };
 
   const login = (e) => {
@@ -86,6 +83,13 @@ const Modal = ({
     console.log(newSettings);
     setSettings(newSettings);
     handleChangeSettings(newSettings);
+  };
+
+  const changeSalesAgent = (value) => {
+    const agent = JSON.parse(localStorage.agents)[localStorage.salesAgentId];
+    setMessage(value);
+    localStorage.setItem("salesAgentId", value);
+    localStorage.setItem("salesAgentProfile", JSON.stringify(agent));
   };
 
   if (file && file.type === "image") {
@@ -160,6 +164,15 @@ const Modal = ({
       </>
     );
   } else if (file && file.type === "newChat") {
+    let options;
+    if (localStorage.agents) {
+      options = [];
+      _.forEach(JSON.parse(localStorage.agents), (a, k) => {
+        if (a.username && a.isSalesAgent) {
+          options.push([k, a.fullName]);
+        }
+      });
+    }
     return (
       <>
         <div onClick={onClose} className={classes.modalBackground} />
@@ -167,7 +180,27 @@ const Modal = ({
           <div onClick={onClose} className={classes.close}>
             &times;
           </div>
-          <h2>Iniciar nova conversa</h2>
+          {(file.newNumber && localStorage.salesAgentId) && (
+            <>
+              <h2>Vendedor(a):</h2>
+              <form action="null">
+                <select
+                  value={localStorage.salesAgentId}
+                  onChange={(e) => changeSalesAgent(e.target.value)}
+                >
+                  <option value="" disabled>
+                    Selecione...
+                  </option>
+                  {options.map((a) => (
+                    <option value={a[0]} key={a[0]}>
+                      {a[1]}
+                    </option>
+                  ))}
+                </select>
+              </form>
+            </>
+          )}
+          <h2>Número:</h2>
           <form onSubmit={addContact}>
             <NumberFormat
               type="tel"
@@ -175,12 +208,6 @@ const Modal = ({
               format="(##) #####-####"
               value={number}
               onValueChange={({ formattedValue }) => setNumber(formattedValue)}
-            />
-            <input
-              type="text"
-              placeholder="Nome"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
             />
             <input type="submit" hidden />
           </form>

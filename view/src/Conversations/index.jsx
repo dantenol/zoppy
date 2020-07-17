@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useEffect, useState, memo } from "react";
 import classNames from "classnames";
+import { FixedSizeList as List } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
 
 import classes from "./index.module.css";
 import Search from "./Search";
@@ -7,6 +9,14 @@ import Chat from "./Chat";
 import LowBattery from "./LowBattery";
 import Header from "./Header";
 import Spinner from "../Chat/Spinner";
+
+const Row = memo(({ data, index, style }) => (
+  <Chat
+    style={style}
+    data={data.dataToShow[index]}
+    handleClick={() => data.handleSelectChat(data.dataToShow[index].chatId)}
+  />
+));
 
 const Conversations = ({
   data,
@@ -18,6 +28,11 @@ const Conversations = ({
   logout,
   lowBattery,
 }) => {
+  const [dataToShow, setDataToShow] = useState(data);
+  useEffect(() => {
+    setDataToShow(data.filter((c) => c.filtered));
+  }, [data]);
+
   return (
     <div className={classNames(classes.container, "mobile-fullwidth", showing)}>
       {localStorage.agents && localStorage.userId && (
@@ -30,15 +45,19 @@ const Conversations = ({
       {lowBattery && <LowBattery />}
       <div className={classes.chatsList}>
         {data.length ? (
-          data
-            .filter((c) => c.filtered)
-            .map((chat) => (
-              <Chat
-                key={chat.chatId}
-                data={chat}
-                handleClick={() => handleSelectChat(chat.chatId)}
-              />
-            ))
+          <AutoSizer defaultWidth={420}>
+            {({ height }) => (
+              <List
+                height={height}
+                itemData={{ dataToShow, handleSelectChat }}
+                itemCount={dataToShow.length}
+                itemSize={81}
+                width={420}
+              >
+                {Row}
+              </List>
+            )}
+          </AutoSizer>
         ) : (
           <Spinner />
         )}

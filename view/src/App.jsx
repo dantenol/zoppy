@@ -163,7 +163,7 @@ const App = () => {
         })
       );
       window.location.reload();
-    } else if (JSON.parse(localStorage.settings).manageUsersLocally) {
+    } else if (window.location.pathname === "/" && JSON.parse(localStorage.settings).manageUsersLocally) {
       setModal({ type: "selectUser" });
     }
     window.addEventListener("load", function () {
@@ -435,8 +435,8 @@ const App = () => {
     if (newChat) {
       to = newChat.chatId;
     }
-    if (settings.manageUsersLocally && sessionStorage.user) {
-      from = sessionStorage.user;
+    if (settings.manageUsersLocally && localStorage.salesAgentId) {
+      from = localStorage.salesAgentId;
     }
     console.log("sending");
     let id = new Date().valueOf();
@@ -447,7 +447,7 @@ const App = () => {
         messageId: id,
         customId: id,
         mine: true,
-        agentId: sessionStorage.user || localStorage.userId,
+        agentId: localStorage.salesAgentId || localStorage.userId,
         body: message,
         timestamp: id,
         sending: true,
@@ -517,9 +517,9 @@ const App = () => {
   };
 
   const selectUser = (user) => {
-    sessionStorage.setItem("user", user);
+    localStorage.setItem("salesAgentId", user);
     const thisUser = JSON.parse(localStorage.agents)[user];
-    sessionStorage.setItem("userProfile", JSON.stringify(thisUser));
+    localStorage.setItem("salesAgentProfile", JSON.stringify(thisUser));
     setModal(false);
   };
 
@@ -632,7 +632,7 @@ const App = () => {
         `${url}chats/${chat}/claim`,
         {
           remove: !!val,
-          customId: sessionStorage.user,
+          customId: localStorage.salesAgentId,
         },
         params
       );

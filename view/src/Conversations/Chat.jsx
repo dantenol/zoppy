@@ -15,7 +15,7 @@ const calendarTexts = {
   sameElse: "DD/MM/YYYY",
 };
 
-const Chat = ({ data, handleClick }) => {
+const Chat = ({ data, handleClick, style }) => {
   const [msg, setMsg] = useState("");
   const [sent, setSent] = useState();
   let agents = localStorage.agents;
@@ -52,7 +52,7 @@ const Chat = ({ data, handleClick }) => {
   });
 
   return (
-    <div className={classes.chat} onClick={handleClick}>
+    <div className={classes.chat} style={style} onClick={handleClick}>
       <img src={data.profilePic} alt="Chat" />
       <div>
         <div className={classes.info}>

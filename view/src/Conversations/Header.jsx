@@ -8,8 +8,8 @@ import classes from "./index.module.css";
 
 const Header = ({ logout, handleSettings }) => {
   let agent;
-  if (sessionStorage.userProfile) {
-    agent = JSON.parse(sessionStorage.userProfile);
+  if (localStorage.salesAgentProfile) {
+    agent = JSON.parse(localStorage.salesAgentProfile);
   } else {
     agent = JSON.parse(localStorage.agents)[localStorage.userId];
   }

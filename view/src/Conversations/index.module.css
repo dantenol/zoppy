@@ -14,11 +14,7 @@
 
 .chatsList {
   flex-grow: 1;
-  overflow: hidden;
-}
-
-.chatsList:hover {
-  overflow-y: scroll;
+  /* overflow: hidden; */
 }
 
 .searchContainer {
@@ -197,5 +193,11 @@
 @media screen and (max-width: 600px) {
   .chatsList {
     overflow-y: auto;
+  }
+}
+
+@media screen and (min-width: 600px) {
+  .container {
+    min-width: 420px;
   }
 }
