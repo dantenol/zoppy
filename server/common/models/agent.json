@@ -35,6 +35,11 @@
       "type": "hasMany",
       "model": "message",
       "foreignKey": ""
+    },
+    "sales": {
+      "type": "hasMany",
+      "model": "sales",
+      "foreignKey": ""
     }
   },
   "acls": [

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import _ from "lodash";
 import "moment/locale/pt-br";
 
 import { url, params } from "./connector";
@@ -87,7 +88,7 @@ const App = () => {
 
   const getStatus = async () => {
     const { data } = await axios(`${url}chats/status`, params);
-    if (!data.online) {
+    if (data.online !== true) {
       setModal({ type: "offline" });
     } else if (data.online && modal && modal.type === "offline") {
       setModal(false);
@@ -145,6 +146,7 @@ const App = () => {
   }, 5000);
 
   useEffect(() => {
+    window.agents = JSON.parse(localStorage.agents || 0);
     window.location.hash = "";
     if (localStorage.access_token) {
       checkOnline();
@@ -163,7 +165,10 @@ const App = () => {
         })
       );
       window.location.reload();
-    } else if (window.location.pathname === "/" && JSON.parse(localStorage.settings).manageUsersLocally) {
+    } else if (
+      window.location.pathname === "/" &&
+      JSON.parse(localStorage.settings).manageUsersLocally
+    ) {
       setModal({ type: "selectUser" });
     }
     window.addEventListener("load", function () {
@@ -326,6 +331,7 @@ const App = () => {
     const curr = cloneArray(chats);
     let sound;
 
+    console.log(data);
     data.forEach((entry) => {
       const idx = findIdxById(entry.chatId);
       if (idx < 0) {
@@ -376,6 +382,7 @@ const App = () => {
     });
 
     curr.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
+    console.log(curr);
     if (deepDiff(curr, chats).length > 0) {
       setChats(curr);
 
@@ -430,7 +437,7 @@ const App = () => {
     setModal(false);
   };
 
-  const send = async (message, to = currentChat) => {
+  const send = async (message, to = currentChat, attempt = 0) => {
     let from;
     if (newChat) {
       to = newChat.chatId;
@@ -455,33 +462,46 @@ const App = () => {
         sender: "Você",
         chatId: to,
       };
+      console.log(data);
       curr[idx].messages.unshift(data);
       setChats(curr);
+      console.log(curr);
     }
-    const msg = await axios.post(
-      `${url}chats/${to}/send`,
-      {
-        message,
-        from,
-        customId: id,
-      },
-      params
-    );
+
+    let msg;
+    try {
+      msg = await axios.post(
+        `${url}chats/${to}/send`,
+        {
+          message,
+          from,
+          customId: id,
+        },
+        params
+      );
+    } catch (error) {
+      console.log(error.response);
+      if (attempt < 3) {
+        setTimeout(async () => {
+          await send(message, to, attempt + 1);
+        }, 200);
+      } else {
+        throw error;
+      }
+    }
 
     if (to === currentChat) {
       const curr = cloneArray(chats);
       const idx = findIdxById(currentChat);
       curr[idx].lastMessageAt = msg.data.timestamp;
-      let thisMsg =
-        curr[idx].messages.findIndex((m) => m.customId === msg.data.customId) + 1 ||
-        curr[idx].messages.findIndex((m) => m.messageId === msg.data.messageId) + 1;
+      _.remove(
+        curr[idx].messages,
+        (m) =>
+          m.customId === msg.data.customId || m.messageId === msg.data.messageId
+      );
 
       delete msg.data.customId;
-      if (thisMsg > 0) {
-        curr[idx].messages[thisMsg - 1] = msg.data;
-      } else {
-        curr[idx].messages.unshift(msg.data);
-      }
+      curr[idx].messages.unshift(msg.data);
       curr[idx].lastMessageAt = msg.data.timestamp;
       setChats(curr);
 
@@ -518,7 +538,7 @@ const App = () => {
 
   const selectUser = (user) => {
     localStorage.setItem("salesAgentId", user);
-    const thisUser = JSON.parse(localStorage.agents)[user];
+    const thisUser = window.agents[user];
     localStorage.setItem("salesAgentProfile", JSON.stringify(thisUser));
     setModal(false);
   };
@@ -658,6 +678,7 @@ const App = () => {
     try {
       const { data } = await axios(`${url}agents/list`, params);
       data.wpp = { fullName: "WhatsApp" };
+      window.agents = data;
       localStorage.setItem("agents", JSON.stringify(data));
     } catch (err) {
       console.log(err);
@@ -671,7 +692,9 @@ const App = () => {
       let str = true;
       let pin = true;
       if (string) {
-        str = c.displayName.toLowerCase().includes(lowerStr);
+        str =
+          c.displayName.toLowerCase().includes(lowerStr) ||
+          c.chatId.slice(0, 12).includes(lowerStr);
       }
       if (pinned) {
         pin = c.agentId === me;
@@ -693,6 +716,28 @@ const App = () => {
   const handleChangeSettings = (data) => {
     setSettings(data);
     localStorage.setItem("settings", JSON.stringify(data));
+    if (!data.manageUsersLocally) {
+      localStorage.removeItem('salesAgentProfile')
+      localStorage.removeItem('salesAgentId')
+    }
+  };
+
+  const saveSales = async (data) => {
+    data.agentId = localStorage.salesAgentId || localStorage.userId;
+    data.chatId = currentChat;
+    const salesMsg = await axios.post(`${url}sales/new`, data, params);
+    addMessagesToConversations([
+      {
+        chatId: currentChat,
+        messages: [salesMsg.data],
+        lastMessageAt: new Date().toString(),
+      },
+    ]);
+    setModal(false);
+  };
+
+  const handleModal = (type) => {
+    setModal({ type });
   };
 
   return (
@@ -704,6 +749,8 @@ const App = () => {
         handleNewChat={handleNewContact}
         handleChangeSettings={handleChangeSettings}
         handleLogin={login}
+        handleUpload={handleUploadModal}
+        saveSales={saveSales}
         selectUser={selectUser}
       />
       <div className={classes.container}>
@@ -720,7 +767,7 @@ const App = () => {
         <Chat
           handleBack={() => goTo("conversations")}
           showing={String(isMobile && page === "chat")}
-          handleUpload={handleUploadModal}
+          handleModal={handleModal}
           showMedia={handleShowMedia}
           handleSend={send}
           handleChangeName={handleChangeName}
@@ -728,7 +775,12 @@ const App = () => {
           chat={newChat || chats[selectedChatIndex]}
           handlePin={handleSetAgent}
         />
-        <iframe hidden id="iframe" src="https://z.zoppy.app"></iframe>
+        <iframe
+          title="z.zoppy"
+          hidden
+          id="iframe"
+          src="https://z.zoppy.app"
+        ></iframe>
       </div>
     </main>
   );

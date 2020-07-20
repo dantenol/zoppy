@@ -79,6 +79,16 @@
   bottom: 6px;
 }
 
+.container .sale {
+  text-align: center;
+  max-width: 100%;
+  margin: auto;
+  margin-top: 16px;
+  background-color: #8BC34A;
+  border-radius: 4px;
+  line-height: 1.5em;
+}
+
 .time img {
   opacity: 0.5;
 }

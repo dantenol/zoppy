@@ -39,6 +39,12 @@
     },
     "mimetype": {
       "type": "string"
+    },
+    "starting": {
+      "type": "boolean"
+    },
+    "answered": {
+      "type": "boolean"
     }
   },
   "validations": [],

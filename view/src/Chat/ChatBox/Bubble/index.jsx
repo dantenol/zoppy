@@ -4,6 +4,7 @@ import classNames from "classnames";
 import classes from "./index.module.css";
 import PureText from "./PureText";
 import Image from "./Image";
+import Sale from "./Sale";
 import VoiceMessage from "./VoiceMessage";
 import Sticker from "./Sticker";
 
@@ -25,7 +26,13 @@ const Bubble = ({ message, isGroup, showMedia }) => {
     BubbleComponent = VoiceMessage;
   }
 
-  if (BubbleComponent) {
+  if (message.type ==='sale') {
+    return (
+      <div className={classes.container}>
+        <Sale message={message} />
+      </div>
+    );
+  } else if (BubbleComponent) {
     return (
       <div className={classNames(classes.container, side)} style={{ opacity }}>
         <BubbleComponent

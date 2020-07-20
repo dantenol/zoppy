@@ -20,7 +20,9 @@ const Modal = ({
   handleSendImage,
   handleNewChat,
   handleLogin,
+  handleUpload,
   selectUser,
+  saveSales,
   handleChangeSettings,
 }) => {
   const [message, setMessage] = useState("");
@@ -55,9 +57,8 @@ const Modal = ({
     }
 
     setButtonDisabled(true);
-    const parsed = number.substring(0, 5) + number.substring(6, number.length);
-    const to = "55" + parsed.replace(/\D/g, "") + "@c.us";
-    handleNewChat(number, to);
+    const chat = "55" + number.replace(/\D/g, "") + "@c.us";
+    handleNewChat(number, chat);
   };
 
   const login = (e) => {
@@ -67,6 +68,22 @@ const Modal = ({
       return;
     }
     handleLogin(message, password);
+  };
+
+  const handleSaveSale = () => {
+    const items = message;
+    const value = password;
+    const nbrRegex = /^[0-9]{1,4}([.,][0-9]{1,2})?$/g;
+    if (!items.match(nbrRegex) || !value.match(nbrRegex)) {
+      alert("Dádos inválidos. Verifique os números");
+      return;
+    }
+    const salesInfo = {
+      itemCount: items.replace(",", "."),
+      totalValue: value.replace(",", "."),
+    };
+    setButtonDisabled(true);
+    saveSales(salesInfo);
   };
 
   const handlePickUser = () => {
@@ -80,13 +97,12 @@ const Modal = ({
   const changeSettings = ({ target }) => {
     console.log(target.name, target.checked);
     const newSettings = { ...settings, [target.name]: target.checked };
-    console.log(newSettings);
     setSettings(newSettings);
     handleChangeSettings(newSettings);
   };
 
   const changeSalesAgent = (value) => {
-    const agent = JSON.parse(localStorage.agents)[localStorage.salesAgentId];
+    const agent = window.agents[localStorage.salesAgentId];
     setMessage(value);
     localStorage.setItem("salesAgentId", value);
     localStorage.setItem("salesAgentProfile", JSON.stringify(agent));
@@ -135,6 +151,39 @@ const Modal = ({
         </div>
       </>
     );
+  } else if (file && file.type === "picUpload") {
+    return (
+      <>
+        <div onClick={onClose} className={classes.modalBackground} />
+        <div className={classNames(classes.modal, classes.opaque)}>
+          <div onClick={onClose} className={classes.close}>
+            &times;
+          </div>
+          <h1>Enviar imagem</h1>
+          <label htmlFor="upload-button">
+            <div className={classes.button}>Tirar foto agora</div>
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            capture
+            id="upload-button"
+            style={{ display: "none" }}
+            onChange={handleUpload}
+          />
+          <label htmlFor="upload-button2">
+            <div className={classes.button}>Enviar foto do dispositivo</div>
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            id="upload-button2"
+            style={{ display: "none" }}
+            onChange={handleUpload}
+          />
+        </div>
+      </>
+    );
   } else if (file && file.type === "photoUpload") {
     return (
       <>
@@ -165,14 +214,15 @@ const Modal = ({
     );
   } else if (file && file.type === "newChat") {
     let options;
-    if (localStorage.agents) {
+    if (window.agents) {
       options = [];
-      _.forEach(JSON.parse(localStorage.agents), (a, k) => {
+      _.forEach(window.agents, (a, k) => {
         if (a.username && a.isSalesAgent) {
           options.push([k, a.fullName]);
         }
       });
     }
+
     return (
       <>
         <div onClick={onClose} className={classes.modalBackground} />
@@ -180,7 +230,7 @@ const Modal = ({
           <div onClick={onClose} className={classes.close}>
             &times;
           </div>
-          {(file.newNumber && localStorage.salesAgentId) && (
+          {file.newNumber && localStorage.salesAgentId && (
             <>
               <h2>Vendedor(a):</h2>
               <form action="null">
@@ -223,9 +273,9 @@ const Modal = ({
     );
   } else if (file && file.type === "selectUser") {
     let options;
-    if (localStorage.agents) {
+    if (window.agents) {
       options = [];
-      _.forEach(JSON.parse(localStorage.agents), (a, k) => {
+      _.forEach(window.agents, (a, k) => {
         if (a.username && a.isSalesAgent) {
           options.push([k, a.fullName]);
         }
@@ -337,6 +387,41 @@ const Modal = ({
               "Salvar"
             )}
           </button>
+        </div>
+      </>
+    );
+  } else if (file && file.type === "sale") {
+    return (
+      <>
+        <div className={classes.modalBackground} />
+        <div className={classNames(classes.modal, classes.opaque)}>
+          <div onClick={onClose} className={classes.close}>
+            &times;
+          </div>
+          <h2>Venda</h2>
+          <form action="" onSubmit={handleSaveSale} noValidate>
+            <input
+              type="number"
+              placeholder="Num. itens"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <input
+              type="number"
+              placeholder="Valor total"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <input type="submit" hidden />
+          </form>
+          <button disabled={buttonDisabled} onClick={handleSaveSale}>
+            {buttonDisabled ? (
+              <img src={loading} alt="loading spinner" />
+            ) : (
+              "salvar"
+            )}
+          </button>
+          <form action=""></form>
         </div>
       </>
     );

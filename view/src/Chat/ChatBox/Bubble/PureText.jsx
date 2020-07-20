@@ -7,7 +7,7 @@ import classes from "./index.module.css";
 import { parseText } from "../../../hooks/helpers";
 
 const PureText = ({ message, isGroup }) => {
-  const agents = JSON.parse(localStorage.agents);
+  const agents = window.agents;
 
   let senderName = "WhatsApp";
 

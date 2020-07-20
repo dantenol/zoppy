@@ -10,10 +10,10 @@ import Day from "./Bubble/Day";
 const Chat = ({
   messages,
   more,
+  handleModal,
   loading,
   chatId,
   handleLoadMore,
-  handleUpload,
   send,
   showMedia,
 }) => {
@@ -44,8 +44,7 @@ const Chat = ({
                 lastDay = current;
                 if (m === "none") {
                   return;
-                }
-                if (!moment(last).isSame(lastDay, "day")) {
+                } else if (!moment(last).isSame(lastDay, "day")) {
                   return (
                     <Fragment key={m.messageId}>
                       <Day day={last} />
@@ -90,7 +89,7 @@ const Chat = ({
         </div>
       </div>
       <MessageField
-        handleUpload={handleUpload}
+        handleModal={handleModal}
         message={message}
         handleChangeMessage={setMessage}
         send={send}

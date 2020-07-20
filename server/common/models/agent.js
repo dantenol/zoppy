@@ -10,16 +10,13 @@ function titleCase(str) {
 }
 
 const colors = [
-  '#FBFF00',
   '#F82000',
   '#800B00',
   '#0F8001',
-  '#808001',
   '#3600FF',
   '#160080',
   '#FD00FF',
   '#800080',
-  '#1D8080',
 ];
 
 module.exports = function (Agent) {

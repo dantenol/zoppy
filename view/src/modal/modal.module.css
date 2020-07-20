@@ -61,7 +61,8 @@
   margin-top: 12px;
 }
 
-.opaque button {
+.opaque button,
+.opaque .button {
   width: 100%;
   text-align: center;
   background-color: #4caf50;

@@ -87,6 +87,9 @@
 .info b {
   color: #4a4a4a;
   flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chat > img {
@@ -125,7 +128,6 @@
   text-overflow: ellipsis;
   flex-grow: 1;
   margin-top: 8px;
-  flex-grow: 1;
 }
 
 .message span.unread {

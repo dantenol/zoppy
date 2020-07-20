@@ -50,8 +50,11 @@
 
 .input button {
   background: none;
-  opacity: 0.4;
-  transition: opacity ease 0.1s;
+  opacity: 0.3;
+  padding: 0;
+  width: 30px;
+  margin-right: 8px;
+  transition: all ease 0.2s;
 }
 
 .input button:hover {
@@ -100,21 +103,20 @@
   animation: indeterminate_second 1.5s infinite ease-in;
 }
 
-.input .camera {
-  margin: 12px 8px;
-  opacity: 0.6;
-  cursor: pointer;
-  background: none;
-  transition: all ease 0.3s;
+.input img {
+  width: 100%;
 }
 
-.input .camera:hover {
-  opacity: 1;
-}
 
 .emojiContainer {
   position: absolute;
   bottom: 60px;
+}
+
+.input.true button:nth-child(-n+2) {
+  padding: 0;
+  width: 0;
+  margin: 0;
 }
 
 @keyframes indeterminate_first {
@@ -144,4 +146,8 @@
     max-width: 100vw;
     overflow-y: scroll;
   }
+  .input img {
+    margin: 0;
+  }
+
 }

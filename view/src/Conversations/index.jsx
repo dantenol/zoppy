@@ -1,4 +1,4 @@
-import React, { useEffect, useState, memo } from "react";
+import React, { useEffect, useState } from "react";
 import classNames from "classnames";
 import { FixedSizeList as List } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -10,13 +10,13 @@ import LowBattery from "./LowBattery";
 import Header from "./Header";
 import Spinner from "../Chat/Spinner";
 
-const Row = memo(({ data, index, style }) => (
+const Row = ({ data, index, style }) => (
   <Chat
     style={style}
     data={data.dataToShow[index]}
     handleClick={() => data.handleSelectChat(data.dataToShow[index].chatId)}
   />
-));
+);
 
 const Conversations = ({
   data,
@@ -45,14 +45,14 @@ const Conversations = ({
       {lowBattery && <LowBattery />}
       <div className={classes.chatsList}>
         {data.length ? (
-          <AutoSizer defaultWidth={420}>
-            {({ height }) => (
+          <AutoSizer>
+            {({ height, width }) => (
               <List
                 height={height}
                 itemData={{ dataToShow, handleSelectChat }}
                 itemCount={dataToShow.length}
                 itemSize={81}
-                width={420}
+                width={width}
               >
                 {Row}
               </List>

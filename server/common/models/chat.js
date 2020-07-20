@@ -20,7 +20,15 @@ require('axios-debug-log')({
 
 let model, wp, QRbuffer, myNumber, battery, charging, startedSetup;
 
-const validMsgTypes = ['chat', 'image', 'ptt', 'video', 'ciphertext'];
+const validMsgTypes = [
+  'chat',
+  'image',
+  'ptt',
+  'video',
+  'ciphertext',
+  'vcard',
+  'document',
+];
 
 async function start(wpp) {
   wp = wpp;
@@ -70,7 +78,7 @@ wa.ev.on('qr.**', async (qrcode) => {
   console.log(QRbuffer);
 });
 
-async function createMessage(msg, latest) {
+async function createMessage(msg, latest, starting) {
   const Message = model.app.models.Message;
   const waMsg = await wp.getMessageById(msg.id);
   if (!validMsgTypes.includes(msg.type)) {
@@ -98,6 +106,7 @@ async function createMessage(msg, latest) {
       mediaKey: waMsg.mediaKey,
       mimetype: waMsg.mimetype,
       caption: waMsg.caption,
+      starting,
     });
     return savedMsg;
   } catch (error) {
@@ -106,11 +115,15 @@ async function createMessage(msg, latest) {
 }
 
 async function saveMsg(msg) {
+  if (!validMsgTypes.includes(msg.type)) {
+    return;
+  }
   const chat = await model.findById(msg.chatId);
+  let previousTimestamp;
   if (!chat) {
     const waMsg = await wp.getMessageById(msg.id);
     const wpChat = waMsg.chat;
-    // console.log('new chat:', wpChat);
+    console.log('new chat:');
     await model.create({
       chatId: msg.chatId,
       name:
@@ -123,15 +136,28 @@ async function saveMsg(msg) {
       lastMessageAt: wpChat.t * 1000,
       mute: false,
       pin: false,
+      newConversation: true,
     });
   } else {
+    previousTimestamp = chat.lastMessageAt;
     await chat.updateAttributes({lastMessageAt: new Date(msg.t * 1000)});
   }
-  await createMessage(msg, true);
+  const newChatFromMe = msg.fromMe && !chat ? true : undefined;
+  await createMessage(msg, true, newChatFromMe);
   const loaded = await wp.getAmountOfLoadedMessages();
   if (loaded > 3000) {
     console.log(loaded);
     await wp.cutMsgCache();
+  }
+  if (!ignoreChat(chat)) {
+    if (!msg.fromMe || msg.from !== myNumber) {
+      isConversion(msg);
+    } else if (msg.fromMe && chat) {
+      isStarting(msg, {
+        previousTimestamp,
+        newConversation: chat.newConversation,
+      });
+    }
   }
 }
 
@@ -200,6 +226,66 @@ async function setSeen(id) {
   return sen;
 }
 
+async function isConversion(msg) {
+  const Message = model.app.models.Message;
+  const msgs = await Message.find({
+    where: {chatId: msg.chatId},
+    order: 'timestamp DESC',
+    sort: 'timestamp DESC',
+    limit: 2,
+  });
+  const last = msgs.find((m) => m.messageId !== msg.id);
+  console.log('LAST: ', last, moment(last.t * 1000).isSame(moment(), 'day'));
+  if (moment(last.t * 1000).isSame(moment(), 'day') && last.starting) {
+    await Message.upsertWithWhere(
+      {messageId: last.messageId},
+      {answered: true},
+    );
+    const r = await model.upsertWithWhere(
+      {chatId: msg.chatId},
+      {newConversation: false},
+    );
+    console.log('IS CONVERSION', r);
+  }
+}
+
+async function isStarting(msg, {previousTimestamp, newConversation}) {
+  const Message = model.app.models.Message;
+  const last = moment(previousTimestamp);
+  console.log(
+    'STARTING',
+    last.isBefore(moment().startOf('D').subtract(2, 'D'), 'D'),
+  );
+  if (last.isBefore(moment().startOf('D').subtract(2, 'D'), 'D')) {
+    await Message.upsertWithWhere({messageId: msg.id}, {starting: true});
+    await model.upsertWithWhere({chatId: msg.chatId}, {newConversation: true});
+  } else if (last.isSame(moment(), 'D') && newConversation) {
+    await Message.upsertWithWhere({messageId: msg.id}, {starting: true});
+    await Message.upsertWithWhere(
+      {
+        and: [
+          {chatId: msg.chatId},
+          {timestamp: {gt: moment().startOf('D').toDate()}},
+          {messageId: {neq: msg.id}},
+        ],
+      },
+      {starting: false},
+    );
+    console.log('CHANGED STARTING MESSAGE');
+  }
+}
+
+function ignoreChat(chat) {
+  const Admin = model.app.models.Admin;
+  if (!chat || chat.chatId.includes('@g')) {
+    return true;
+  }
+  // const admin = Admin.findOne();
+  // if (admin.ignoreNumbers.includes(chat.chatId)) {
+  //   return false;
+  // }
+}
+
 module.exports = function (Chat) {
   model = Chat;
   Chat.disableRemoteMethodByName('prototype.__delete__messages');
@@ -232,13 +318,13 @@ module.exports = function (Chat) {
     wa.create({
       killProcessOnBrowserClose: false,
       restartOnCrash: start,
-      licenseKey: true,
+      licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
       disableSpins: true,
       sessionDataPath: './session',
-      headless: true, // Headless chrome
-      devtools: false, // Open devtools by default
-      useChrome: true, // If false will use Chromium instance
-      debug: true, // Opens a debug session
+      headless: true,
+      devtools: false,
+      executablePath: '/usr/bin/google-chrome-stable',
+      debug: true,
       logQR: true,
       qrRefreshS: 15,
       qrTimeout: 40,
@@ -441,10 +527,8 @@ module.exports = function (Chat) {
   Chat.sendMessage = async (req, to, message, from, customId) => {
     const Message = model.app.models.Message;
     const wpMsg = await wp.sendText(to, message);
-    console.log(wpMsg);
     if (typeof wpMsg === 'string') {
       const msg = await Message.findById(wpMsg);
-      console.log(msg);
       if (msg) {
         const newMsg = await msg.updateAttributes({
           agentId: from || req.accessToken.userId,
@@ -453,6 +537,7 @@ module.exports = function (Chat) {
         return newMsg;
       }
     } else {
+      console.log('NO ID');
       try {
         const msg = await new Promise((resolve) => {
           const started = new Date();
@@ -476,11 +561,11 @@ module.exports = function (Chat) {
           msg.updateAttributes({agentId: from || req.accessToken.userId});
           await model.claimChat(req, to);
         }
+        return msg;
       } catch (error) {
         console.log(error);
       }
     }
-    return true;
   };
 
   Chat.remoteMethod('sendMessage', {
@@ -641,7 +726,14 @@ module.exports = function (Chat) {
   });
 
   Chat.checkNum = async (chatId) => {
-    return (await wp.checkNumberStatus(chatId)).canReceiveMessage;
+    const removeNine =
+      chatId.substring(0, 5) + chatId.substring(6, chatId.length);
+    const noNine = (await wp.checkNumberStatus(removeNine)).canReceiveMessage;
+    if (noNine) {
+      return true;
+    } else {
+      return (await wp.checkNumberStatus(chatId)).canReceiveMessage;
+    }
   };
 
   Chat.remoteMethod('checkNum', {
@@ -652,10 +744,15 @@ module.exports = function (Chat) {
   });
 
   Chat.status = async () => {
+    let conn = false;
+    if (wp) {
+      wp = (await wp.isConnected()) || (await wp.getConnectionState());
+    }
+
     return {
       battery,
       charging,
-      online: await wp.isConnected(),
+      online: conn,
     };
   };
 

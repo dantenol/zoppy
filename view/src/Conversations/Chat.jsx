@@ -18,10 +18,10 @@ const calendarTexts = {
 const Chat = ({ data, handleClick, style }) => {
   const [msg, setMsg] = useState("");
   const [sent, setSent] = useState();
-  let agents = localStorage.agents;
+  let agents;
   let backgroundColor = 'initial';
-  if (agents) {
-    agents = JSON.parse(agents);
+  if (window.agents) {
+    agents = window.agents;
     _.forEach(agents, (a, k) => {
       if (k === data.agentId) {
         backgroundColor = a.color;

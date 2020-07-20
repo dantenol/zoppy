@@ -1,18 +1,34 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
+import classNames from 'classnames';
 
 import classes from "./index.module.css";
 import sendImg from "../../assets/images/send.svg";
 import emojiFace from "../../assets/images/emoji.svg";
 import camera from "../../assets/images/camera.svg";
+import bag from "../../assets/images/bag.svg";
 import outslideClickListener from "../../hooks/outslideClickListener";
 
-const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
+const MessageField = ({
+  message,
+  handleChangeMessage,
+  send,
+  handleModal,
+}) => {
   const [rows, setRows] = useState(1);
-  const [sending, setSending] = useState(false);
   const [emoji, setEmoji] = useState();
+  const [focused, setFocused] = useState(false);
+  const [salesButon, setSalesButon] = useState(false);
   const emojiRef = useRef();
+  
+  useEffect(() => {
+    if (localStorage.settings && JSON.parse(localStorage.settings).salesOptions) {
+      setSalesButon(true);
+    } else {
+      setSalesButon(false);
+    }
+  }, [localStorage.settings]);
 
   const closeEmoji = () => {
     setEmoji(false);
@@ -21,7 +37,7 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
   outslideClickListener(emojiRef, closeEmoji);
 
   const enterListener = (e) => {
-    if (e.keyCode === 13 && !e.shiftKey && !sending) {
+    if (e.keyCode === 13 && !e.shiftKey) {
       e.preventDefault();
       if (message) {
         handlesendButton();
@@ -80,28 +96,26 @@ const MessageField = ({ message, handleChangeMessage, send, handleUpload }) => {
           />
         </div>
       )}
-      <div className={classes.input}>
-        <label htmlFor="upload-button">
+      <div className={classNames(classes.input, classes[focused])}>
+        <button onClick={() => handleModal('picUpload')}>
           <img className={classes.camera} src={camera} alt="upload" />
-        </label>
-        <input
-          type="file"
-          accept="image/*"
-          capture
-          id="upload-button"
-          style={{ display: "none" }}
-          onChange={handleUpload}
-        />
+        </button>
+        {salesButon && (
+          <button onClick={() => handleModal('sale')}>
+            <img src={bag} alt="Nova venda" />
+          </button>
+        )}
         <button onClick={toggleEmoji}>
           <img src={emojiFace} alt="Emoji" />
         </button>
         <textarea
-          autoFocus
           type="text"
           rows={rows}
           value={message}
           onKeyDown={enterListener}
           onChange={handleChange}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           placeholder="Digite uma mensagem"
         ></textarea>
         <button onClick={() => handlesendButton()}>

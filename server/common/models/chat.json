@@ -51,6 +51,11 @@
       "type": "belongsTo",
       "model": "agent",
       "foreignKey": ""
+    },
+    "sales": {
+      "type": "hasMany",
+      "model": "sales",
+      "foreignKey": ""
     }
   },
   "acls": [

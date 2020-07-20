@@ -12,7 +12,7 @@ const Chat = ({
   handleChangeName,
   handleSend,
   handleLoadMore,
-  handleUpload,
+  handleModal,
   showMedia,
   showing,
   handlePin,
@@ -34,7 +34,7 @@ const Chat = ({
           handlePin={handlePin}
           />
         <ChatBox
-          handleUpload={handleUpload}
+          handleModal={handleModal}
           showMedia={showMedia}
           handleLoadMore={handleLoadMore}
           send={handleSend}
