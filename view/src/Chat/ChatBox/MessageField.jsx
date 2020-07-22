@@ -97,11 +97,11 @@ const MessageField = ({
         </div>
       )}
       <div className={classNames(classes.input, classes[focused])}>
-        <button onClick={() => handleModal('picUpload')}>
+        <button className={classes.hide} onClick={() => handleModal('picUpload')}>
           <img className={classes.camera} src={camera} alt="upload" />
         </button>
         {salesButon && (
-          <button onClick={() => handleModal('sale')}>
+          <button className={classes.hide} onClick={() => handleModal('sale')}>
             <img src={bag} alt="Nova venda" />
           </button>
         )}

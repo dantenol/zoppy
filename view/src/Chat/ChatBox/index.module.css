@@ -113,7 +113,7 @@
   bottom: 60px;
 }
 
-.input.true button:nth-child(-n+2) {
+.input.true .hide {
   padding: 0;
   width: 0;
   margin: 0;
