@@ -43,11 +43,6 @@ const App = () => {
   const audio = new Audio(notificationSound);
   const me = localStorage.userId;
 
-  window.onload = () => {
-    const reciever = window.document.getElementById("iframe").contentWindow;
-    reciever.postMessage(window.location.hostname, "https://z.zoppy.app");
-  };
-
   const checkOnline = async () => {
     try {
       const isSetup = (await axios(`${url}chats/online`, params)).data;
@@ -775,12 +770,6 @@ const App = () => {
           chat={newChat || chats[selectedChatIndex]}
           handlePin={handleSetAgent}
         />
-        <iframe
-          title="z.zoppy"
-          hidden
-          id="iframe"
-          src="https://z.zoppy.app"
-        ></iframe>
       </div>
     </main>
   );
