@@ -730,9 +730,11 @@ module.exports = function (Chat) {
       chatId.substring(0, 5) + chatId.substring(6, chatId.length);
     const noNine = (await wp.checkNumberStatus(removeNine)).canReceiveMessage;
     if (noNine) {
-      return true;
+      return removeNine;
+    } else if ((await wp.checkNumberStatus(chatId)).canReceiveMessage) {
+      return chatId;
     } else {
-      return (await wp.checkNumberStatus(chatId)).canReceiveMessage;
+      return false;
     }
   };
 

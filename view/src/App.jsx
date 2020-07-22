@@ -421,7 +421,7 @@ const App = () => {
     }
     const chat = {
       profilePic: colors[Math.floor(Math.random() * 6)],
-      chatId: to,
+      chatId: contact.data,
       displayName: name,
       messages: ["none"],
       type: "chat",
