@@ -746,7 +746,7 @@ module.exports = function (Chat) {
   Chat.status = async () => {
     let conn = false;
     if (wp) {
-      wp = (await wp.isConnected()) || (await wp.getConnectionState());
+      conn = (await wp.isConnected()) || (await wp.getConnectionState());
     }
 
     return {
