@@ -173,12 +173,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    if (newChat) {
-      selectChat(newChat.chatId);
-      goTo("chat");
-      handleChangeName(newChat.displayName, newChat.chatId);
-      setNewChat(false);
-    } else if (chats.length && !urlChecked) {
+    if (chats.length && !urlChecked) {
       setUrlChecked(false);
       checkUrl();
     }
@@ -505,7 +500,12 @@ const App = () => {
       }
       return true;
     } else {
+      handleSetAgent(true, to)
+      selectChat(newChat.chatId);
+      handleChangeName(newChat.displayName, newChat.chatId);
+      setNewChat(false);
       setModal(false);
+      goTo("chat");
       return false;
     }
   };
@@ -516,9 +516,11 @@ const App = () => {
 
   const handleUploadModal = (e) => {
     e.persist();
+    console.log(e.target.files[0]);
     setModal({
       data: e.target.files[0],
       type: "photoUpload",
+      format: e.target.files[0].type.includes("video") ? "video" : "photo",
     });
     e.target.value = null;
   };

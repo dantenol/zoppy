@@ -165,7 +165,7 @@ const Modal = ({
           </label>
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,video/*"
             capture
             id="upload-button"
             style={{ display: "none" }}
@@ -176,7 +176,7 @@ const Modal = ({
           </label>
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,video/*"
             id="upload-button2"
             style={{ display: "none" }}
             onChange={handleUpload}
@@ -192,7 +192,11 @@ const Modal = ({
           <div onClick={onClose} className={classes.close}>
             &times;
           </div>
-          <img src={URL.createObjectURL(file.data)} alt="Imagem" />
+          {file.format === "video" ? (
+            <video controls src={URL.createObjectURL(file.data)} />
+          ) : (
+            <img src={URL.createObjectURL(file.data)} alt="Imagem" />
+          )}
           <form onSubmit={sendImage}>
             <input
               type="text"

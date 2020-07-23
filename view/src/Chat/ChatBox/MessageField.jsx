@@ -83,6 +83,12 @@ const MessageField = ({
     handleChangeMessage(message + e.native);
   };
 
+  const handleCollapse = () => {
+    if (!message) {
+      setFocused(false)
+    }
+  }
+
   return (
     <>
       {emoji && (
@@ -115,7 +121,7 @@ const MessageField = ({
           onKeyDown={enterListener}
           onChange={handleChange}
           onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          onBlur={handleCollapse}
           placeholder="Digite uma mensagem"
         ></textarea>
         <button onClick={() => handlesendButton()}>

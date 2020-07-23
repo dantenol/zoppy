@@ -79,6 +79,10 @@
   margin: 0;
 }
 
+.modal video {
+  max-width: 100%;
+}
+
 .modal .close {
   position: absolute;
   top: 8px;

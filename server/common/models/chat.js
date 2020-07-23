@@ -643,6 +643,19 @@ module.exports = function (Chat) {
     http: {path: '/download/:messageId', verb: 'get'},
   });
 
+  const possibleExtensions = [
+    'png',
+    'jpg',
+    'jpeg',
+    'gif',
+    'webp',
+    'mp4',
+    '3pg',
+    'mkv',
+    'flv',
+    'avi',
+  ];
+
   Chat.uploadMedia = async (chatId, req, message) => {
     const Message = model.app.models.Message;
     const {caption} = message;
@@ -651,8 +664,7 @@ module.exports = function (Chat) {
     const k = Object.keys(req.files)[0];
     const file = req.files[k];
     const extension = file.mimetype.split('/')[1];
-    if (extension !== 'png' && extension !== 'jpg' && extension !== 'jpeg')
-      throw 'invalid file type';
+    if (!possibleExtensions.includes(extension)) throw 'invalid file type';
     const now = new Date().valueOf();
     const base64 = Buffer.from(file.data).toString('base64');
     const uri = `data:image/${extension};base64,${base64}`;
@@ -729,9 +741,10 @@ module.exports = function (Chat) {
     const removeNine =
       chatId.substring(0, 5) + chatId.substring(6, chatId.length);
     const noNine = (await wp.checkNumberStatus(removeNine)).canReceiveMessage;
+    const nine = (await wp.checkNumberStatus(chatId)).canReceiveMessage
     if (noNine) {
       return removeNine;
-    } else if ((await wp.checkNumberStatus(chatId)).canReceiveMessage) {
+    } else if (nine) {
       return chatId;
     } else {
       return false;
