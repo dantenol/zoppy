@@ -714,8 +714,8 @@ const App = () => {
     setSettings(data);
     localStorage.setItem("settings", JSON.stringify(data));
     if (!data.manageUsersLocally) {
-      localStorage.removeItem('salesAgentProfile')
-      localStorage.removeItem('salesAgentId')
+      localStorage.removeItem("salesAgentProfile");
+      localStorage.removeItem("salesAgentId");
     }
   };
 
