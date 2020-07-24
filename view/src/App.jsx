@@ -177,6 +177,12 @@ const App = () => {
       setUrlChecked(false);
       checkUrl();
     }
+    if (newChat && _.find(chats, (o) => o.chatId === newChat.chatId)) {
+      selectChat(newChat.chatId);
+      handleSetAgent(false, newChat.chatId);
+      handleChangeName(newChat.displayName, newChat.chatId);
+      setNewChat(false);
+    }
     cacheConversations();
   }, [chats]);
 
@@ -500,10 +506,6 @@ const App = () => {
       }
       return true;
     } else {
-      handleSetAgent(true, to)
-      selectChat(newChat.chatId);
-      handleChangeName(newChat.displayName, newChat.chatId);
-      setNewChat(false);
       setModal(false);
       goTo("chat");
       return false;
@@ -660,13 +662,12 @@ const App = () => {
           agentId,
           agentLetter,
         },
-        currentChat
+        chat
       );
 
       return Boolean(agentId);
     } catch (error) {
       console.log(error);
-      alert("Algo deu errado ao tentar associar a conversa");
       throw new Error("error");
     }
   };
