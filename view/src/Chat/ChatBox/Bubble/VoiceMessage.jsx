@@ -29,6 +29,8 @@ const VoiceMessage = ({ message, isGroup }) => {
   useEffect(() => {
     if (audio) {
       try {
+        const sounds = document.getElementsByTagName("audio");
+        for (let i = 0; i < sounds.length; i++) sounds[i].pause();
         playing ? audio.play() : audio.pause();
         audio.addEventListener("ended", () => setPlaying(false));
 

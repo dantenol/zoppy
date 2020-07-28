@@ -146,6 +146,7 @@ const App = () => {
     if (localStorage.access_token) {
       checkOnline();
     } else {
+      localStorage.clear();
       setModal({
         type: "login",
       });
@@ -407,6 +408,13 @@ const App = () => {
   };
 
   const handleNewContact = async (name, to) => {
+    const removeNine = to.substring(0, 4) + to.substring(5, to.length);
+    const idx2 = findIdxById(removeNine);
+    if (idx2 >= 0) {
+      selectChat(removeNine);
+      setModal(false);
+      return;
+    }
     const idx = findIdxById(to);
     if (idx >= 0) {
       selectChat(to);

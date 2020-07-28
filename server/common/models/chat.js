@@ -739,7 +739,7 @@ module.exports = function (Chat) {
 
   Chat.checkNum = async (chatId) => {
     const removeNine =
-      chatId.substring(0, 5) + chatId.substring(6, chatId.length);
+      chatId.substring(0, 4) + chatId.substring(5, chatId.length);
     const noNine = (await wp.checkNumberStatus(removeNine)).canReceiveMessage;
     const nine = (await wp.checkNumberStatus(chatId)).canReceiveMessage
     if (noNine) {
