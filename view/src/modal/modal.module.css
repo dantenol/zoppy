@@ -38,7 +38,7 @@
   height: auto;
 }
 
-.opaque > form > select, 
+.opaque > form > select,
 .opaque > form > input {
   border-radius: 24px;
   border: 1px solid darkgray;
@@ -105,6 +105,44 @@ img.logo {
 
 .qr {
   margin: auto;
+}
+
+.saleType {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.saleType > label {
+  margin-top: 16px;
+  background-color: white;
+  color: #4caf50;
+  border: 2px solid #4caf50;
+  font-size: 16px;
+  padding: 4px;
+  cursor: pointer;
+}
+
+input[type="radio"]:checked + label {
+  background-color: #4caf50;
+  color: #fff;
+  border: 1px solid #4caf50;
+  font-size: 16px;
+}
+
+.saleType > input {
+  display: none;
+}
+
+.saleType label:first-of-type {
+  border-radius: 16px 0 0 16px;
+  padding-left: 12px;
+}
+
+.saleType label:last-of-type {
+  border-radius: 0 16px 16px 0;
+  padding-right: 12px;
+  border-left: 0;
 }
 
 @media screen and (max-width: 600px) {

@@ -4,6 +4,9 @@ then
   v=$(awk -F"v" 'BEGIN{OFS=FS} $1==""{$2=$2}1' LATEST)
 fi
 
+echo $v
+awk -i inplace -v ver=$v '{sub(/v[0-9]{2,3}\.0/,ver".0");}1' package.json
+
 echo Building $v...
 npm run update-front
 npm run custom-key

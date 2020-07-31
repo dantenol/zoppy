@@ -41,7 +41,8 @@ const App = () => {
   const [URLMessageNumber, setURLMessageNumber] = useState("");
   const isMobile = window.innerWidth <= 600;
   const audio = new Audio(notificationSound);
-  const me = localStorage.userId;
+  const me = localStorage.salesAgentId || localStorage.userId;
+  window.me = me;
 
   const checkOnline = async () => {
     try {
@@ -174,6 +175,10 @@ const App = () => {
   }, []);
 
   useEffect(() => {
+    let idx = findIdxById(currentChat);
+    if (selectedChatIndex !== idx) {
+      setSelectedChatIndex(idx);
+    }
     if (chats.length && !urlChecked) {
       setUrlChecked(false);
       checkUrl();
@@ -346,7 +351,7 @@ const App = () => {
         return !curr[idx].messages.find(
           (m) =>
             m.messageId === msg.messageId ||
-            (msg.mine && msg.agentId === me) ||
+            // (msg.mine && msg.agentId === me) ||
             (msg.mine && msg.timestamp < new Date() - 200)
         );
       });
@@ -379,7 +384,6 @@ const App = () => {
     });
 
     curr.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
-    console.log(curr);
     if (deepDiff(curr, chats).length > 0) {
       setChats(curr);
 
@@ -458,7 +462,7 @@ const App = () => {
         messageId: id,
         customId: id,
         mine: true,
-        agentId: localStorage.salesAgentId || localStorage.userId,
+        agentId: me,
         body: message,
         timestamp: id,
         sending: true,
@@ -506,7 +510,9 @@ const App = () => {
 
       delete msg.data.customId;
       curr[idx].messages.unshift(msg.data);
-      curr[idx].lastMessageAt = msg.data.timestamp;
+      const data = curr[idx];
+      _.pullAt(curr, idx);
+      curr.unshift(data);
       setChats(curr);
 
       if (!curr[idx].agentLetter) {
@@ -729,7 +735,7 @@ const App = () => {
   };
 
   const saveSales = async (data) => {
-    data.agentId = localStorage.salesAgentId || localStorage.userId;
+    data.agentId = me;
     data.chatId = currentChat;
     const salesMsg = await axios.post(`${url}sales/new`, data, params);
     addMessagesToConversations([

@@ -181,7 +181,12 @@ async function loadAllMessages(client) {
         try {
           await model.create({
             chatId,
-            name: chat.name || chat.contact.pushname || chat.formattedTitle,
+            name:
+              chat.name ||
+              chat.pushname ||
+              chat.contact.verifiedName ||
+              chat.contact.formattedName ||
+              chat.formattedTitle,
             type: chat.kind,
             lastMessageAt: chat.t * 1000,
             profilePic: chat.contact.profilePicThumbObj.eurl,
@@ -321,7 +326,7 @@ module.exports = function (Chat) {
       licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
       disableSpins: true,
       sessionDataPath: './session',
-      headless: true,
+      headless: !process.env.HEADLESS,
       devtools: false,
       executablePath: '/usr/bin/google-chrome-stable',
       debug: true,
@@ -534,6 +539,7 @@ module.exports = function (Chat) {
           agentId: from || req.accessToken.userId,
         });
         newMsg.customId = customId;
+        newMsg.agentId = from || req.accessToken.userId;
         return newMsg;
       }
     } else {
@@ -559,6 +565,7 @@ module.exports = function (Chat) {
         console.log('MESSAGE: ', msg);
         if (msg) {
           msg.updateAttributes({agentId: from || req.accessToken.userId});
+          msg.agentId = from || req.accessToken.userId;
           await model.claimChat(req, to);
         }
         return msg;
@@ -741,7 +748,7 @@ module.exports = function (Chat) {
     const removeNine =
       chatId.substring(0, 4) + chatId.substring(5, chatId.length);
     const noNine = (await wp.checkNumberStatus(removeNine)).canReceiveMessage;
-    const nine = (await wp.checkNumberStatus(chatId)).canReceiveMessage
+    const nine = (await wp.checkNumberStatus(chatId)).canReceiveMessage;
     if (noNine) {
       return removeNine;
     } else if (nine) {
@@ -760,14 +767,16 @@ module.exports = function (Chat) {
 
   Chat.status = async () => {
     let conn = false;
+    const status = await wp.getConnectionState();
     if (wp) {
-      conn = (await wp.isConnected()) || (await wp.getConnectionState());
+      conn = (await wp.isConnected()) || status;
     }
 
     return {
       battery,
       charging,
       online: conn,
+      status,
     };
   };
 

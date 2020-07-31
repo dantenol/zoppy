@@ -40,6 +40,8 @@ const Modal = ({
     setPassword("");
     if (file && file.newNumber) {
       setNumber(file.newNumber);
+    } else if (file && file.type === "sale") {
+      setNumber("sale");
     }
   }, [file]);
 
@@ -73,14 +75,19 @@ const Modal = ({
   const handleSaveSale = () => {
     const items = message;
     const value = password;
+    const type = number;
     const nbrRegex = /^[0-9]{1,4}([.,][0-9]{1,2})?$/g;
-    if (!items.match(nbrRegex) || !value.match(nbrRegex)) {
-      alert("Dádos inválidos. Verifique os números");
+    if (
+      !items.match(nbrRegex) ||
+      (number === "sale" && !value.match(nbrRegex))
+    ) {
+      alert("Dados inválidos. Verifique os números");
       return;
     }
     const salesInfo = {
       itemCount: items.replace(",", "."),
       totalValue: value.replace(",", "."),
+      type,
     };
     setButtonDisabled(true);
     saveSales(salesInfo);
@@ -410,12 +417,32 @@ const Modal = ({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
-            <input
-              type="number"
-              placeholder="Valor total"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className={classes.saleType}>
+              <input
+                checked={number === "sale"}
+                onChange={() => setNumber("sale")}
+                type="radio"
+                name="saleType"
+                id="sale"
+              />
+              <label htmlFor="sale">Venda</label>
+              <input
+                checked={number === "bag"}
+                onChange={() => setNumber("bag")}
+                type="radio"
+                name="saleType"
+                id="bag"
+              />
+              <label htmlFor="bag">Malinha</label>
+            </div>
+            {number === "sale" ? (
+              <input
+                type="number"
+                placeholder="Valor total"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            ) : null}
             <input type="submit" hidden />
           </form>
           <button disabled={buttonDisabled} onClick={handleSaveSale}>

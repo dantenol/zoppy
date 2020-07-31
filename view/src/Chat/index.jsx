@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import classNames from "classnames";
 
 import Header from "./Header";
@@ -6,6 +6,7 @@ import ChatBox from "./ChatBox";
 import NoChat from "./NoChat";
 
 import classes from "./index.module.css";
+import ContactDetails from "./ContactDetails";
 
 const Chat = ({
   chat,
@@ -18,6 +19,7 @@ const Chat = ({
   handlePin,
   handleBack,
 }) => {
+  const [showDetails, setShowDetails] = useState(false);
   if (chat) {
     return (
       <div
@@ -30,8 +32,7 @@ const Chat = ({
         <Header
           data={chat}
           handleBack={handleBack}
-          handleChangeName={handleChangeName}
-          handlePin={handlePin}
+          handleToggleDetails={() => setShowDetails(!showDetails)}
           />
         <ChatBox
           handleModal={handleModal}
@@ -43,6 +44,13 @@ const Chat = ({
           handleChangeName={handleChangeName}
           messages={chat.messages}
           loading={chat.firstClick}
+          />
+        <ContactDetails
+          show={showDetails}
+          data={chat}
+          handlePin={handlePin}
+          handleChangeName={handleChangeName}
+          handleClose={() => setShowDetails(false)}
         />
       </div>
     );

@@ -1,6 +1,7 @@
 .chatContainer {
   width: 100%;
   max-width: calc(100vw - 420px);
+  position: relative;
 }
 
 .centerContainer {
@@ -38,20 +39,9 @@
   flex-grow: 1;
 }
 
-.header .nameInput {
-  border: 1px solid transparent;
-  background-color: transparent;
+.header .name {
   padding: 8px;
   font-size: 20px;
-  background-image: url(../assets/images/edit.svg);
-  background-repeat: no-repeat;
-  background-size: 16px;
-  background-position: center right;
-  max-width: 50vw;
-}
-
-.header .nameInput:focus {
-  background: none;
 }
 
 .header .pinContainer {
@@ -73,32 +63,6 @@
 
 .header .pinContainer:hover {
   background-color: #636363;
-}
-
-.hintBubble {
-  background: #d6d6d6;
-  border-radius: 0.4em;
-  padding: 16px;
-  position: absolute;
-  z-index: 1;
-  width: 256px;
-  max-width: 50vw;
-  text-align: center;
-  color: #636363;
-}
-
-.hintBubble:after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border: 9px solid transparent;
-  border-bottom-color: #d6d6d6;
-  border-top: 0;
-  margin-left: -9px;
-  margin-top: -9px;
 }
 
 .arrow {

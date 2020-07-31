@@ -23,7 +23,7 @@ module.exports = function (Agent) {
   Agent.beforeRemote('create', async (ctx) => {
     const body = ctx.req.body;
     body.fullName = titleCase(body.fullName);
-    body.firstLetter = body.fullName[0];
+    body.firstLetter = body.firstLetter || body.fullName[0];
     body.color = colors[Math.floor(Math.random() * colors.length)];
     body.createdAt = new Date();
   });

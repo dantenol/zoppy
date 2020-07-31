@@ -1,0 +1,107 @@
+.container {
+  height: 100%;
+  width: 0;
+  position: absolute;
+  overflow-x: hidden;
+  right: 0;
+  top: 0;
+  background-color: #f7f7f7;
+  box-shadow: -2px 0 5px -2px #797979;
+  transition: width ease 0.3s;
+}
+
+.container.true {
+  width: 400px;
+  max-width: 95%;
+}
+
+.close {
+  font-size: 40px;
+  color: #bdbdbd;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  transition: all ease 0.3s;
+}
+
+.close:hover {
+  color: #797979;
+  cursor: pointer;
+}
+
+.profilePic {
+  width: 100%;
+}
+
+.dataContainer {
+  width: 100%;
+  padding: 8px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.dataContainer * {
+  margin: 0;
+}
+
+.dataContainer > * {
+  margin-bottom: 8px;
+}
+
+.dataContainer .nameInput {
+  border: 1px solid transparent;
+  background-color: transparent;
+  font-size: 32px;
+  font-weight: bold;
+  background-image: url(../../assets/images/edit.svg);
+  background-repeat: no-repeat;
+  background-size: 16px;
+  background-position: center right;
+  max-width: 100%;
+}
+
+.dataContainer .nameInput:focus {
+  background: none;
+}
+
+.hintBubble {
+  background: #d6d6d6;
+  border-radius: 0.4em;
+  padding: 16px;
+  position: absolute;
+  z-index: 1;
+  width: 256px;
+  max-width: 50vw;
+  text-align: center;
+  color: #636363;
+}
+
+.hintBubble:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border: 9px solid transparent;
+  border-bottom-color: #d6d6d6;
+  border-top: 0;
+  margin-left: -9px;
+  margin-top: -9px;
+}
+
+.dataContainer h3 {
+  color: #797979;
+}
+
+.dataContainer .salesAgent {
+  display: inline-flex;
+}
+
+.dataContainer .salesAgent button {
+  margin-left: 16px;
+  width: 32px;
+}
+
+.dataContainer .salesAgent img {
+  width: 100%;
+}
