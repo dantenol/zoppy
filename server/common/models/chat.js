@@ -6,6 +6,8 @@ const path = require('path');
 const wa = require('@open-wa/wa-automate');
 const io = require('socket.io')();
 
+const certs = require('../../server/ssl/certs');
+
 require('axios-debug-log')({
   request: function (debug, config) {
     debug('Request with ', config);
@@ -332,7 +334,8 @@ io.on('connection', (socket) => {
     // socket.broadcast.emit('newMessage', msg)
   });
 });
-io.listen(3002);
+const options = await certs();
+io.listen(3002, options);
 
 module.exports = function (Chat) {
   model = Chat;
