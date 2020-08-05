@@ -4,6 +4,7 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 const wa = require('@open-wa/wa-automate');
+const io = require('socket.io')();
 
 require('axios-debug-log')({
   request: function (debug, config) {
@@ -18,7 +19,11 @@ require('axios-debug-log')({
   },
 });
 
-let model, wp, QRbuffer, myNumber, battery, charging, startedSetup;
+let model, wp, QRbuffer, myNumber, battery, charging, startedSetup, sts;
+const sentMessages = [];
+const status = {
+  connection: 'CONNECTED'
+};
 
 const validMsgTypes = [
   'chat',
@@ -39,17 +44,25 @@ async function start(wpp) {
     saveMsg(msg);
   });
 
+  io.sockets.emit('reload');
   wpp.onBattery((b) => {
     console.log(b);
     battery = b;
+    status.battery = b;
+    io.sockets.emit('status', status);
   });
   wpp.onPlugged((b) => {
     console.log(b);
     charging = b;
+    status.charging = b;
+    io.sockets.emit('status', status);
   });
 
   wpp.onStateChanged((s) => {
     console.log(s);
+    sts = s;
+    status.connection = s;
+    io.sockets.emit('status', status);
     switch (s) {
       case 'CONFLICT':
         wpp.forceRefocus();
@@ -78,7 +91,11 @@ wa.ev.on('qr.**', async (qrcode) => {
   console.log(QRbuffer);
 });
 
-async function createMessage(msg, latest, starting) {
+function isSent({chatId, body}) {
+  return sentMessages.findIndex((m) => m.to === chatId && m.message === body);
+}
+
+async function createMessage(msg, latest, starting, newChat) {
   const Message = model.app.models.Message;
   const waMsg = await wp.getMessageById(msg.id);
   if (!validMsgTypes.includes(msg.type)) {
@@ -87,6 +104,10 @@ async function createMessage(msg, latest, starting) {
   let time = waMsg.t;
   if (latest) {
     time = new Date().valueOf() / 1000;
+  }
+  let socketObj = {};
+  if (newChat) {
+    socketObj = newChat;
   }
   try {
     const savedMsg = await Message.create({
@@ -108,6 +129,10 @@ async function createMessage(msg, latest, starting) {
       caption: waMsg.caption,
       starting,
     });
+    socketObj.message = savedMsg;
+    if (isSent(savedMsg) < 0) {
+      io.sockets.emit('newMessage', socketObj);
+    }
     return savedMsg;
   } catch (error) {
     console.log('duplicated %s', waMsg.id);
@@ -120,11 +145,12 @@ async function saveMsg(msg) {
   }
   const chat = await model.findById(msg.chatId);
   let previousTimestamp;
+  let newChat;
   if (!chat) {
     const waMsg = await wp.getMessageById(msg.id);
     const wpChat = waMsg.chat;
     console.log('new chat:');
-    await model.create({
+    newChat = await model.create({
       chatId: msg.chatId,
       name:
         wpChat.name ||
@@ -138,12 +164,16 @@ async function saveMsg(msg) {
       pin: false,
       newConversation: true,
     });
+    io.sockets.emit('newChat', newChat);
   } else {
     previousTimestamp = chat.lastMessageAt;
-    await chat.updateAttributes({lastMessageAt: new Date(msg.t * 1000)});
+    await chat.updateAttributes({
+      lastMessageAt: new Date(msg.t * 1000),
+      profilePic: msg.chat.contact.profilePicThumbObj.eurl,
+    });
   }
   const newChatFromMe = msg.fromMe && !chat ? true : undefined;
-  await createMessage(msg, true, newChatFromMe);
+  await createMessage(msg, true, newChatFromMe, newChat);
   const loaded = await wp.getAmountOfLoadedMessages();
   if (loaded > 3000) {
     console.log(loaded);
@@ -242,6 +272,7 @@ async function isConversion(msg) {
   const last = msgs.find((m) => m.messageId !== msg.id);
   console.log('LAST: ', last, moment(last.t * 1000).isSame(moment(), 'day'));
   if (moment(last.t * 1000).isSame(moment(), 'day') && last.starting) {
+    console.log('CONVERSION');
     await Message.upsertWithWhere(
       {messageId: last.messageId},
       {answered: true},
@@ -262,9 +293,11 @@ async function isStarting(msg, {previousTimestamp, newConversation}) {
     last.isBefore(moment().startOf('D').subtract(2, 'D'), 'D'),
   );
   if (last.isBefore(moment().startOf('D').subtract(2, 'D'), 'D')) {
+    console.log(1);
     await Message.upsertWithWhere({messageId: msg.id}, {starting: true});
     await model.upsertWithWhere({chatId: msg.chatId}, {newConversation: true});
   } else if (last.isSame(moment(), 'D') && newConversation) {
+    console.log(2);
     await Message.upsertWithWhere({messageId: msg.id}, {starting: true});
     await Message.upsertWithWhere(
       {
@@ -290,6 +323,16 @@ function ignoreChat(chat) {
   //   return false;
   // }
 }
+
+io.on('connection', (socket) => {
+  console.log('connected');
+  socket.on('sendMessage', async (data) => {
+    console.log(data);
+    // const msg = await model.sendMessage(null, ...data);
+    // socket.broadcast.emit('newMessage', msg)
+  });
+});
+io.listen(3002);
 
 module.exports = function (Chat) {
   model = Chat;
@@ -531,15 +574,23 @@ module.exports = function (Chat) {
 
   Chat.sendMessage = async (req, to, message, from, customId) => {
     const Message = model.app.models.Message;
+    sentMessages.push({to, message});
+    const t = new Date();
+    console.log(t);
     const wpMsg = await wp.sendText(to, message);
+    console.log('FINISHED', new Date().valueOf() - t);
     if (typeof wpMsg === 'string') {
       const msg = await Message.findById(wpMsg);
       if (msg) {
-        const newMsg = await msg.updateAttributes({
+        const newMsg = {...msg.toJSON()};
+        await msg.updateAttributes({
           agentId: from || req.accessToken.userId,
         });
         newMsg.customId = customId;
         newMsg.agentId = from || req.accessToken.userId;
+        io.sockets.emit('sentMessage', newMsg);
+        const msgIdx = isSent(to, message);
+        sentMessages.splice(msgIdx, 1);
         return newMsg;
       }
     } else {
@@ -675,6 +726,7 @@ module.exports = function (Chat) {
     const now = new Date().valueOf();
     const base64 = Buffer.from(file.data).toString('base64');
     const uri = `data:image/${extension};base64,${base64}`;
+    console.log('sending image', new Date());
     const wpMsg = await wp.sendImage(
       chatId,
       uri,
@@ -683,6 +735,7 @@ module.exports = function (Chat) {
       null,
       true,
     );
+    console.log('IMAGE SENT', new Date());
 
     const msgId = await new Promise((resolve) => {
       const interval = setInterval(async () => {
@@ -776,7 +829,8 @@ module.exports = function (Chat) {
       battery,
       charging,
       online: conn,
-      status,
+      status: sts,
+      connection: status,
     };
   };
 

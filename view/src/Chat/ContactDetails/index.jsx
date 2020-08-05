@@ -3,6 +3,7 @@ import classNames from "classnames";
 
 import classes from "./index.module.css";
 import swap from "../../assets/images/swap.svg";
+import { idToPhone } from "../../hooks/helpers";
 
 const ContactDetails = ({
   data,
@@ -65,17 +66,6 @@ const ContactDetails = ({
     };
   }, []);
 
-  const formatPhonenNumber = () => {
-    const parsed = data.chatId.slice(2, data.chatId.indexOf("@"));
-    const ddd = parsed.slice(0, 2);
-    const lastPart = parsed.slice(-4);
-    let firstPart = parsed.slice(2, -4);
-    if (firstPart.length === 4) {
-      firstPart = "9" + firstPart;
-    }
-    return `(${ddd}) ${firstPart}-${lastPart}`;
-  };
-
   const handleSwapAgent = () => {
     if (data.agentId === window.me) {
       handlePin(true);
@@ -105,7 +95,7 @@ const ContactDetails = ({
             Aperte enter para salvar ou clique fora do campo para cancelar
           </div>
         )}
-        <h3>{formatPhonenNumber()}</h3>
+        <h3>{idToPhone(data.chatId)}</h3>
         <div className={classes.salesAgent}>
           <h2>Atendente: {attendant || "Nenhum"}</h2>
           <button onClick={handleSwapAgent}>

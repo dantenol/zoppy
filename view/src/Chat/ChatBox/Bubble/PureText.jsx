@@ -4,7 +4,7 @@ import moment from "moment";
 import clock from "../../../assets/images/clock.svg";
 
 import classes from "./index.module.css";
-import { parseText } from "../../../hooks/helpers";
+import FormattedSpan from "../../../hooks/FormattedSpan";
 
 const PureText = ({ message, isGroup }) => {
   const agents = window.agents;
@@ -21,9 +21,7 @@ const PureText = ({ message, isGroup }) => {
         {isGroup && !message.mine && <p>{message.sender}</p>}
         {message.agentId && <p>{senderName}</p>}
         <div className={classes.msg}>
-          <span
-            dangerouslySetInnerHTML={{ __html: parseText(message.body) }}
-          ></span>
+          <FormattedSpan text={message.body} />
           <span className={classes.buffer}></span>
         </div>
       </div>

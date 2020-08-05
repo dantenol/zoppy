@@ -6,6 +6,7 @@ import classes from "./index.module.css";
 
 import sentImg from "../assets/images/share.svg";
 import { parseText } from "../hooks/helpers";
+import { FormattedP } from "../hooks/FormattedSpan";
 
 const calendarTexts = {
   sameDay: "HH:mm",
@@ -38,6 +39,8 @@ const Chat = ({ data, handleClick, style }) => {
       setMsg(lastMsg.body);
     } else if (lastMsg.type === "ptt") {
       setMsg("Áudio");
+    } else if (lastMsg.type === "sale") {
+      setMsg("Venda");
     } else {
       setMsg(lastMsg.type);
     }
@@ -61,7 +64,7 @@ const Chat = ({ data, handleClick, style }) => {
         </div>
         <div className={classes.message}>
           {sent && <img src={sentImg} alt="Enviado" />}
-          <p dangerouslySetInnerHTML={{ __html: parseText(msg, false) }}></p>
+          {msg && <FormattedP text={msg} enter={false} />}
           {data.agentId && (
             <span className={classes.letter} style={{ backgroundColor }}>
               {agents[data.agentId].firstLetter}

@@ -6,6 +6,7 @@ import Spinner from "../Spinner";
 import MessageField from "./MessageField";
 import Bubble from "./Bubble";
 import Day from "./Bubble/Day";
+import { cloneArray } from "../../hooks/helpers";
 
 const Chat = ({
   messages,
@@ -20,6 +21,7 @@ const Chat = ({
   const [message, setMessage] = useState("");
   const isGroup = chatId.includes("-");
   const messagesEndRef = useRef();
+  const msgs = cloneArray(messages)
 
   let lastDay = new Date(messages[0].timestamp);
 
@@ -35,7 +37,7 @@ const Chat = ({
           <div ref={messagesEndRef} />
           <>
             {messages.length &&
-              messages.map((m, i) => {
+              msgs.map((m, i) => {
                 const last = lastDay;
                 const current = m.timestamp;
                 if (m.mine && !m.agentId) {

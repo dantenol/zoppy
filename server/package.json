@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "v27.0.0",
+  "version": "v28.0.0",
   "main": "server/server.js",
   "engines": {
     "node": ">=4"
@@ -29,6 +29,7 @@
     "moment": "^2.27.0",
     "serve-favicon": "^2.5.0",
     "sharp": "^0.25.4",
+    "socket.io": "^2.3.0",
     "strong-error-handler": "^3.5.0",
     "uuid": "^8.2.0"
   },

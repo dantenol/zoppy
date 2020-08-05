@@ -2,7 +2,7 @@ import React from "react";
 import moment from "moment";
 
 import classes from "./index.module.css";
-import { parseText } from "../../../hooks/helpers";
+import FormattedSpan from "../../../hooks/FormattedSpan";
 
 const Image = ({ message, isGroup, showMedia }) => (
   <div>
@@ -17,7 +17,7 @@ const Image = ({ message, isGroup, showMedia }) => (
       ></div>
       {message.caption && (
         <div className={classes.msg}>
-          <span dangerouslySetInnerHTML={{__html: parseText(message.caption)}}></span>
+          <FormattedSpan text={message.caption} />
           <span className={classes.buffer}></span>
         </div>
       )}

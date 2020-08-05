@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import _ from "lodash";
 import "moment/locale/pt-br";
+import io from "socket.io-client";
+import { useImmer } from "use-immer";
 
 import { url, params } from "./connector";
 
 import classes from "./App.module.css";
 import Conversations from "./Conversations";
 import notificationSound from "./assets/audio/notification.ogg";
-import { cloneArray, deepDiff } from "./hooks/helpers";
+import { cloneArray, deepDiff, idToPhone } from "./hooks/helpers";
 
 import useInterval from "./hooks/useInterval";
 import red from "./assets/images/red.svg";
@@ -27,11 +29,12 @@ const initialSettings = JSON.parse(localStorage.settings || 0) || {
   salesOptions: false,
 };
 
+let socket;
 const App = () => {
-  const [chats, setChats] = useState(initialChats || []);
+  const [chats, setChats] = useImmer(initialChats || []);
   const [currentChat, setCurrentChat] = useState();
   const [selectedChatIndex, setSelectedChatIndex] = useState();
-  const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [lastSentMessage, setLastSentMessage] = useState(new Date());
   const [modal, setModal] = useState(null);
   const [newChat, setNewChat] = useState(null);
   const [urlChecked, setUrlChecked] = useState(false);
@@ -49,6 +52,8 @@ const App = () => {
       const isSetup = (await axios(`${url}chats/online`, params)).data;
       if (isSetup) {
         loadChats();
+        getStatus();
+        window.socket = socket;
       } else {
         alert(
           "Ops, sua conexão foi perdida. Continue para sincronizar novamente."
@@ -56,35 +61,20 @@ const App = () => {
         clearLoginData();
         window.location.reload();
       }
-    } catch (error) {}
-  };
-
-  const getLatestMsgs = async () => {
-    if (!localStorage.access_token) return;
-    try {
-      const msgs = await axios(
-        `${url}chats/latest/${lastUpdate.valueOf() - 10000}`,
-        params
-      );
-
-      if (msgs.data) {
-        addMessagesToConversations(msgs.data);
-      }
-      setLastUpdate(new Date());
     } catch (error) {
       if (error.response.status === 401) {
         alert(
-          "Sua conta está sendo utilizada em outro lugar. Entre novamente."
+          "Fizemos alguns ajustes por aqui, e você vai ter que logar novamente"
         );
-        localStorage.clear();
+        clearLoginData();
         window.location.reload();
       }
     }
   };
 
-  const getStatus = async () => {
-    const { data } = await axios(`${url}chats/status`, params);
-    if (data.online !== true) {
+  const evaluateStatus = (data) => {
+    const onlineStates = ["TIMEOUT", "CONNECTED", "PAIRING"];
+    if (!onlineStates.includes(data.connection)) {
       setModal({ type: "offline" });
     } else if (data.online && modal && modal.type === "offline") {
       setModal(false);
@@ -93,6 +83,12 @@ const App = () => {
     } else if (data.charging || data.battery > 20) {
       setLowBattery(false);
     }
+  };
+
+  const getStatus = async () => {
+    const { data } = await axios(`${url}chats/status`, params);
+    console.log(data);
+    evaluateStatus(data);
   };
 
   const cacheConversations = () => {
@@ -113,6 +109,7 @@ const App = () => {
         type,
         messages: [messages[0]],
         filtered: true,
+        firstClick: false,
         profilePic,
       })
     );
@@ -134,10 +131,21 @@ const App = () => {
     }
   };
 
+  const checkInactive = () => {
+    const now = new Date().valueOf();
+    if (
+      (now - lastSentMessage > 180000) &
+      JSON.parse(localStorage.settings).manageUsersLocally
+    ) {
+      setModal({ type: "selectUser" });
+    }
+  };
+
   useInterval(() => {
     if (localStorage.connected && localStorage.access_token) {
-      getLatestMsgs();
-      getStatus();
+      // getLatestMsgs();
+      // getStatus();
+      checkInactive();
     }
   }, 5000);
 
@@ -146,12 +154,20 @@ const App = () => {
     window.location.hash = "";
     if (localStorage.access_token) {
       checkOnline();
+      socket = io("https://demo.zoppy.app:3002", {
+        secure: true,
+        query: {
+          access_token: localStorage.access_token,
+        },
+      });
+      socket.on("reload", () => {
+        window.location.reload();
+      });
     } else {
       localStorage.clear();
       setModal({
         type: "login",
       });
-      return;
     }
     if (!localStorage.settings) {
       localStorage.setItem(
@@ -161,7 +177,7 @@ const App = () => {
           salesOptions: false,
         })
       );
-      window.location.reload();
+      // window.location.reload();
     } else if (
       window.location.pathname === "/" &&
       JSON.parse(localStorage.settings).manageUsersLocally
@@ -175,6 +191,29 @@ const App = () => {
   }, []);
 
   useEffect(() => {
+    if (socket) {
+      socket.on("newMessage", (data) => {
+        console.log("recieved", data);
+        addMessageToConversations(data);
+      });
+      socket.on("sentMessage", (data) => {
+        addSentMessageToConversations(data);
+      });
+      socket.on("status", (data) => {
+        console.log(data);
+        evaluateStatus(data);
+      });
+    }
+    return () => {
+      if (socket) {
+        socket.off("newMessage");
+        socket.off("status");
+        socket.off("sentMessage");
+      }
+    };
+  }, [chats]);
+
+  useEffect(() => {
     let idx = findIdxById(currentChat);
     if (selectedChatIndex !== idx) {
       setSelectedChatIndex(idx);
@@ -182,12 +221,6 @@ const App = () => {
     if (chats.length && !urlChecked) {
       setUrlChecked(false);
       checkUrl();
-    }
-    if (newChat && _.find(chats, (o) => o.chatId === newChat.chatId)) {
-      selectChat(newChat.chatId);
-      handleSetAgent(false, newChat.chatId);
-      handleChangeName(newChat.displayName, newChat.chatId);
-      setNewChat(false);
     }
     cacheConversations();
   }, [chats]);
@@ -218,10 +251,11 @@ const App = () => {
         }
       });
 
-      setChats(res.data);
-      setLastUpdate(new Date());
+      setChats((draft) => {
+        draft = res.data;
+      });
     } catch (error) {
-      console.log(error.response);
+      console.log(error);
       if (error.response.status === 401) {
         alert(
           "Fizemos alguns ajustes por aqui, e você vai ter que logar novamente"
@@ -246,7 +280,9 @@ const App = () => {
     chat = { ...chat, ...obj };
     newChats[idx] = chat;
 
-    setChats(newChats);
+    setChats((draft) => {
+      draft[idx] = { ...draft[idx], ...obj };
+    });
   };
 
   const checkUrl = () => {
@@ -278,6 +314,7 @@ const App = () => {
     let index = findIdxById(id);
     setSelectedChatIndex(index);
     const curr = chats[index];
+    setNewChat(false);
     setCurrentChat(curr.chatId);
     goTo("chat");
 
@@ -316,9 +353,7 @@ const App = () => {
       );
 
       const idx = findIdxById(id);
-      const curr = [...chats];
-      curr[idx].displayName = name;
-      setChats(curr);
+      setChats((draft) => (draft[idx].displayName = name));
     } catch (error) {
       console.log(error);
     }
@@ -329,67 +364,87 @@ const App = () => {
     return msgs.data;
   };
 
-  const addMessagesToConversations = (data) => {
-    const curr = cloneArray(chats);
+  const addMessageToConversations = (data) => {
     let sound;
+    const msg = data.message;
 
-    console.log(data);
-    data.forEach((entry) => {
-      const idx = findIdxById(entry.chatId);
-      if (idx < 0) {
-        entry.profilePic = colors[Math.floor(Math.random() * 6)];
-        entry.displayName = entry.name;
-        entry.firstClick = true;
-        entry.more = true;
-        entry.unread = 1;
-        entry.filtered = true;
-        curr.unshift(entry);
-        return;
+    const idx = findIdxById(msg.chatId, chats);
+    console.log(idx);
+    if (idx < 0) {
+      data.profilePic = colors[Math.floor(Math.random() * 6)];
+      data.displayName = idToPhone(msg.chatId);
+      data.firstClick = true;
+      data.more = true;
+      data.unread = 1;
+      data.filtered = true;
+      setChats((draft) => draft.unshift(data));
+      return;
+    }
+
+    if (data.chatId !== currentChat || msg.type !== "sale") {
+      const notifyable = !chats[idx].agentId || chats[idx].agentId === me;
+      if (notifyable) {
+        sound = true;
       }
+    }
 
-      const recievedMsgs = entry.messages.filter((msg) => {
-        return !curr[idx].messages.find(
-          (m) =>
-            m.messageId === msg.messageId ||
-            // (msg.mine && msg.agentId === me) ||
-            (msg.mine && msg.timestamp < new Date() - 200)
-        );
-      });
-
-      if (!recievedMsgs.length) {
-        return;
+    let unreadCount = chats[idx].unread;
+    if (idx !== selectedChatIndex) {
+      if (unreadCount) {
+        unreadCount += 1;
+      } else {
+        unreadCount = 1;
       }
+    }
 
-      if (!sound && entry.chatId !== currentChat) {
-        const notifyable = recievedMsgs.filter((m) => {
-          return !m.mine && (!m.agentId || m.agentId === me);
-        });
-        if (notifyable.length) {
-          sound = true;
-        }
-      }
-
-      curr[idx].messages.unshift(...recievedMsgs);
-      curr[idx].lastMessageAt = entry.lastMessageAt;
-      if (idx !== selectedChatIndex) {
-        const newMsgs = entry.messages.filter((m) => !m.mine);
-        if (curr[idx].unread && !curr[idx].messages[0].mine) {
-          curr[idx].unread += newMsgs.length;
-        } else if (curr[idx].unread && curr[idx].messages[0].mine) {
-          curr[idx].unread = 0;
-        } else {
-          curr[idx].unread = newMsgs.length;
-        }
-      }
+    setChats((draft) => {
+      draft[idx].messages.unshift(data.message);
+      draft[idx].lastMessageAt =
+        data.message.timestamp || new Date().toISOString();
+      draft[idx].unread = unreadCount;
+      draft.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
     });
 
-    curr.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
-    if (deepDiff(curr, chats).length > 0) {
-      setChats(curr);
+    sound && audio.play();
+    if (idx > selectedChatIndex) {
+      setSelectedChatIndex(selectedChatIndex + 1);
+    }
+  };
 
-      const newIdx = findIdxById(currentChat, curr);
-      setSelectedChatIndex(newIdx);
-      sound && audio.play();
+  const addSentMessageToConversations = (msg) => {
+    const data = { chatId: msg.chatId, message: msg };
+
+    const idx = findIdxById(data.chatId);
+    if (idx < 0) {
+      data.profilePic = colors[Math.floor(Math.random() * 6)];
+      data.displayName = idToPhone(data.chatId);
+      data.filtered = true;
+      setChats((draft) => draft.unshift(data));
+      if (newChat && data.chatId === newChat.chatId) {
+        handleSetAgent(false, newChat.chatId);
+        data.displayName = newChat.displayName;
+        setNewChat(false);
+        setSelectedChatIndex(0);
+        selectChat(newChat.chatId);
+      }
+      return;
+    }
+
+    const waitingMessageIdx = chats[idx].messages.findIndex(
+      (m) => m.sending && m.body === msg.body
+    );
+    setChats((draft) => {
+      if (waitingMessageIdx >= 0) {
+        draft[idx].messages[waitingMessageIdx] = msg;
+      } else {
+        draft[idx].messages.unshift(msg);
+      }
+      draft[idx].lastMessageAt = msg.timestamp || new Date().toISOString();
+      draft[idx].unread = 0;
+      draft.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
+    });
+    if (waitingMessageIdx >= 0) {
+      setSelectedChatIndex(0);
     }
   };
 
@@ -405,10 +460,10 @@ const App = () => {
     if (!msgs.data.length) {
       console.log("no msgs");
       // updateChat({more: false}, currentChat)
-    } else {
-      curr[idx].messages.push(...msgs.data);
     }
-    setChats(curr);
+    setChats((draft) => {
+      draft[idx].messages.push(...msgs.data);
+    });
   };
 
   const handleNewContact = async (name, to) => {
@@ -447,6 +502,7 @@ const App = () => {
 
   const send = async (message, to = currentChat, attempt = 0) => {
     let from;
+    setLastSentMessage(new Date());
     if (newChat) {
       to = newChat.chatId;
     }
@@ -456,11 +512,8 @@ const App = () => {
     console.log("sending");
     let id = new Date().valueOf();
     if (to === currentChat) {
-      const curr = cloneArray(chats);
-      const idx = findIdxById(currentChat);
       const data = {
         messageId: id,
-        customId: id,
         mine: true,
         agentId: me,
         body: message,
@@ -470,15 +523,14 @@ const App = () => {
         sender: "Você",
         chatId: to,
       };
-      console.log(data);
-      curr[idx].messages.unshift(data);
-      setChats(curr);
-      console.log(curr);
+      const idx = selectedChatIndex;
+      setChats((draft) => {
+        draft[idx].messages.unshift(data);
+      });
     }
 
-    let msg;
     try {
-      msg = await axios.post(
+      await axios.post(
         `${url}chats/${to}/send`,
         {
           message,
@@ -496,33 +548,6 @@ const App = () => {
       } else {
         throw error;
       }
-    }
-
-    if (to === currentChat) {
-      const curr = cloneArray(chats);
-      const idx = findIdxById(currentChat);
-      curr[idx].lastMessageAt = msg.data.timestamp;
-      _.remove(
-        curr[idx].messages,
-        (m) =>
-          m.customId === msg.data.customId || m.messageId === msg.data.messageId
-      );
-
-      delete msg.data.customId;
-      curr[idx].messages.unshift(msg.data);
-      const data = curr[idx];
-      _.pullAt(curr, idx);
-      curr.unshift(data);
-      setChats(curr);
-
-      if (!curr[idx].agentLetter) {
-        handleSetAgent();
-      }
-      return true;
-    } else {
-      setModal(false);
-      goTo("chat");
-      return false;
     }
   };
 
@@ -574,11 +599,11 @@ const App = () => {
       }
     );
 
-    let curr = cloneArray(chats); // TODO achar maneira mais inteligente de evitar referência
     const idx = findIdxById(currentChat);
-    curr[idx].messages.unshift(msg.data);
 
-    setChats(curr);
+    setChats((draft) => {
+      draft[idx].messages.unshift(msg.data);
+    });
     setModal(false);
     return true;
   };
@@ -715,7 +740,23 @@ const App = () => {
       return c;
     });
 
-    setChats(queried);
+    setChats((draft) => {
+      draft.map((c) => {
+        const lowerStr = string.toLowerCase();
+        let str = true;
+        let pin = true;
+        if (string) {
+          str =
+            c.displayName.toLowerCase().includes(lowerStr) ||
+            c.chatId.slice(0, 12).includes(lowerStr);
+        }
+        if (pinned) {
+          pin = c.agentId === me;
+        }
+        c.filtered = str && pin;
+        return c;
+      });
+    });
   };
 
   const handleSettingsModal = () => {
@@ -738,13 +779,11 @@ const App = () => {
     data.agentId = me;
     data.chatId = currentChat;
     const salesMsg = await axios.post(`${url}sales/new`, data, params);
-    addMessagesToConversations([
-      {
-        chatId: currentChat,
-        messages: [salesMsg.data],
-        lastMessageAt: new Date().toString(),
-      },
-    ]);
+    console.log(salesMsg);
+    addMessageToConversations({
+      chatId: salesMsg.data.chatId,
+      message: salesMsg.data,
+    });
     setModal(false);
   };
 

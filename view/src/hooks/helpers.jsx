@@ -63,7 +63,7 @@ export function parseText(text, enter = true) {
   if (!enter) {
     lineBreak = "&nbsp;";
   } else {
-    str = urlify(str);
+    // str = urlify(str);
   }
 
   if (typeof str !== "string") {
@@ -75,3 +75,14 @@ export function parseText(text, enter = true) {
       .replace(strong, "<b>$1</b>");
   }
 }
+
+export const idToPhone = (id) => {
+  const parsed = id.slice(2, id.indexOf("@"));
+  const ddd = parsed.slice(0, 2);
+  const lastPart = parsed.slice(-4);
+  let firstPart = parsed.slice(2, -4);
+  if (firstPart.length === 4) {
+    firstPart = "9" + firstPart;
+  }
+  return `(${ddd}) ${firstPart}-${lastPart}`;
+};
