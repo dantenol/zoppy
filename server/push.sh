@@ -1,3 +1,5 @@
+v=$(awk -F"v" 'BEGIN{OFS=FS} $1==""{$2=$2+1}1' LATEST)
+
 sed -i "s/\"latest\"/$v/g" "../.github/workflows/s3.yml"
 git add .
 git commit -m 'replace version'
