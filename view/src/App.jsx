@@ -51,7 +51,7 @@ const App = () => {
     try {
       const isSetup = (await axios(`${url}chats/online`, params)).data;
       if (isSetup) {
-        loadChats();
+        loadChats(socket);
         getStatus();
         window.socket = socket;
       } else {
@@ -73,10 +73,15 @@ const App = () => {
   };
 
   const evaluateStatus = (data) => {
-    const onlineStates = ["TIMEOUT", "CONNECTED", "PAIRING"];
+    const onlineStates = ["TIMEOUT", "CONNECTED", "PAIRING", "OPENING"];
     if (!onlineStates.includes(data.connection)) {
+      console.log("OFFLINE", data);
       setModal({ type: "offline" });
-    } else if (data.online && modal && modal.type === "offline") {
+    } else if (
+      onlineStates.includes(data.connection) &&
+      modal &&
+      modal.type === "offline"
+    ) {
       setModal(false);
     } else if (!data.charging && data.battery < 20) {
       setLowBattery(true);
@@ -87,7 +92,6 @@ const App = () => {
 
   const getStatus = async () => {
     const { data } = await axios(`${url}chats/status`, params);
-    console.log(data);
     evaluateStatus(data);
   };
 
@@ -154,7 +158,7 @@ const App = () => {
     window.location.hash = "";
     if (localStorage.access_token) {
       checkOnline();
-      socket = io("https://demo.zoppy.app:3002", {
+      socket = io({
         secure: true,
         query: {
           access_token: localStorage.access_token,
@@ -162,6 +166,13 @@ const App = () => {
       });
       socket.on("reload", () => {
         window.location.reload();
+      });
+      socket.on("setAgent", (data) => {
+        handleChangeAgent(data);
+      });
+      socket.on("loadedChats", (data) => {
+        console.log(data);
+        handleRecieveChats(data);
       });
     } else {
       localStorage.clear();
@@ -235,37 +246,10 @@ const App = () => {
     }
   };
 
-  const loadChats = async () => {
-    try {
-      loadAgents();
-      const res = await axios(`${url}chats/all`, params);
-      res.data.forEach((c) => {
-        const image = colors[Math.floor(Math.random() * 6)];
-        c.profilePic = c.profilePic || image;
-        c.firstClick = true;
-        c.filtered = true;
-        c.more = true;
-        c.displayName = c.customName || c.name;
-        if (c.messages.length && c.messages[0].mine) {
-          c.unread = 0;
-        }
-      });
-
-      setChats((draft) => {
-        draft = res.data;
-      });
-    } catch (error) {
-      console.log(error);
-      if (error.response.status === 401) {
-        alert(
-          "Fizemos alguns ajustes por aqui, e você vai ter que logar novamente"
-        );
-        clearLoginData();
-        window.location.reload();
-      } else {
-        alert("Algo deu errado no login. Tente novamente mais tarde");
-      }
-    }
+  const loadChats = async (socketS) => {
+    loadAgents();
+    console.log('requesting chats');
+    socketS.emit("getChats");
   };
 
   const findIdxById = (id, chatsArr = chats) => {
@@ -315,6 +299,7 @@ const App = () => {
     setSelectedChatIndex(index);
     const curr = chats[index];
     setNewChat(false);
+    loadOldMessages(null, id);
     setCurrentChat(curr.chatId);
     goTo("chat");
 
@@ -381,9 +366,9 @@ const App = () => {
       return;
     }
 
-    if (data.chatId !== currentChat || msg.type !== "sale") {
+    if (data.chatId !== currentChat && msg.type !== "sale") {
       const notifyable = !chats[idx].agentId || chats[idx].agentId === me;
-      if (notifyable) {
+      if (notifyable && msg.timestamp >= chats[idx].lastMessageAt) {
         sound = true;
       }
     }
@@ -406,8 +391,34 @@ const App = () => {
     });
 
     sound && audio.play();
-    if (idx > selectedChatIndex) {
+    if (selectedChatIndex >= 0 && idx > selectedChatIndex) {
       setSelectedChatIndex(selectedChatIndex + 1);
+    }
+  };
+
+  const handleRecieveChats = ({ data, count }) => {
+    console.log(data, count);
+    const chts = data.map((c) => {
+      const image = colors[Math.floor(Math.random() * 6)];
+      c.profilePic = c.profilePic || image;
+      c.firstClick = true;
+      c.filtered = true;
+      c.more = true;
+      c.displayName = c.customName || c.name;
+      if (c.messages.length && c.messages[0].mine) {
+        c.unread = 0;
+      }
+      return c;
+    });
+
+    if (!count) {
+      console.log('STARTING');
+      setChats(() => chts);
+    } else {
+      setChats((draft) => {
+        draft.push(...chts);
+        draft.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
+      });
     }
   };
 
@@ -448,22 +459,24 @@ const App = () => {
     }
   };
 
-  const loadOldMessages = async () => {
-    const idx = findIdxById(currentChat);
+  const loadOldMessages = async (e, chatId = currentChat) => {
+    console.log(chatId);
+    const idx = findIdxById(chatId);
     const curr = [...chats];
     const msgsNumber = curr[idx].messages.length;
     const msgs = await axios(
-      `${url}chats/${currentChat}/messages?filter={"skip":${msgsNumber}}`,
+      `${url}chats/${chatId}/messages?filter={"skip":${msgsNumber}}`,
       params
     );
 
     if (!msgs.data.length) {
       console.log("no msgs");
-      // updateChat({more: false}, currentChat)
+      updateChat({ more: false }, chatId);
+    } else {
+      setChats((draft) => {
+        draft[idx].messages.push(...msgs.data);
+      });
     }
-    setChats((draft) => {
-      draft[idx].messages.push(...msgs.data);
-    });
   };
 
   const handleNewContact = async (name, to) => {
@@ -524,6 +537,7 @@ const App = () => {
         chatId: to,
       };
       const idx = selectedChatIndex;
+      handleSetAgent();
       setChats((draft) => {
         draft[idx].messages.unshift(data);
       });
@@ -694,21 +708,21 @@ const App = () => {
         },
         params
       );
-
-      const { agentId, agentLetter } = data;
-      updateChat(
-        {
-          agentId,
-          agentLetter,
-        },
-        chat
-      );
-
-      return Boolean(agentId);
     } catch (error) {
       console.log(error);
       throw new Error("error");
     }
+  };
+
+  const handleChangeAgent = (data) => {
+    const { agentId, agentLetter } = data;
+    updateChat(
+      {
+        agentId,
+        agentLetter,
+      },
+      data.chatId
+    );
   };
 
   const loadAgents = async () => {

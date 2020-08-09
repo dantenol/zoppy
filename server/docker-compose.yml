@@ -1,31 +1,66 @@
-version: '3'
+version: '3.8'
 
 services:
   server:
     container_name: SERVER
-    build: "."
+    build: .
     volumes:
-      - ./:/usr/src/app
+      - ~/session1:/app/session
       # - ./node_modules:/node-app/node_modules
     environment:
       NODE_ENV: development
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: pass
+      WA_BROWSER_WS_ENDPOINT: 'http://browser:3000'
+      WA_DISABLE_SPINS: 'true'
+      # ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      # ME_CONFIG_MONGODB_ADMINPASSWORD: pass
     depends_on:
       - db
+      - browser
     links:
       - db
+      - browser
     ports:
-      - '3001:3001'
+      - '443:3001'
+    networks:
+      - mongo-compose-network
 
+  browser:
+    image: browserless/chrome
+    hostname: browser
+    ports:
+      - "3000:3000"
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    environment:
+      CONNECTION_TIMEOUT: -1
+      KEEP_ALIVE: 'true'
+      WORKSPACE_EXPIRE_DAYS: 1
+      ENABLE_CORS: 'true'
+      CHROME_REFRESH_TIME: 86400000
+      DEFAULT_BLOCK_ADS: 'true'
+      FUNCTION_ENABLE_INCOGNITO_MODE: 'true'
+    networks:
+      - mongo-compose-network
+          
   db:
     image: 'mongo'
-    container_name: MONGO
-    # ports:
-    #   - '27017:27017'
-    # volumes:
-    #   - /data/zoppydb:/data/db
+    container_name: db
+    ports:
+      - '27017:27017'
+    volumes:
+      - ~/zoppydb1:/data/db
     command: --quiet
+    networks:
+      - mongo-compose-network
     # environment:
     #   MONGO_INITDB_ROOT_USERNAME: root
     #   MONGO_INITDB_ROOT_PASSWORD: pass
+
+networks: 
+  mongo-compose-network:
+    driver: bridge

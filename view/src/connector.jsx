@@ -1,4 +1,4 @@
-export const url = "https://demo.zoppy.app/api/";
+export const url = "/api/";
 
 export const params = {
   params: {

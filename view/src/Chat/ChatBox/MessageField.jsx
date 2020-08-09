@@ -172,16 +172,16 @@ const MessageField = ({ message, handleChangeMessage, send, handleModal }) => {
         <button onClick={() => handlesendButton()}>
           <img src={sendImg} alt="Enviar" />
         </button>
-        ) : (
-        {/* <button
+        {/* ) : (
+        <button
           class={classNames(classes.record, classes[isRecording])}
           id="recorder"
           onClick={handleRecord}
         >
           <img src={mic} alt="Enviar áudio" />
         </button>
-        )} */}
-        {/* <audio src={this.state.blobURL} controls="controls" hidden /> */}
+        )}
+        <audio src={this.state.blobURL} controls="controls" hidden /> */}
       </div>
     </>
   );

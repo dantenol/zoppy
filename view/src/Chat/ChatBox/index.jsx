@@ -6,7 +6,6 @@ import Spinner from "../Spinner";
 import MessageField from "./MessageField";
 import Bubble from "./Bubble";
 import Day from "./Bubble/Day";
-import { cloneArray } from "../../hooks/helpers";
 
 const Chat = ({
   messages,
@@ -21,7 +20,6 @@ const Chat = ({
   const [message, setMessage] = useState("");
   const isGroup = chatId.includes("-");
   const messagesEndRef = useRef();
-  const msgs = cloneArray(messages)
 
   let lastDay = new Date(messages[0].timestamp);
 
@@ -29,7 +27,8 @@ const Chat = ({
     messagesEndRef.current.scrollIntoView();
   };
 
-  useEffect(scrollToBottom, [messages]);
+  useEffect(scrollToBottom, []);
+
   return (
     <div className={classes.chat}>
       <div className={classes.scroll}>
@@ -37,7 +36,8 @@ const Chat = ({
           <div ref={messagesEndRef} />
           <>
             {messages.length &&
-              msgs.map((m, i) => {
+              messages.map((msg, i) => {
+                const m = { ...msg };
                 const last = lastDay;
                 const current = m.timestamp;
                 if (m.mine && !m.agentId) {
@@ -46,17 +46,6 @@ const Chat = ({
                 lastDay = current;
                 if (m === "none") {
                   return;
-                } else if (!moment(last).isSame(lastDay, "day")) {
-                  return (
-                    <Fragment key={m.messageId}>
-                      <Day day={last} />
-                      <Bubble
-                        showMedia={showMedia}
-                        message={m}
-                        isGroup={isGroup}
-                      />
-                    </Fragment>
-                  );
                 } else if (i === messages.length - 1) {
                   return (
                     <Fragment key={m.messageId}>
@@ -67,6 +56,17 @@ const Chat = ({
                         isGroup={isGroup}
                       />
                       <Day day={last} />
+                    </Fragment>
+                  );
+                } else if (!moment(last).isSame(lastDay, "day")) {
+                  return (
+                    <Fragment key={m.messageId}>
+                      <Day day={last} />
+                      <Bubble
+                        showMedia={showMedia}
+                        message={m}
+                        isGroup={isGroup}
+                      />
                     </Fragment>
                   );
                 } else {
@@ -80,9 +80,8 @@ const Chat = ({
                   );
                 }
               })}
-            {loading ? (
-              <Spinner />
-            ) : (
+            {loading && <Spinner />}
+            {more && (
               <div onClick={handleLoadMore} className={classes.loadMore}>
                 Carregar mais
               </div>

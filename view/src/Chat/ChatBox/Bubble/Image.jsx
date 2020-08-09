@@ -3,6 +3,7 @@ import moment from "moment";
 
 import classes from "./index.module.css";
 import FormattedSpan from "../../../hooks/FormattedSpan";
+import { url } from "../../../connector";
 
 const Image = ({ message, isGroup, showMedia }) => (
   <div>
@@ -14,7 +15,14 @@ const Image = ({ message, isGroup, showMedia }) => (
         style={{
           backgroundImage: `url(data:image/jpg;base64,${message.body})`,
         }}
-      ></div>
+      >
+        <div
+          className={classes.highResImg}
+          style={{
+            backgroundImage: `url(${url}chats/download/${message.messageId}?access_token=${localStorage.access_token})`,
+          }}
+        />
+      </div>
       {message.caption && (
         <div className={classes.msg}>
           <FormattedSpan text={message.caption} />

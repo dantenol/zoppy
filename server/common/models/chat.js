@@ -4,9 +4,6 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 const wa = require('@open-wa/wa-automate');
-const io = require('socket.io')();
-
-const certs = require('../../server/ssl/certs');
 
 require('axios-debug-log')({
   request: function (debug, config) {
@@ -24,12 +21,13 @@ require('axios-debug-log')({
 let model, wp, QRbuffer, myNumber, battery, charging, startedSetup, sts;
 const sentMessages = [];
 const status = {
-  connection: 'CONNECTED'
+  connection: 'CONNECTED',
 };
 
 const validMsgTypes = [
   'chat',
   'image',
+  'sticker',
   'ptt',
   'video',
   'ciphertext',
@@ -37,307 +35,342 @@ const validMsgTypes = [
   'document',
 ];
 
-async function start(wpp) {
-  wp = wpp;
-
-  myNumber = (await wpp.getMe()).wid;
-  console.log('My number %s', myNumber);
-  wpp.onAnyMessage((msg) => {
-    saveMsg(msg);
+module.exports = function (Chat) {
+  let io;
+  wa.ev.on('qr.**', async (qrcode) => {
+    QRbuffer = Buffer.from(
+      qrcode.replace('data:image/png;base64,', ''),
+      'base64',
+    );
+    console.log(QRbuffer);
   });
 
-  io.sockets.emit('reload');
-  wpp.onBattery((b) => {
-    console.log(b);
-    battery = b;
-    status.battery = b;
-    io.sockets.emit('status', status);
-  });
-  wpp.onPlugged((b) => {
-    console.log(b);
-    charging = b;
-    status.charging = b;
-    io.sockets.emit('status', status);
-  });
+  function isSent({chatId, body}) {
+    return sentMessages.findIndex((m) => m.to === chatId && m.message === body);
+  }
 
-  wpp.onStateChanged((s) => {
-    console.log(s);
-    sts = s;
-    status.connection = s;
-    io.sockets.emit('status', status);
-    switch (s) {
-      case 'CONFLICT':
-        wpp.forceRefocus();
-        break;
-      case 'UNPAIRED':
-        model.kill();
-        model.setup();
-        break;
-      default:
-        break;
+  async function start(wpp) {
+    if (!Chat.app.io) {
+      return setTimeout(() => {
+        console.log('retrying');
+        start(wpp);
+      }, 500);
+    } else {
+      io = Chat.app.io;
+      console.log('GOT IO');
     }
-  });
+    const send = await wpp
+      .getPage()
+      .evaluate(() => window.WAPI.sendMessage.toString());
+    console.log('WAPI', send);
+    if (!send.includes('0x')) {
+      wpp.kill();
+      return Chat.setup();
+    }
+    wp = wpp;
 
-  process.on('SIGINT', () => {
-    wpp.close();
-  });
-
-  loadAllMessages(wpp);
-}
-
-wa.ev.on('qr.**', async (qrcode) => {
-  QRbuffer = Buffer.from(
-    qrcode.replace('data:image/png;base64,', ''),
-    'base64',
-  );
-  console.log(QRbuffer);
-});
-
-function isSent({chatId, body}) {
-  return sentMessages.findIndex((m) => m.to === chatId && m.message === body);
-}
-
-async function createMessage(msg, latest, starting, newChat) {
-  const Message = model.app.models.Message;
-  const waMsg = await wp.getMessageById(msg.id);
-  if (!validMsgTypes.includes(msg.type)) {
-    return;
-  }
-  let time = waMsg.t;
-  if (latest) {
-    time = new Date().valueOf() / 1000;
-  }
-  let socketObj = {};
-  if (newChat) {
-    socketObj = newChat;
-  }
-  try {
-    const savedMsg = await Message.create({
-      messageId: waMsg.id,
-      chatId: waMsg.chatId._serialized,
-      body: waMsg.body,
-      sender:
-        waMsg.sender.pushname ||
-        waMsg.sender.formattedName ||
-        waMsg.sender.id ||
-        waMsg.sender,
-      type: waMsg.type,
-      mine: waMsg.sender.id === myNumber || waMsg.fromMe,
-      timestamp: time * 1000,
-      quote: waMsg.quotedMsg || undefined,
-      clientUrl: waMsg.clientUrl,
-      mediaKey: waMsg.mediaKey,
-      mimetype: waMsg.mimetype,
-      caption: waMsg.caption,
-      starting,
+    myNumber = (await wpp.getMe()).wid;
+    console.log('My number %s', myNumber);
+    wpp.onAnyMessage((msg) => {
+      saveMsg(msg);
     });
-    socketObj.message = savedMsg;
-    if (isSent(savedMsg) < 0) {
-      io.sockets.emit('newMessage', socketObj);
-    }
-    return savedMsg;
-  } catch (error) {
-    console.log('duplicated %s', waMsg.id);
-  }
-}
 
-async function saveMsg(msg) {
-  if (!validMsgTypes.includes(msg.type)) {
-    return;
+    io.on('connection', (socket) => {
+      console.log('connected on Chat');
+      socket.on('getChats', async () => {
+        console.log('GET CHATS', new Date());
+        const chats = await model.getAll();
+        console.log('LOADED', new Date());
+        let count = 0;
+        const id = setInterval(() => {
+          const sendingChats = chats.slice(count, 50);
+          if (sendingChats.length) {
+            socket.emit('loadedChats', {count, data: sendingChats});
+            console.log('SENT', new Date());
+            count += sendingChats.length;
+          } else {
+            clearInterval(id);
+          }
+        }, 200);
+      });
+    });
+    io.sockets.emit('reload');
+
+    process.on('SIGINT', () => {
+      wpp.close();
+    });
+
+    loadAllMessages(wpp);
+    setStateListeners();
   }
-  const chat = await model.findById(msg.chatId);
-  let previousTimestamp;
-  let newChat;
-  if (!chat) {
+
+  function setStateListeners() {
+    wp.onBattery((b) => {
+      console.log(b);
+      battery = b;
+      status.battery = b;
+      io.sockets.emit('status', status);
+    });
+    wp.onPlugged((b) => {
+      console.log(b);
+      charging = b;
+      status.charging = b;
+      io.sockets.emit('status', status);
+    });
+
+    wp.onStateChanged((s) => {
+      console.log(s);
+      sts = s;
+      status.connection = s;
+      io.sockets.emit('status', status);
+      switch (s) {
+        case 'CONFLICT':
+          wpp.forceRefocus();
+          break;
+        case 'UNPAIRED':
+          model.kill();
+          model.setup();
+          break;
+        default:
+          break;
+      }
+    });
+  }
+
+  async function createMessage(msg, latest, starting, newChat) {
+    const Message = model.app.models.Message;
     const waMsg = await wp.getMessageById(msg.id);
-    const wpChat = waMsg.chat;
-    console.log('new chat:');
-    newChat = await model.create({
-      chatId: msg.chatId,
-      name:
-        wpChat.name ||
-        wpChat.pushname ||
-        wpChat.contact.verifiedName ||
-        wpChat.contact.formattedName ||
-        wpChat.formattedTitle,
-      type: wpChat.kind,
-      lastMessageAt: wpChat.t * 1000,
-      mute: false,
-      pin: false,
-      newConversation: true,
-    });
-    io.sockets.emit('newChat', newChat);
-  } else {
-    previousTimestamp = chat.lastMessageAt;
-    await chat.updateAttributes({
-      lastMessageAt: new Date(msg.t * 1000),
-      profilePic: msg.chat.contact.profilePicThumbObj.eurl,
-    });
+    if (!validMsgTypes.includes(msg.type)) {
+      return;
+    }
+    let time = waMsg.t;
+    if (latest) {
+      time = new Date().valueOf() / 1000;
+    }
+    let socketObj = {};
+    if (newChat) {
+      socketObj = newChat;
+    }
+    try {
+      const savedMsg = await Message.create({
+        messageId: waMsg.id,
+        chatId: waMsg.chatId._serialized,
+        body: waMsg.body,
+        sender:
+          waMsg.sender.pushname ||
+          waMsg.sender.formattedName ||
+          waMsg.sender.id ||
+          waMsg.sender,
+        type: waMsg.type,
+        mine: waMsg.sender.id === myNumber || waMsg.fromMe,
+        timestamp: time * 1000,
+        quote: waMsg.quotedMsg || undefined,
+        clientUrl: waMsg.clientUrl,
+        mediaKey: waMsg.mediaKey,
+        mimetype: waMsg.mimetype,
+        caption: waMsg.caption,
+        starting,
+      });
+      socketObj.message = savedMsg;
+      if (isSent(savedMsg) < 0 && savedMsg.timestamp > new Date() - 2000) {
+        io.sockets.emit('newMessage', socketObj);
+      }
+      return savedMsg;
+    } catch (error) {
+      // console.log('duplicated %s', waMsg.id);
+    }
   }
-  const newChatFromMe = msg.fromMe && !chat ? true : undefined;
-  await createMessage(msg, true, newChatFromMe, newChat);
-  const loaded = await wp.getAmountOfLoadedMessages();
-  if (loaded > 3000) {
-    console.log(loaded);
-    await wp.cutMsgCache();
-  }
-  if (!ignoreChat(chat)) {
-    if (!msg.fromMe || msg.from !== myNumber) {
-      isConversion(msg);
-    } else if (msg.fromMe && chat) {
-      isStarting(msg, {
-        previousTimestamp,
-        newConversation: chat.newConversation,
+
+  async function saveMsg(msg) {
+    if (!validMsgTypes.includes(msg.type)) {
+      return;
+    }
+    const chat = await model.findById(msg.chatId);
+    let previousTimestamp;
+    let newChat;
+    if (!chat) {
+      const waMsg = await wp.getMessageById(msg.id);
+      const wpChat = waMsg.chat;
+      console.log('new chat:');
+      newChat = await model.create({
+        chatId: msg.chatId,
+        name:
+          wpChat.name ||
+          wpChat.pushname ||
+          wpChat.contact.verifiedName ||
+          wpChat.contact.formattedName ||
+          wpChat.formattedTitle,
+        type: wpChat.kind,
+        lastMessageAt: wpChat.t * 1000,
+        mute: false,
+        pin: false,
+        newConversation: true,
+      });
+      io.sockets.emit('newChat', newChat);
+    } else {
+      previousTimestamp = chat.lastMessageAt;
+      await chat.updateAttributes({
+        lastMessageAt: new Date(msg.t * 1000),
+        profilePic: msg.chat.contact.profilePicThumbObj.eurl,
       });
     }
-  }
-}
-
-async function loadAllMessages(client) {
-  const Message = model.app.models.Message;
-  const chats = await client.getAllChats();
-
-  if (process.env.RESET === 'true') {
-    await model.deleteAll();
-    await Message.deleteAll();
-  }
-
-  await Promise.all(
-    chats.map(async (chat) => {
-      const chatId = chat.id;
-      const currChat = await model.findById(chatId);
-
-      if (currChat) {
-        currChat.updateAttributes({lastMessageAt: chat.t * 1000});
-      } else {
-        try {
-          await model.create({
-            chatId,
-            name:
-              chat.name ||
-              chat.pushname ||
-              chat.contact.verifiedName ||
-              chat.contact.formattedName ||
-              chat.formattedTitle,
-            type: chat.kind,
-            lastMessageAt: chat.t * 1000,
-            profilePic: chat.contact.profilePicThumbObj.eurl,
-            mute: Boolean(chat.mute),
-            pin: chat.pin,
-          });
-        } catch (error) {
-          console.log('duplicated %s', chatId);
-        }
+    const newChatFromMe = msg.fromMe && !chat ? true : undefined;
+    await createMessage(msg, true, newChatFromMe, newChat);
+    const loaded = await wp.getAmountOfLoadedMessages();
+    if (loaded > 3000) {
+      console.log(loaded);
+      await wp.cutMsgCache();
+    }
+    if (!ignoreChat(chat)) {
+      if (!msg.fromMe || msg.from !== myNumber) {
+        isConversion(msg);
+      } else if (msg.fromMe && chat) {
+        isStarting(msg, {
+          previousTimestamp,
+          newConversation: chat.newConversation,
+        });
       }
+    }
+  }
 
-      let allMessages = await client.getAllMessagesInChat(chatId, true);
-      console.log('loaded %d messages on chat %s', allMessages.length, chatId);
+  async function loadAllMessages(client) {
+    const Message = model.app.models.Message;
+    const chats = await client
+      .getPage()
+      .evaluate(() => window.WAPI.getAllChatIds());
+    console.log(chats, chats.length);
+    // const chats = await client.getAllChats();
 
-      if (!allMessages.length) {
-        allMessages = await client.loadEarlierMessages(chatId);
-      }
+    if (process.env.RESET === 'true') {
+      await model.deleteAll();
+      await Message.deleteAll();
+    }
 
-      await Promise.all(
-        allMessages.map(async (msg) => {
+    await Promise.all(
+      chats.map(async (chatId) => {
+        const currChat = await model.findById(chatId);
+        const chat = await client.getChatById(chatId);
+
+        if (currChat) {
+          currChat.updateAttributes({lastMessageAt: chat.t * 1000});
+        } else {
           try {
-            await createMessage(msg);
-          } catch (error) {
-            console.log('duplicated %s', msg.id);
-          }
-        }),
+            await model.create({
+              chatId,
+              name:
+                chat.name ||
+                chat.pushname ||
+                chat.contact.verifiedName ||
+                chat.contact.formattedName ||
+                chat.formattedTitle,
+              type: chat.kind,
+              lastMessageAt: chat.t * 1000,
+              profilePic: chat.contact.profilePicThumbObj.eurl,
+              mute: Boolean(chat.mute),
+              pin: chat.pin,
+            });
+          } catch (error) {}
+        }
+
+        let allMessages = await client.getAllMessagesInChat(chatId, true);
+        // console.log(
+        //   'loaded %d messages on chat %s',
+        //   allMessages.length,
+        //   chatId,
+        // );
+
+        if (!allMessages.length) {
+          allMessages = await client.loadEarlierMessages(chatId);
+        }
+
+        await Promise.all(
+          allMessages.map(async (msg) => {
+            try {
+              await createMessage(msg);
+            } catch (error) {
+              // console.log('duplicated %s', msg.id);
+            }
+          }),
+        );
+      }),
+    );
+    console.log('terminado', new Date());
+  }
+
+  async function getUnreadChats() {
+    const newMsgs = await wp.getIndicatedNewMessages();
+    return newMsgs;
+  }
+
+  async function setSeen(id) {
+    const sen = await wp.sendSeen(id);
+    return sen;
+  }
+
+  async function isConversion(msg) {
+    const Message = model.app.models.Message;
+    const msgs = await Message.find({
+      where: {chatId: msg.chatId},
+      order: 'timestamp DESC',
+      sort: 'timestamp DESC',
+      limit: 2,
+    });
+    const last = msgs.find((m) => m.messageId !== msg.id);
+    console.log('LAST: ', last, moment(last.t * 1000).isSame(moment(), 'day'));
+    if (moment(last.t * 1000).isSame(moment(), 'day') && last.starting) {
+      console.log('CONVERSION');
+      await Message.upsertWithWhere(
+        {messageId: last.messageId},
+        {answered: true},
       );
-    }),
-  );
-  console.log('terminado', new Date());
-}
-
-async function getUnreadChats() {
-  const newMsgs = await wp.getIndicatedNewMessages();
-
-  return newMsgs;
-}
-
-async function setSeen(id) {
-  const sen = await wp.sendSeen(id);
-
-  return sen;
-}
-
-async function isConversion(msg) {
-  const Message = model.app.models.Message;
-  const msgs = await Message.find({
-    where: {chatId: msg.chatId},
-    order: 'timestamp DESC',
-    sort: 'timestamp DESC',
-    limit: 2,
-  });
-  const last = msgs.find((m) => m.messageId !== msg.id);
-  console.log('LAST: ', last, moment(last.t * 1000).isSame(moment(), 'day'));
-  if (moment(last.t * 1000).isSame(moment(), 'day') && last.starting) {
-    console.log('CONVERSION');
-    await Message.upsertWithWhere(
-      {messageId: last.messageId},
-      {answered: true},
-    );
-    const r = await model.upsertWithWhere(
-      {chatId: msg.chatId},
-      {newConversation: false},
-    );
-    console.log('IS CONVERSION', r);
+      const r = await model.upsertWithWhere(
+        {chatId: msg.chatId},
+        {newConversation: false},
+      );
+      console.log('IS CONVERSION', r);
+    }
   }
-}
 
-async function isStarting(msg, {previousTimestamp, newConversation}) {
-  const Message = model.app.models.Message;
-  const last = moment(previousTimestamp);
-  console.log(
-    'STARTING',
-    last.isBefore(moment().startOf('D').subtract(2, 'D'), 'D'),
-  );
-  if (last.isBefore(moment().startOf('D').subtract(2, 'D'), 'D')) {
-    console.log(1);
-    await Message.upsertWithWhere({messageId: msg.id}, {starting: true});
-    await model.upsertWithWhere({chatId: msg.chatId}, {newConversation: true});
-  } else if (last.isSame(moment(), 'D') && newConversation) {
-    console.log(2);
-    await Message.upsertWithWhere({messageId: msg.id}, {starting: true});
-    await Message.upsertWithWhere(
-      {
-        and: [
-          {chatId: msg.chatId},
-          {timestamp: {gt: moment().startOf('D').toDate()}},
-          {messageId: {neq: msg.id}},
-        ],
-      },
-      {starting: false},
+  async function isStarting(msg, {previousTimestamp, newConversation}) {
+    const Message = model.app.models.Message;
+    const last = moment(previousTimestamp);
+    console.log(
+      'STARTING',
+      last.isBefore(moment().startOf('D').subtract(2, 'D'), 'D'),
     );
-    console.log('CHANGED STARTING MESSAGE');
+    if (last.isBefore(moment().startOf('D').subtract(2, 'D'), 'D')) {
+      await Message.upsertWithWhere({messageId: msg.id}, {starting: true});
+      await model.upsertWithWhere(
+        {chatId: msg.chatId},
+        {newConversation: true},
+      );
+    } else if (last.isSame(moment(), 'D') && newConversation) {
+      await Message.upsertWithWhere({messageId: msg.id}, {starting: true});
+      await Message.upsertWithWhere(
+        {
+          and: [
+            {chatId: msg.chatId},
+            {timestamp: {gt: moment().startOf('D').toDate()}},
+            {messageId: {neq: msg.id}},
+          ],
+        },
+        {starting: false},
+      );
+      console.log('CHANGED STARTING MESSAGE');
+    }
   }
-}
 
-function ignoreChat(chat) {
-  const Admin = model.app.models.Admin;
-  if (!chat || chat.chatId.includes('@g')) {
-    return true;
+  function ignoreChat(chat) {
+    const Admin = model.app.models.Admin;
+    if (!chat || chat.chatId.includes('@g')) {
+      return true;
+    }
+    // const admin = Admin.findOne();
+    // if (admin.ignoreNumbers.includes(chat.chatId)) {
+    //   return false;
+    // }
   }
-  // const admin = Admin.findOne();
-  // if (admin.ignoreNumbers.includes(chat.chatId)) {
-  //   return false;
-  // }
-}
 
-io.on('connection', (socket) => {
-  console.log('connected');
-  socket.on('sendMessage', async (data) => {
-    console.log(data);
-    // const msg = await model.sendMessage(null, ...data);
-    // socket.broadcast.emit('newMessage', msg)
-  });
-});
-const options = await certs();
-io.listen(3002, options);
-
-module.exports = function (Chat) {
   model = Chat;
   Chat.disableRemoteMethodByName('prototype.__delete__messages');
   Chat.disableRemoteMethodByName('prototype.__destroyById__messages');
@@ -371,14 +404,17 @@ module.exports = function (Chat) {
       restartOnCrash: start,
       licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
       disableSpins: true,
+      cacheEnabled:false,
       sessionDataPath: './session',
       headless: !process.env.HEADLESS,
       devtools: false,
-      executablePath: '/usr/bin/google-chrome-stable',
+      browserWSEndpoint: 'ws://browser:3000',
+      // executablePath: '/usr/bin/google-chrome-stable',
       debug: true,
       logQR: true,
       qrRefreshS: 15,
       qrTimeout: 40,
+      authTimeout: 90,
     }).then((client) => start(client));
   };
 
@@ -411,7 +447,9 @@ module.exports = function (Chat) {
   });
 
   Chat.getAll = async () => {
+    console.log('t1', new Date());
     const unread = await getUnreadChats();
+    console.log('t2', new Date());
 
     const unreadObj = {};
     unread.forEach((chat) => {
@@ -428,6 +466,7 @@ module.exports = function (Chat) {
         },
       },
     });
+    console.log('t3', new Date());
 
     conversations.forEach((c, i) => {
       if (unreadObj[c.chatId]) {
@@ -435,6 +474,7 @@ module.exports = function (Chat) {
       }
     });
 
+    console.log('t4', new Date());
     return conversations;
   };
 
@@ -473,11 +513,22 @@ module.exports = function (Chat) {
     });
     const msgs = chat.toJSON();
 
-    if (msgs.messages.length < 50) {
-      Chat.loadMore(chatId);
+    if (!msgs.messages.length) {
+      const msgs = await Chat.loadMore(chatId);
+      console.log('SKIP', filter.skip);
+      console.log('RETURNED', msgs.all);
+      let newMsgs;
+      if (msgs.all) {
+        newMsgs = msgs.msgs.slice(filter.skip);
+      } else {
+        newMsgs = msgs.msgs;
+      }
+      return newMsgs
+        .filter((m) => !!m)
+        .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+    } else {
+      return msgs.messages;
     }
-
-    return msgs.messages;
   };
 
   Chat.remoteMethod('getMessages', {
@@ -539,8 +590,11 @@ module.exports = function (Chat) {
 
   Chat.loadMore = async (chatId) => {
     const earlierMsgs = await wp.loadEarlierMessages(chatId);
+    const all = await wp.getAllMessagesInChat(chatId);
+    console.log('EARLIER', earlierMsgs.length);
+    console.log('ALL', all.length);
     if (earlierMsgs && earlierMsgs.length) {
-      await Promise.all(
+      const msgs = await Promise.all(
         earlierMsgs.map(async (m) => {
           try {
             const msg = await createMessage(m);
@@ -550,6 +604,19 @@ module.exports = function (Chat) {
           }
         }),
       );
+      return {msgs};
+    } else {
+      const msgs = await Promise.all(
+        all.map(async (m) => {
+          try {
+            await createMessage(m);
+            return m;
+          } catch (error) {
+            console.log(error);
+          }
+        }),
+      );
+      return {msgs, all: true};
     }
   };
 
@@ -674,17 +741,12 @@ module.exports = function (Chat) {
 
     const msg = await Message.findById(messageId);
 
-    const mediaData = await wa.decryptMedia(msg);
-
-    // const fileBase64 = `data:${msg.mimetype.replace(
-    //   / /g,
-    //   '',
-    // )};base64,${mediaData.toString('base64')}`;
-
-    // console.log(mediaData);
+    let mediaData;
     if (msg.type === 'sticker') {
-      const img = await sharp('image.webp').png().toBuffer();
-      console.log(img);
+      let stickerDecryptable = await wp.getStickerDecryptable(messageId);
+      mediaData = await wa.decryptMedia(stickerDecryptable);
+    } else {
+      mediaData = await wa.decryptMedia(msg);
     }
 
     res.setHeader('Content-Type', msg.mimetype.split(';')[0]);
@@ -784,7 +846,7 @@ module.exports = function (Chat) {
         agentLetter: usr.firstLetter,
       });
     }
-
+    io.sockets.emit('setAgent', upd);
     return upd;
   };
 

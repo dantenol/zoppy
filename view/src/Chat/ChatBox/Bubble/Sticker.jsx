@@ -6,18 +6,14 @@ import { url } from "../../../connector";
 import classes from "./index.module.css";
 
 const Sticker = ({ message, isGroup }) => (
-  <div>
+  <div className={classes.noBg}>
     <div className={classes.message}>
       {isGroup && !message.mine && <p>{message.sender}</p>}
-      <div
-        className={classes.image}
-        onClick={() => alert("Figurinhas não são suportadas ainda")}
-      >
-        <picture>
-          <source
-            srcSet={`${url}chats/download/${message.messageId}?access_token=${localStorage.access_token}`}
-          />
-        </picture>
+      <div className={classes.sticker}>
+        <img
+          src={`${url}chats/download/${message.messageId}?access_token=${localStorage.access_token}`}
+          alt="Adesivo"
+        />
       </div>
     </div>
     <div className={classes.time}>

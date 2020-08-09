@@ -151,6 +151,29 @@ div.message p {
   cursor: pointer;
 }
 
+.image div {
+  width: 200px;
+  height: 200px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+  cursor: pointer;
+}
+
+.sticker img {
+  width: 100px;
+  height: 100px;
+  margin-bottom: 16px;
+}
+
+div.noBg {
+  background-color: transparent;
+}
+
+div.noBg::after {
+  border-color: transparent;
+}
+
 .audio {
   width: 80px;
   height: 80px;

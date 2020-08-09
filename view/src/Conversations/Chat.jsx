@@ -41,6 +41,8 @@ const Chat = ({ data, handleClick, style }) => {
       setMsg("Áudio");
     } else if (lastMsg.type === "sale") {
       setMsg("Venda");
+    } else if (lastMsg.type === "image") {
+      setMsg("📷 Foto");
     } else {
       setMsg(lastMsg.type);
     }
