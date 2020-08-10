@@ -66,7 +66,7 @@ module.exports = function (Chat) {
 
     await sleep(5000);
     let count = 1;
-    setInterval(() => {
+    setInterval(async () => {
       const send = await wpp
         .getPage()
         .evaluate(() => window.WAPI.sendMessage.toString());
