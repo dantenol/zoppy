@@ -35,6 +35,10 @@ const validMsgTypes = [
   'document',
 ];
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 module.exports = function (Chat) {
   let io;
   wa.ev.on('qr.**', async (qrcode) => {
@@ -59,6 +63,8 @@ module.exports = function (Chat) {
       io = Chat.app.io;
       console.log('GOT IO');
     }
+
+    await sleep(500);
     const send = await wpp
       .getPage()
       .evaluate(() => window.WAPI.sendMessage.toString());
