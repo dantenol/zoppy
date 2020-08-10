@@ -60,7 +60,8 @@
           "kill": true,
           "forceReloadChat": true,
           "checkNum": true,
-          "status": true
+          "status": true,
+          "reset": true
         }
       }
     }

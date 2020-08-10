@@ -36,7 +36,7 @@ const validMsgTypes = [
 ];
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 module.exports = function (Chat) {
@@ -410,7 +410,7 @@ module.exports = function (Chat) {
       restartOnCrash: start,
       licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
       disableSpins: true,
-      cacheEnabled:false,
+      cacheEnabled: false,
       sessionDataPath: './session',
       headless: !process.env.HEADLESS,
       devtools: false,
@@ -909,5 +909,20 @@ module.exports = function (Chat) {
     description: 'Get device status',
     returns: {root: true},
     http: {path: '/status', verb: 'get'},
+  });
+
+  Chat.reset = async () => {
+    if (!wp) {
+      await Chat.deleteAll();
+      await Message.deleteAll();
+      return true;
+    }
+    return false;
+  };
+
+  Chat.remoteMethod('reset', {
+    description: 'reset',
+    returns: {root: true},
+    http: {path: '/reset', verb: 'post'},
   });
 };
