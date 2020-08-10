@@ -16,6 +16,7 @@ RUN npm run custom-key
 
 COPY . .
 RUN npm run prod-db
+RUN npm run update-front
 
 
 EXPOSE 3001
