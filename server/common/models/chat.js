@@ -64,22 +64,15 @@ module.exports = function (Chat) {
       console.log('GOT IO');
     }
 
-    await sleep(5000);
-    let count = 1;
-    setInterval(async () => {
-      const send = await wpp
-        .getPage()
-        .evaluate(() => window.WAPI.sendMessage.toString());
-      console.log('WAPI', send);
-      // if (!send.includes('0x')) {
-      //   wpp.kill();
-      //   return Chat.setup();
-      // }
-      // count += 1;
-      // if (count === 10) {
-        
-      // }
-    }, 1000);
+    // await sleep(5000);
+    const send = await wpp
+      .getPage()
+      .evaluate(() => window.WAPI.sendMessage.toString());
+    console.log('WAPI', send);
+    if (!send.includes('0x')) {
+      wpp.kill();
+      return Chat.setup();
+    }
     wp = wpp;
 
     myNumber = (await wpp.getMe()).wid;
