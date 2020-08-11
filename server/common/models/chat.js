@@ -943,6 +943,7 @@ module.exports = function (Chat) {
   });
 
   Chat.reset = async () => {
+    const Message = Chat.app.models.Message;
     if (!wp) {
       await Chat.deleteAll();
       await Message.deleteAll();
