@@ -20,7 +20,7 @@ const Chat = ({ data, handleClick, style }) => {
   const [msg, setMsg] = useState("");
   const [sent, setSent] = useState();
   let agents;
-  let backgroundColor = 'initial';
+  let backgroundColor = "initial";
   if (window.agents) {
     agents = window.agents;
     _.forEach(agents, (a, k) => {
