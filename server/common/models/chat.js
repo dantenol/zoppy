@@ -53,6 +53,31 @@ module.exports = function (Chat) {
     return sentMessages.findIndex((m) => m.to === chatId && m.message === body);
   }
 
+  async function query(string) {
+    var pattern = new RegExp('.*'+string+'.*', "i")
+    return await Chat.find({
+      where: {
+        or: [
+          {
+            name: {like: pattern},
+          },
+          {
+            chatId: {like: pattern},
+          },
+        ],
+      },
+      order: 'lastMessageAt DESC',
+      limit: 50,
+      include: {
+        relation: 'messages',
+        scope: {
+          limit: 1,
+          order: 'timestamp DESC',
+        },
+      },
+    });
+  }
+
   async function start(wpp) {
     if (!Chat.app.io) {
       return setTimeout(() => {
@@ -89,15 +114,20 @@ module.exports = function (Chat) {
         console.log('LOADED', new Date());
         let count = 0;
         const id = setInterval(() => {
-          const sendingChats = chats.slice(count, 50);
+          const sendingChats = chats.slice(count, count + 50);
           if (sendingChats.length) {
             socket.emit('loadedChats', {count, data: sendingChats});
-            console.log('SENT', new Date());
-            count += sendingChats.length;
+            console.log('SENT', new Date(), sendingChats.length);
+            count += 50;
           } else {
             clearInterval(id);
           }
-        }, 200);
+        }, 100);
+      });
+      socket.on('queryChat', async ({string, pinned}) => {
+        const res = await query(string);
+        console.log(res);
+        socket.emit('queryResult', {res, pinned});
       });
     });
     io.sockets.emit('reload');
@@ -464,6 +494,7 @@ module.exports = function (Chat) {
 
     const conversations = await Chat.find({
       order: 'lastMessageAt DESC',
+      limit: 200,
       include: {
         relation: 'messages',
         scope: {
