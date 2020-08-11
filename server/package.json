@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "v29.0.0",
+  "version": "v30.0.0",
   "main": "server/server.js",
   "engines": {
     "node": ">=4"
