@@ -1,5 +1,6 @@
 v=$(awk -F"v" 'BEGIN{OFS=FS} $1==""{$2=$2+1}1' LATEST)
 
+npm run update-front
 sed -i "s/\"latest\"/\"$v\"/g" "../.github/workflows/s3.yml"
 echo $v
 git add ../.github/workflows/s3.yml
