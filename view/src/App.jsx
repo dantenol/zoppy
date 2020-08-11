@@ -174,6 +174,10 @@ const App = () => {
         console.log(data);
         handleRecieveChats(data);
       });
+      socket.on("status", (data) => {
+        console.log(data);
+        evaluateStatus(data);
+      });
     } else {
       localStorage.clear();
       setModal({
@@ -210,9 +214,8 @@ const App = () => {
       socket.on("sentMessage", (data) => {
         addSentMessageToConversations(data);
       });
-      socket.on("status", (data) => {
-        console.log(data);
-        evaluateStatus(data);
+      socket.on("queryResult", (res) => {
+        handleDBQuery(res);
       });
     }
     return () => {
@@ -220,6 +223,7 @@ const App = () => {
         socket.off("newMessage");
         socket.off("status");
         socket.off("sentMessage");
+        socket.off("queryResult");
       }
     };
   }, [chats]);
@@ -248,7 +252,7 @@ const App = () => {
 
   const loadChats = async (socketS) => {
     loadAgents();
-    console.log('requesting chats');
+    console.log("requesting chats");
     socketS.emit("getChats");
   };
 
@@ -374,7 +378,7 @@ const App = () => {
     }
 
     let unreadCount = chats[idx].unread;
-    if (idx !== selectedChatIndex) {
+    if (idx !== selectedChatIndex && !data.mine) {
       if (unreadCount) {
         unreadCount += 1;
       } else {
@@ -397,7 +401,7 @@ const App = () => {
   };
 
   const handleRecieveChats = ({ data, count }) => {
-    console.log(data, count);
+    console.log(data);
     const chts = data.map((c) => {
       const image = colors[Math.floor(Math.random() * 6)];
       c.profilePic = c.profilePic || image;
@@ -412,7 +416,7 @@ const App = () => {
     });
 
     if (!count) {
-      console.log('STARTING');
+      console.log("STARTING");
       setChats(() => chts);
     } else {
       setChats((draft) => {
@@ -459,6 +463,36 @@ const App = () => {
     }
   };
 
+  const addWithoutDuplicate = (msgArr) => {
+    const idx = findIdxById(msgArr[0].chatId);
+    setChats((draft) => {
+      msgArr.forEach((m) => {
+        const i = draft[idx].messages.findIndex(
+          (c) => c.messageId === m.messageId
+        );
+        if (i < 0) {
+          draft[idx].messages.push(m);
+        }
+      });
+    });
+  };
+
+  const addChatWithoutDuplicate = (chatArr) => {
+    setChats((draft) => {
+      chatArr.forEach((c) => {
+        const image = colors[Math.floor(Math.random() * 6)];
+        const i = draft.findIndex((oc) => oc.chatId === c.chatId);
+        if (i < 0) {
+          c.profilePic = c.profilePic || image;
+          c.filtered = true;
+          c.displayName = c.name;
+          draft.push(c);
+        }
+      });
+      draft.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
+    });
+  };
+
   const loadOldMessages = async (e, chatId = currentChat) => {
     console.log(chatId);
     const idx = findIdxById(chatId);
@@ -473,9 +507,7 @@ const App = () => {
       console.log("no msgs");
       updateChat({ more: false }, chatId);
     } else {
-      setChats((draft) => {
-        draft[idx].messages.push(...msgs.data);
-      });
+      addWithoutDuplicate(msgs.data);
     }
   };
 
@@ -736,32 +768,29 @@ const App = () => {
     }
   };
 
-  const handleQuery = (string, pinned) => {
-    const curr = cloneArray(chats);
-    const queried = curr.map((c) => {
-      const lowerStr = string.toLowerCase();
-      let str = true;
-      let pin = true;
-      if (string) {
-        str =
-          c.displayName.toLowerCase().includes(lowerStr) ||
-          c.chatId.slice(0, 12).includes(lowerStr);
+  const handleDBQuery = ({ res, pinned }) => {
+    const queried = [];
+    res.forEach((c) => {
+      if (pinned && c.agentId === me) {
+        queried.push(c);
+      } else if (!pinned) {
+        queried.push(c);
       }
-      if (pinned) {
-        pin = c.agentId === me;
-      }
-      c.filtered = str && pin;
-      return c;
     });
+    addChatWithoutDuplicate(queried);
+  };
 
+  const handleQuery = (string, pinned) => {
+    socket.emit("queryChat", { pinned, string });
     setChats((draft) => {
       draft.map((c) => {
         const lowerStr = string.toLowerCase();
         let str = true;
         let pin = true;
         if (string) {
+          console.log(c.chatId);
           str =
-            c.displayName.toLowerCase().includes(lowerStr) ||
+            (c.displayName && c.displayName.toLowerCase().includes(lowerStr)) ||
             c.chatId.slice(0, 12).includes(lowerStr);
         }
         if (pinned) {
