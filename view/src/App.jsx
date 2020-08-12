@@ -149,7 +149,7 @@ const App = () => {
     if (localStorage.connected && localStorage.access_token) {
       // getLatestMsgs();
       // getStatus();
-      checkInactive();
+      // checkInactive();
     }
   }, 5000);
 
@@ -371,7 +371,8 @@ const App = () => {
     }
 
     if (data.chatId !== currentChat && msg.type !== "sale") {
-      const notifyable = !chats[idx].agentId || chats[idx].agentId === me;
+      const notifyable =
+        !chats[idx].agentId || chats[idx].agentId === me || !data.mine;
       if (notifyable && msg.timestamp >= chats[idx].lastMessageAt) {
         sound = true;
       }
@@ -456,6 +457,9 @@ const App = () => {
       }
       draft[idx].lastMessageAt = msg.timestamp || new Date().toISOString();
       draft[idx].unread = 0;
+      draft[idx].messages.sort((a, b) =>
+        a.lastMessageAt < b.lastMessageAt ? 1 : -1
+      ); // TODO improve it
       draft.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
     });
     if (waitingMessageIdx >= 0) {
