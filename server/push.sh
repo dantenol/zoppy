@@ -4,13 +4,13 @@ if [ $# -ne 0 ] && [ $1 = 'same' ]
 then
   v=$(awk -F"v" 'BEGIN{OFS=FS} $1==""{$2=$2}1' LATEST)
   awk -i inplace -v ver=$v '{sub(/v[0-9]{2,3}\.0/,ver".0");}1' package.json
-  save = 1
+  save=1
 elif [ $# -ne 0 ]
 then
   v=$1
 else
   awk -i inplace -v ver=$v '{sub(/v[0-9]{2,3}\.0/,ver".0");}1' package.json
-  save = 1
+  save=1
 fi
 
 npm run update-front
