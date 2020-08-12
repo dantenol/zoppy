@@ -44,7 +44,7 @@ const Chat = ({
                   m.agentId = "wpp";
                 }
                 lastDay = current;
-                if (m === "none") {
+                if (m === "none" || m.chatId !== chatId) {
                   return;
                 } else if (i === messages.length - 1) {
                   return (
