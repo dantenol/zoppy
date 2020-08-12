@@ -126,7 +126,6 @@ module.exports = function (Chat) {
       });
       socket.on('queryChat', async ({string, pinned}) => {
         const res = await query(string);
-        console.log(res);
         socket.emit('queryResult', {res, pinned});
       });
     });
