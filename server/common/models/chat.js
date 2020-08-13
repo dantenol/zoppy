@@ -54,7 +54,7 @@ module.exports = function (Chat) {
   }
 
   async function query(string) {
-    var pattern = new RegExp('.*'+string+'.*', "i")
+    const pattern = new RegExp('.*' + string + '.*', 'i');
     return await Chat.find({
       where: {
         or: [
