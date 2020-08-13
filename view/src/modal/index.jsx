@@ -24,6 +24,7 @@ const Modal = ({
   selectUser,
   saveSales,
   handleChangeSettings,
+  passiveSearch,
 }) => {
   const [message, setMessage] = useState("");
   const [number, setNumber] = useState("");
@@ -113,6 +114,15 @@ const Modal = ({
     setMessage(value);
     localStorage.setItem("salesAgentId", value);
     localStorage.setItem("salesAgentProfile", JSON.stringify(agent));
+  };
+
+  const handleNumber = (number) => {
+    setNumber(number);
+    console.log(number);
+    if (number[13].match(/\d/)) {
+      const chat = "55" + number.replace(/\D/g, "");
+      passiveSearch(chat);
+    }
   };
 
   if (file && file.type === "image") {
@@ -268,7 +278,9 @@ const Modal = ({
               placeholder="Celular"
               format="(##) #####-####"
               value={number}
-              onValueChange={({ formattedValue }) => setNumber(formattedValue)}
+              onValueChange={({ formattedValue }) =>
+                handleNumber(formattedValue)
+              }
             />
             <input type="submit" hidden />
           </form>

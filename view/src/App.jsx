@@ -47,6 +47,10 @@ const App = () => {
   const me = localStorage.salesAgentId || localStorage.userId;
   window.me = me;
 
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   const checkOnline = async () => {
     try {
       const isSetup = (await axios(`${url}chats/online`, params)).data;
@@ -158,7 +162,7 @@ const App = () => {
     window.location.hash = "";
     if (localStorage.access_token) {
       checkOnline();
-      socket = io({
+      socket = io("https://localhost:3001", {
         secure: true,
         query: {
           access_token: localStorage.access_token,
@@ -226,7 +230,7 @@ const App = () => {
         socket.off("queryResult");
       }
     };
-  }, [chats]);
+  }, [chats, newChat]);
 
   useEffect(() => {
     let idx = findIdxById(currentChat);
@@ -273,12 +277,23 @@ const App = () => {
     });
   };
 
-  const checkUrl = () => {
-    const url = window.location.pathname.split("/")[1];
-    if (url.length < 12) {
+  const getChat = async (id1, id2) => {
+    const res1 = await axios(`${url}chats/findChat/${id1}`, params);
+    if (res1.data) {
+      return res1.data;
+    }
+    const res2 = await axios(`${url}chats/findChat/${id1}`, params);
+    if (res2.data) {
+      return res2.data;
+    }
+  };
+
+  const checkUrl = async () => {
+    const thisURL = window.location.pathname.split("/")[1];
+    if (thisURL.length < 12) {
       return;
     }
-    const number = /^55(\d{2})([89]?)(\d{4})(\d{4})$/g.exec(url);
+    const number = /^55(\d{2})([89]?)(\d{4})(\d{4})$/g.exec(thisURL);
     if (!number) {
       return;
     }
@@ -366,14 +381,20 @@ const App = () => {
       data.more = true;
       data.unread = 1;
       data.filtered = true;
-      setChats((draft) => draft.unshift(data));
+      data.chatId = msg.chatId;
+      if (!msg.mine) {
+        audio.play();
+      }
+      setChats((draft) => {
+        draft.unshift(data);
+      });
       return;
     }
 
     if (data.chatId !== currentChat && msg.type !== "sale") {
       const notifyable =
-        !chats[idx].agentId || chats[idx].agentId === me || !data.mine;
-      if (notifyable && msg.timestamp >= chats[idx].lastMessageAt) {
+        !chats[idx].agentId || chats[idx].agentId === me;
+      if (notifyable && msg.timestamp >= chats[idx].lastMessageAt && !data.mine) {
         sound = true;
       }
     }
@@ -402,7 +423,6 @@ const App = () => {
   };
 
   const handleRecieveChats = ({ data, count }) => {
-    console.log(data);
     const chts = data.map((c) => {
       const image = colors[Math.floor(Math.random() * 6)];
       c.profilePic = c.profilePic || image;
@@ -435,10 +455,13 @@ const App = () => {
       data.profilePic = colors[Math.floor(Math.random() * 6)];
       data.displayName = idToPhone(data.chatId);
       data.filtered = true;
-      setChats((draft) => draft.unshift(data));
+      data.messages = [msg];
+      setChats((draft) => {
+        draft.unshift(data);
+      });
+      console.log(newChat);
       if (newChat && data.chatId === newChat.chatId) {
         handleSetAgent(false, newChat.chatId);
-        data.displayName = newChat.displayName;
         setNewChat(false);
         setSelectedChatIndex(0);
         selectChat(newChat.chatId);
@@ -450,6 +473,7 @@ const App = () => {
       (m) => m.sending && m.body === msg.body
     );
     setChats((draft) => {
+      _.remove(draft[idx].messages, (d) => d.messageId === msg.messageId);
       if (waitingMessageIdx >= 0) {
         draft[idx].messages[waitingMessageIdx] = msg;
       } else {
@@ -457,9 +481,7 @@ const App = () => {
       }
       draft[idx].lastMessageAt = msg.timestamp || new Date().toISOString();
       draft[idx].unread = 0;
-      draft[idx].messages.sort((a, b) =>
-        a.lastMessageAt < b.lastMessageAt ? 1 : -1
-      ); // TODO improve it
+      draft[idx].messages.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1)); // TODO improve it
       draft.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
     });
     if (waitingMessageIdx >= 0) {
@@ -515,6 +537,11 @@ const App = () => {
     }
   };
 
+  const backgroundContactQuery = async (to) => {
+    const removeNine = to.substring(0, 4) + to.substring(5, to.length);
+    socket.emit("queryChat", { string: removeNine });
+  };
+
   const handleNewContact = async (name, to) => {
     const removeNine = to.substring(0, 4) + to.substring(5, to.length);
     const idx2 = findIdxById(removeNine);
@@ -549,9 +576,13 @@ const App = () => {
     setModal(false);
   };
 
-  const send = async (message, to = currentChat, attempt = 0) => {
+  const send = async (rawMessage, to = currentChat, attempt = 0) => {
     let from;
-    setLastSentMessage(new Date());
+    const message = rawMessage.trim();
+    // setLastSentMessage(new Date());
+    if (!message) {
+      return;
+    }
     if (newChat) {
       to = newChat.chatId;
     }
@@ -560,23 +591,25 @@ const App = () => {
     }
     console.log("sending");
     let id = new Date().valueOf();
-    if (to === currentChat) {
       const data = {
         messageId: id,
         mine: true,
         agentId: me,
         body: message,
-        timestamp: id,
+      timestamp: new Date().toISOString(),
         sending: true,
         type: "chat",
         sender: "Você",
         chatId: to,
       };
+    if (to === currentChat) {
       const idx = selectedChatIndex;
       handleSetAgent();
       setChats((draft) => {
         draft[idx].messages.unshift(data);
       });
+    } else {
+      setNewChat({ ...newChat, messages: [data] });
     }
 
     try {
@@ -781,7 +814,9 @@ const App = () => {
         queried.push(c);
       }
     });
+    if (queried.length) {
     addChatWithoutDuplicate(queried);
+    }
   };
 
   const handleQuery = (string, pinned) => {
@@ -850,6 +885,7 @@ const App = () => {
         handleUpload={handleUploadModal}
         saveSales={saveSales}
         selectUser={selectUser}
+        passiveSearch={backgroundContactQuery}
       />
       <div className={classes.container}>
         <Conversations
