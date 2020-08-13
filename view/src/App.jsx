@@ -297,18 +297,23 @@ const App = () => {
     if (!number) {
       return;
     }
-    const parsed = 55 + number[1] + number[3] + number[4] + "@c.us";
+    const parsed = 55 + number[1] + number[2] + number[3] + number[4] + "@c.us";
     const formatted = `(${number[1]}) ${number[2] || 9}${number[3]}-${
       number[4]
     }`;
+    const removeNine =
+      parsed.substring(0, 4) + parsed.substring(5, parsed.length);
     setURLMessageNumber(formatted);
-    if (findIdxById(parsed) >= 0) {
+    if (findIdxById(removeNine) >= 0) {
+      selectChat(removeNine);
+    } else if (findIdxById(parsed) >= 0) {
       selectChat(parsed);
     } else {
       setModal({
         type: "newChat",
         newNumber: formatted,
       });
+      socket.emit("queryChat", { string: number[3] + number[4] });
     }
     window.history.pushState({}, "Zoppy", "/");
   };
