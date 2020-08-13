@@ -43,6 +43,8 @@ const Chat = ({ data, handleClick, style }) => {
       setMsg("Venda");
     } else if (lastMsg.type === "image") {
       setMsg("📷 Foto");
+    } else if (lastMsg.type === "sticker") {
+      setMsg("📷 Adesivo");
     } else {
       setMsg(lastMsg.type);
     }
