@@ -397,9 +397,12 @@ const App = () => {
     }
 
     if (data.chatId !== currentChat && msg.type !== "sale") {
-      const notifyable =
-        !chats[idx].agentId || chats[idx].agentId === me;
-      if (notifyable && msg.timestamp >= chats[idx].lastMessageAt && !data.mine) {
+      const notifyable = !chats[idx].agentId || chats[idx].agentId === me;
+      if (
+        notifyable &&
+        msg.timestamp >= chats[idx].lastMessageAt &&
+        !data.mine
+      ) {
         sound = true;
       }
     }
