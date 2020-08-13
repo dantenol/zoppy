@@ -516,11 +516,18 @@ const App = () => {
       chatArr.forEach((c) => {
         const image = colors[Math.floor(Math.random() * 6)];
         const i = draft.findIndex((oc) => oc.chatId === c.chatId);
-        if (i < 0) {
           c.profilePic = c.profilePic || image;
           c.filtered = true;
           c.displayName = c.name;
+        c.more = true;
+        c.displayName = c.customName || c.name;
+        if (c.messages.length && c.messages[0].mine) {
+          c.unread = 0;
+        }
+        if (i < 0) {
           draft.push(c);
+        } else {
+          draft[i] = c;
         }
       });
       draft.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
