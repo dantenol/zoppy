@@ -434,6 +434,11 @@ module.exports = function (Chat) {
       return Chat.setup();
     }
     startedSetup = true;
+    let source = {executablePath: '/usr/bin/google-chrome-stable'};
+    console.log('ENV:', process.env.NODE_ENV);
+    if (process.env.NODE_ENV === 'production') {
+      source = {browserWSEndpoint: 'ws://browser:3000'};
+    }
     wa.create({
       killProcessOnBrowserClose: false,
       restartOnCrash: start,
@@ -443,8 +448,7 @@ module.exports = function (Chat) {
       sessionDataPath: './session',
       headless: !process.env.HEADLESS,
       devtools: false,
-      browserWSEndpoint: 'ws://browser:3000',
-      // executablePath: '/usr/bin/google-chrome-stable',
+      ...source,
       debug: true,
       logQR: true,
       qrRefreshS: 15,
