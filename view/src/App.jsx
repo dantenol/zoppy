@@ -162,7 +162,7 @@ const App = () => {
     window.location.hash = "";
     if (localStorage.access_token) {
       checkOnline();
-      socket = io("https://localhost:3001", {
+      socket = io({
         secure: true,
         query: {
           access_token: localStorage.access_token,
@@ -174,9 +174,9 @@ const App = () => {
       socket.on("setAgent", (data) => {
         handleChangeAgent(data);
       });
-      socket.on("loadedChats", (data) => {
-        console.log(data);
-        handleRecieveChats(data);
+      socket.on("loadedChats", (res) => {
+        console.log(res);
+        addChatWithoutDuplicate(res.data);
       });
       socket.on("status", (data) => {
         console.log(data);
