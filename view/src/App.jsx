@@ -516,9 +516,9 @@ const App = () => {
       chatArr.forEach((c) => {
         const image = colors[Math.floor(Math.random() * 6)];
         const i = draft.findIndex((oc) => oc.chatId === c.chatId);
-          c.profilePic = c.profilePic || image;
-          c.filtered = true;
-          c.displayName = c.name;
+        c.profilePic = c.profilePic || image;
+        c.filtered = true;
+        c.displayName = c.name;
         c.more = true;
         c.displayName = c.customName || c.name;
         if (c.messages.length && c.messages[0].mine) {
@@ -606,17 +606,17 @@ const App = () => {
     }
     console.log("sending");
     let id = new Date().valueOf();
-      const data = {
-        messageId: id,
-        mine: true,
-        agentId: me,
-        body: message,
+    const data = {
+      messageId: id,
+      mine: true,
+      agentId: me,
+      body: message,
       timestamp: new Date().toISOString(),
-        sending: true,
-        type: "chat",
-        sender: "Você",
-        chatId: to,
-      };
+      sending: true,
+      type: "chat",
+      sender: "Você",
+      chatId: to,
+    };
     if (to === currentChat) {
       const idx = selectedChatIndex;
       handleSetAgent();
@@ -830,7 +830,7 @@ const App = () => {
       }
     });
     if (queried.length) {
-    addChatWithoutDuplicate(queried);
+      addChatWithoutDuplicate(queried);
     }
   };
 
