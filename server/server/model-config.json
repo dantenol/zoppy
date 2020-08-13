@@ -61,7 +61,8 @@
           "forceReloadChat": true,
           "checkNum": true,
           "status": true,
-          "reset": true
+          "reset": true,
+          "findChat": true
         }
       }
     }
