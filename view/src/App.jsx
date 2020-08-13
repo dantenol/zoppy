@@ -282,7 +282,7 @@ const App = () => {
     if (res1.data) {
       return res1.data;
     }
-    const res2 = await axios(`${url}chats/findChat/${id1}`, params);
+    const res2 = await axios(`${url}chats/findChat/${id2}`, params);
     if (res2.data) {
       return res2.data;
     }
