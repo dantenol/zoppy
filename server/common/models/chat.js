@@ -962,22 +962,13 @@ module.exports = function (Chat) {
   });
 
   Chat.findChat = async (id) => {
-    const chat = Chat.findById(id, {
-      include: {
-        relation: 'messages',
-        scope: {
-          order: 'timestamp DESC',
-          limit: 20,
-        },
-      },
-    });
-    return chat;
+    return await query(id)
   };
 
   Chat.remoteMethod('findChat', {
-    accepts: [{arg: 'id', type: 'string', required: true}],
+    accepts: [{arg: 'query', type: 'string', required: true}],
     description: 'finds chat by chatId',
     returns: {root: true},
-    http: {path: '/findChat/:id', verb: 'get'},
+    http: {path: '/findChat/:query', verb: 'get'},
   });
 };
