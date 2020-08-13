@@ -302,27 +302,30 @@ const App = () => {
     loadOldMessages(null, id);
     setCurrentChat(curr.chatId);
     goTo("chat");
+    let pic = {};
 
+    try {
+      pic = await axios(`${url}chats/${curr.chatId}/profilePic`, params);
+    } catch (error) {
+      console.log("fail to load pic");
+    }
+    const obj = { unread: 0, profilePic: pic.data || curr.profilePic }
     if (curr.firstClick) {
-      let pic = {};
       const msgs = await loadMessages(curr.chatId);
-      try {
-        pic = await axios(`${url}chats/${curr.chatId}/profilePic`, params);
-      } catch (error) {
-        console.log("fail to load pic");
-      }
 
       updateChat(
         {
           messages: msgs,
-          profilePic: pic.data || curr.profilePic,
           firstClick: false,
-          unread: 0,
+          ...obj
         },
         curr.chatId
       );
     } else {
-      updateChat({ unread: 0 }, curr.chatId);
+      updateChat(
+        obj,
+        curr.chatId
+      );
     }
     axios.patch(`${url}chats/${curr.chatId}/seen`, {}, params);
   };
@@ -362,6 +365,7 @@ const App = () => {
       data.more = true;
       data.unread = 1;
       data.filtered = true;
+      data.messages = [msg];
       data.chatId = msg.chatId;
       if (!msg.mine) {
         audio.play();
