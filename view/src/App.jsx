@@ -10,9 +10,8 @@ import { url, params } from "./connector";
 import classes from "./App.module.css";
 import Conversations from "./Conversations";
 import notificationSound from "./assets/audio/notification.ogg";
-import { cloneArray, deepDiff, idToPhone } from "./hooks/helpers";
+import { idToPhone } from "./hooks/helpers";
 
-import useInterval from "./hooks/useInterval";
 import red from "./assets/images/red.svg";
 import green from "./assets/images/green.svg";
 import yellow from "./assets/images/yellow.svg";
@@ -29,12 +28,11 @@ const initialSettings = JSON.parse(localStorage.settings || 0) || {
   salesOptions: false,
 };
 
-let socket;
+let socket, addedChats;
 const App = () => {
   const [chats, setChats] = useImmer(initialChats || []);
   const [currentChat, setCurrentChat] = useState();
   const [selectedChatIndex, setSelectedChatIndex] = useState();
-  const [lastSentMessage, setLastSentMessage] = useState(new Date());
   const [modal, setModal] = useState(null);
   const [newChat, setNewChat] = useState(null);
   const [urlChecked, setUrlChecked] = useState(false);
@@ -138,24 +136,6 @@ const App = () => {
         break;
     }
   };
-
-  const checkInactive = () => {
-    const now = new Date().valueOf();
-    if (
-      (now - lastSentMessage > 180000) &
-      JSON.parse(localStorage.settings).manageUsersLocally
-    ) {
-      setModal({ type: "selectUser" });
-    }
-  };
-
-  useInterval(() => {
-    if (localStorage.connected && localStorage.access_token) {
-      // getLatestMsgs();
-      // getStatus();
-      // checkInactive();
-    }
-  }, 5000);
 
   useEffect(() => {
     window.agents = JSON.parse(localStorage.agents || 0);
@@ -273,18 +253,14 @@ const App = () => {
     newChats[idx] = chat;
 
     setChats((draft) => {
-      draft[idx] = { ...draft[idx], ...obj };
+      draft[idx] = newChats[idx];
     });
   };
 
-  const getChat = async (id1, id2) => {
-    const res1 = await axios(`${url}chats/findChat/${id1}`, params);
-    if (res1.data) {
-      return res1.data;
-    }
-    const res2 = await axios(`${url}chats/findChat/${id2}`, params);
-    if (res2.data) {
-      return res2.data;
+  const getChat = async (id) => {
+    const res = await axios(`${url}chats/findChat/${id}`, params);
+    if (res.data.length) {
+      handleDBQuery([res.data]);
     }
   };
 
@@ -313,7 +289,7 @@ const App = () => {
         type: "newChat",
         newNumber: formatted,
       });
-      socket.emit("queryChat", { string: number[3] + number[4] });
+      getChat(number[3] + number[4]);
     }
     window.history.pushState({}, "Zoppy", "/");
   };
@@ -513,6 +489,10 @@ const App = () => {
 
   const addChatWithoutDuplicate = (chatArr) => {
     setChats((draft) => {
+      if (!addedChats) {
+        addedChats = 1;
+        draft.splice(0, draft.length);
+      }
       chatArr.forEach((c) => {
         const image = colors[Math.floor(Math.random() * 6)];
         const i = draft.findIndex((oc) => oc.chatId === c.chatId);
@@ -822,6 +802,9 @@ const App = () => {
 
   const handleDBQuery = ({ res, pinned }) => {
     const queried = [];
+    if (!res) {
+      return;
+    }
     res.forEach((c) => {
       if (pinned && c.agentId === me) {
         queried.push(c);
