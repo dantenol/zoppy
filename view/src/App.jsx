@@ -470,6 +470,9 @@ const App = () => {
   const addWithoutDuplicate = (msgArr) => {
     const idx = findIdxById(msgArr[0].chatId);
     setChats((draft) => {
+      if (draft[idx].messages[0] === "none") {
+        draft[idx].messages.splice(0, 1);
+      }
       msgArr.forEach((m) => {
         const i = draft[idx].messages.findIndex(
           (c) => c.messageId === m.messageId
@@ -481,26 +484,30 @@ const App = () => {
     });
   };
 
-  const addChatWithoutDuplicate = (chatArr) => {
+  const addChatWithoutDuplicate = (chatArr, skipDuplicate) => {
     setChats((draft) => {
       if (!addedChats) {
         addedChats = 1;
         draft.splice(0, draft.length);
       }
-      chatArr.forEach((c) => {
+      chatArr.forEach((o) => {
+        const c = {...o};
         const image = colors[Math.floor(Math.random() * 6)];
         const i = draft.findIndex((oc) => oc.chatId === c.chatId);
         c.profilePic = c.profilePic || image;
         c.filtered = true;
         c.displayName = c.name;
         c.more = true;
+        c.firstClick = true;
         c.displayName = c.customName || c.name;
         if (c.messages.length && c.messages[0].mine) {
           c.unread = 0;
+        } else if (!c.messages.length) {
+          c.messages = ["none"];
         }
         if (i < 0) {
           draft.push(c);
-        } else {
+        } else if (!skipDuplicate) {
           draft[i] = c;
         }
       });
@@ -807,7 +814,7 @@ const App = () => {
       }
     });
     if (queried.length) {
-      addChatWithoutDuplicate(queried);
+      addChatWithoutDuplicate(queried, true);
     }
   };
 
