@@ -82,7 +82,8 @@
           "login": true,
           "logout": true,
           "loadAgentsObj": true,
-          "patchAgentData": true
+          "patchAgentData": true,
+          "resetPwd": true
         }
       }
     }

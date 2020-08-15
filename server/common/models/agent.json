@@ -68,7 +68,8 @@
       "property": [
         "loadAgentsObj",
         "updateAttributes",
-        "patchAgentData"
+        "patchAgentData",
+        "resetPwd"
       ]
     }
   ],

@@ -89,4 +89,21 @@ module.exports = function (Agent) {
     returns: {root: true},
     http: {path: '/update/:agent', verb: 'patch'},
   });
+
+  Agent.resetPwd = async (agent, password) => {
+    console.log(agent);
+    const thisAgent = await Agent.findById(agent);
+    await thisAgent.setPassword(password);
+    return true;
+  };
+
+  Agent.remoteMethod('resetPwd', {
+    description: 'update agent password',
+    accepts: [
+      {arg: 'agent', type: 'string', required: true},
+      {arg: 'password', type: 'string', required: true},
+    ],
+    returns: {root: true},
+    http: {path: '/update/:agent/password', verb: 'patch'},
+  });
 };
