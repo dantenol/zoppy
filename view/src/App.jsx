@@ -309,23 +309,13 @@ const App = () => {
     } catch (error) {
       console.log("fail to load pic");
     }
-    const obj = { unread: 0, profilePic: pic.data || curr.profilePic }
+    const obj = { unread: 0, profilePic: pic.data || curr.profilePic };
     if (curr.firstClick) {
       const msgs = await loadMessages(curr.chatId);
 
-      updateChat(
-        {
-          messages: msgs,
-          firstClick: false,
-          ...obj
-        },
-        curr.chatId
-      );
+      updateChat({ messages: msgs, firstClick: false, ...obj }, curr.chatId);
     } else {
-      updateChat(
-        obj,
-        curr.chatId
-      );
+      updateChat(obj, curr.chatId);
     }
     axios.patch(`${url}chats/${curr.chatId}/seen`, {}, params);
   };
