@@ -117,7 +117,6 @@ module.exports = function (Chat) {
           const sendingChats = chats.slice(count, count + 50);
           if (sendingChats.length) {
             socket.emit('loadedChats', {count, data: sendingChats});
-            console.log('SENT', new Date(), sendingChats.length);
             count += 50;
           } else {
             clearInterval(id);
@@ -193,7 +192,8 @@ module.exports = function (Chat) {
         body: waMsg.body,
         sender:
           waMsg.sender.pushname ||
-          waMsg.sender.formattedName ||
+          (waMsg.contact && waMsg.contact.verifiedName) ||
+          (waMsg.contact && waMsg.contact.formattedName) ||
           waMsg.sender.id ||
           waMsg.sender,
         type: waMsg.type,
@@ -232,8 +232,8 @@ module.exports = function (Chat) {
         name:
           wpChat.name ||
           wpChat.pushname ||
-          wpChat.contact.verifiedName ||
-          wpChat.contact.formattedName ||
+          (wpChat.contact && wpChat.contact.verifiedName) ||
+          (wpChat.contact && wpChat.contact.formattedName) ||
           wpChat.formattedTitle,
         type: wpChat.kind,
         lastMessageAt: wpChat.t * 1000,
@@ -270,21 +270,30 @@ module.exports = function (Chat) {
 
   async function loadAllMessages(client) {
     const Message = model.app.models.Message;
-    const chats = await client
-      .getPage()
-      .evaluate(() => window.WAPI.getAllChatIds());
-    console.log(chats, chats.length);
-    // const chats = await client.getAllChats();
+    // const chats = await client
+    //   .getPage()
+    //   .evaluate(() => window.WAPI.getAllChatIds());
+    const t0 = new Date().valueOf()
+    const chats = await client.getAllChats();
+    console.log("LOADED ALL CHATS IN", new Date() - t0);
+    console.log(chats.length);
 
+    let t = new Date();
+    console.log(t);
     if (process.env.RESET === 'true') {
       await model.deleteAll();
       await Message.deleteAll();
     }
 
+    const TREE_MONTHS = moment().subtract(3, 'M').valueOf() / 1000;
     await Promise.all(
-      chats.map(async (chatId) => {
-        const currChat = await model.findById(chatId);
-        const chat = await client.getChatById(chatId);
+      // chats.map(async (chatId) => {
+      chats.map(async (oc) => {
+        const t2 = new Date().valueOf();
+        const currChat = await model.findById(oc.id);
+        // const chat = await client.getChatById(chatId);
+        const chat = oc;
+        const chatId = oc.id;
 
         if (currChat) {
           currChat.updateAttributes({lastMessageAt: chat.t * 1000});
@@ -295,8 +304,8 @@ module.exports = function (Chat) {
               name:
                 chat.name ||
                 chat.pushname ||
-                chat.contact.verifiedName ||
-                chat.contact.formattedName ||
+                (chat.contact && chat.contact.verifiedName) ||
+                (chat.contact && chat.contact.formattedName) ||
                 chat.formattedTitle,
               type: chat.kind,
               lastMessageAt: chat.t * 1000,
@@ -307,6 +316,10 @@ module.exports = function (Chat) {
           } catch (error) {}
         }
 
+        if (chat.t < TREE_MONTHS) {
+          console.log('loaded only chat in', new Date() - t2);
+          return;
+        }
         let allMessages = await client.getAllMessagesInChat(chatId, true);
         // console.log(
         //   'loaded %d messages on chat %s',
@@ -327,9 +340,11 @@ module.exports = function (Chat) {
             }
           }),
         );
+        console.log('loaded chat and messages in', new Date() - t2);
       }),
     );
-    console.log('terminado', new Date());
+    console.log('terminado', new Date(), new Date().valueOf() - t);
+    io.sockets.emit('reload');
   }
 
   async function getUnreadChats() {
@@ -435,7 +450,6 @@ module.exports = function (Chat) {
     }
     startedSetup = true;
     let source = {executablePath: '/usr/bin/google-chrome-stable'};
-    console.log('ENV:', process.env.NODE_ENV);
     if (process.env.NODE_ENV === 'production') {
       source = {browserWSEndpoint: 'ws://browser:3000'};
     }
@@ -486,9 +500,7 @@ module.exports = function (Chat) {
   });
 
   Chat.getAll = async () => {
-    console.log('t1', new Date());
     const unread = await getUnreadChats();
-    console.log('t2', new Date());
 
     const unreadObj = {};
     unread.forEach((chat) => {
@@ -506,7 +518,6 @@ module.exports = function (Chat) {
         },
       },
     });
-    console.log('t3', new Date());
 
     conversations.forEach((c, i) => {
       if (unreadObj[c.chatId]) {
@@ -514,7 +525,6 @@ module.exports = function (Chat) {
       }
     });
 
-    console.log('t4', new Date());
     return conversations;
   };
 
@@ -540,7 +550,7 @@ module.exports = function (Chat) {
     http: {path: '/:userId/profilePic', verb: 'get'},
   });
 
-  Chat.getMessages = async (chatId, filter) => {
+  Chat.getMessages = async (chatId, filter = {skip: 0}) => {
     const chat = await Chat.findById(chatId, {
       include: {
         relation: 'messages',
@@ -962,7 +972,7 @@ module.exports = function (Chat) {
   });
 
   Chat.findChat = async (id) => {
-    return await query(id)
+    return await query(id);
   };
 
   Chat.remoteMethod('findChat', {
