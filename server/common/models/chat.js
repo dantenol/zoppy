@@ -341,6 +341,7 @@ module.exports = function (Chat) {
           }),
         );
         console.log('loaded chat and messages in', new Date() - t2);
+        client.cutMsgCache();
       }),
     );
     console.log('terminado', new Date(), new Date().valueOf() - t);
@@ -659,8 +660,8 @@ module.exports = function (Chat) {
       const msgs = await Promise.all(
         all.map(async (m) => {
           try {
-            await createMessage(m);
-            return m;
+            const sm = await createMessage(m);
+            return sm;
           } catch (error) {
             console.log(error);
           }
