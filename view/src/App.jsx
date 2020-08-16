@@ -245,15 +245,14 @@ const App = () => {
   };
 
   const updateChat = (obj, id) => {
-    const newChats = [...chats];
     let idx = findIdxById(id);
-
-    let chat = chats[idx];
-    chat = { ...chat, ...obj };
-    newChats[idx] = chat;
-
     setChats((draft) => {
-      draft[idx] = newChats[idx];
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          const p = obj[key];
+          draft[idx][key] = p;
+        }
+      }
     });
   };
 
@@ -470,9 +469,11 @@ const App = () => {
   const addWithoutDuplicate = (msgArr) => {
     const idx = findIdxById(msgArr[0].chatId);
     setChats((draft) => {
-      if (draft[idx].messages[0] === "none") {
+      console.log(draft[idx]);
+      if (draft[idx] && draft[idx].messages[0] === "none") {
         draft[idx].messages.splice(0, 1);
       }
+      console.log(idx);
       msgArr.forEach((m) => {
         const i = draft[idx].messages.findIndex(
           (c) => c.messageId === m.messageId
@@ -600,7 +601,9 @@ const App = () => {
     };
     if (to === currentChat) {
       const idx = selectedChatIndex;
-      handleSetAgent();
+      if (!chats[idx].agentId) {
+        handleSetAgent();
+      }
       setChats((draft) => {
         draft[idx].messages.unshift(data);
       });
