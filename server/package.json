@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "start": "node .",
     "preupdate-front": "sed -i 's@\".*/api/\"@\"/api/\"@' ../view/src/connector.jsx",
-    "update-front": "rm -r ./client/* && cd ../view && npm run build && cp -a ./build/* ../server/client",
+    "update-front": "rm -rf ./client/* && cd ../view && npm run build && cp -a ./build/* ../server/client",
     "custom-key": "sed -i 's@openwa.web.app@c.zoppy.app@' node_modules/@open-wa/wa-automate/package.json",
     "default-key": "sed -i 's@c.zoppy.app/api@openwa.web.app@' node_modules/@open-wa/wa-automate/package.json",
     "dev-db": "sed -i 's@\"db\"@\"0.0.0.0\"@' ./server/datasources.json",
