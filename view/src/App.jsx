@@ -330,7 +330,7 @@ const App = () => {
       );
 
       const idx = findIdxById(id);
-      setChats((draft) => (draft[idx].displayName = name));
+      setChats((draft) => {draft[idx].displayName = name});
     } catch (error) {
       console.log(error);
     }
