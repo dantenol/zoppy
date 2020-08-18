@@ -22,6 +22,7 @@ echo $v > LATEST
 git add ../.github/workflows/s3.yml
 git add ./LATEST
 git add ./package.json
+git add ../view/package.json
 git add ./client
 git commit -m 'replace version'
 git push
