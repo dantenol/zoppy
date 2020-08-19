@@ -119,7 +119,7 @@ const Modal = ({
   const handleNumber = (number) => {
     setNumber(number);
     console.log(number);
-    if (number[13].match(/\d/)) {
+    if (number.length > 12 && number[13].match(/\d/)) {
       const chat = "55" + number.replace(/\D/g, "");
       passiveSearch(chat);
     }
