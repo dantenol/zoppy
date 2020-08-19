@@ -6,7 +6,7 @@ function saveUrl(url) {
 
 function redirect(id, url) {
   chrome.storage.local.get(["url"], function (result) {
-    let number;
+    let number = "";
     if (url.startsWith("https://wa.me")) {
       const nbr = /wa.me\/(\d+)/g.exec(url);
       number = nbr[1];
@@ -22,6 +22,7 @@ function redirect(id, url) {
 chrome.tabs.onUpdated.addListener((idx, change, tab) => {
   if (
     tab.url.startsWith("https://wa.me") ||
+    tab.url.startsWith("https://web.wha") ||
     tab.url.startsWith("https://api.whatsa")
   ) {
     redirect(idx, tab.url);
