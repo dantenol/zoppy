@@ -7,6 +7,7 @@ import { useImmer } from "use-immer";
 
 import { url, params } from "./connector";
 
+import useInterval from "./hooks/useInterval";
 import classes from "./App.module.css";
 import Conversations from "./Conversations";
 import notificationSound from "./assets/audio/notification.ogg";
@@ -79,6 +80,7 @@ const App = () => {
     if (!onlineStates.includes(data.connection)) {
       console.log("OFFLINE", data);
       setModal({ type: "offline" });
+      axios.post(`${url}/chats/refocus`, {}, params);
     } else if (
       onlineStates.includes(data.connection) &&
       modal &&
@@ -205,7 +207,6 @@ const App = () => {
     return () => {
       if (socket) {
         socket.off("newMessage");
-        socket.off("status");
         socket.off("sentMessage");
         socket.off("queryResult");
       }
@@ -223,6 +224,12 @@ const App = () => {
     }
     cacheConversations();
   }, [chats]);
+
+  useInterval(() => {
+    if (modal && modal.type === "offline") {
+      getStatus();
+    }
+  }, 5000);
 
   const navigator = () => {
     const path = window.location.hash;
