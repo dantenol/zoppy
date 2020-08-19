@@ -73,6 +73,11 @@
   width: 20px;
 }
 
+.headerContent {
+  display: flex;
+  flex: 1;
+}
+
 @media screen and (max-width: 600px) {
   div.chatContainer {
     max-width: 100%
