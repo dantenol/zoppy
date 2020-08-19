@@ -62,7 +62,8 @@
           "checkNum": true,
           "status": true,
           "reset": true,
-          "findChat": true
+          "findChat": true,
+          "refocus": true
         }
       }
     }

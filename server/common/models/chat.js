@@ -441,6 +441,16 @@ module.exports = function (Chat) {
     http: {path: '/online', verb: 'get'},
   });
 
+  Chat.refocus = async () => {
+    return await wp.forceRefocus()
+  };
+
+  Chat.remoteMethod('refocus', {
+    description: 'Force refocus to open-wa session',
+    returns: {root: true},
+    http: {path: '/refocus', verb: 'post'},
+  });
+
   Chat.setup = async () => {
     if (wp) {
       throw new Error('WhatApp already set');
