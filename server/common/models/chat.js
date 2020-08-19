@@ -140,30 +140,29 @@ module.exports = function (Chat) {
 
   function setStateListeners() {
     wp.onBattery((b) => {
-      console.log(b);
       battery = b;
       status.battery = b;
       io.sockets.emit('status', status);
     });
     wp.onPlugged((b) => {
-      console.log(b);
       charging = b;
       status.charging = b;
       io.sockets.emit('status', status);
     });
 
-    wp.onStateChanged((s) => {
+    wp.onStateChanged(async (s) => {
       console.log(s);
       sts = s;
       status.connection = s;
       io.sockets.emit('status', status);
       switch (s) {
         case 'CONFLICT':
-          wpp.forceRefocus();
+          console.log(12321312123);
+          await wpp.forceRefocus();
+          console.log(342);
           break;
         case 'UNPAIRED':
           model.kill();
-          model.setup();
           break;
         default:
           break;
@@ -951,6 +950,7 @@ module.exports = function (Chat) {
       conn = (await wp.isConnected()) || status;
     }
 
+    battery = await wp.getBatteryLevel();
     return {
       battery,
       charging,
