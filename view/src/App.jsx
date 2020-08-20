@@ -255,7 +255,7 @@ const App = () => {
     let idx = findIdxById(id);
     setChats((draft) => {
       for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (obj.hasOwnProperty(key) && idx >= 0) {
           const p = obj[key];
           draft[idx][key] = p;
         }
@@ -337,7 +337,9 @@ const App = () => {
       );
 
       const idx = findIdxById(id);
-      setChats((draft) => {draft[idx].displayName = name});
+      setChats((draft) => {
+        draft[idx].displayName = name;
+      });
     } catch (error) {
       console.log(error);
     }
@@ -476,7 +478,6 @@ const App = () => {
   const addWithoutDuplicate = (msgArr) => {
     const idx = findIdxById(msgArr[0].chatId);
     setChats((draft) => {
-      console.log(draft[idx]);
       if (draft[idx] && draft[idx].messages[0] === "none") {
         draft[idx].messages.splice(0, 1);
       }
@@ -499,7 +500,7 @@ const App = () => {
         draft.splice(0, draft.length);
       }
       chatArr.forEach((o) => {
-        const c = {...o};
+        const c = { ...o };
         const image = colors[Math.floor(Math.random() * 6)];
         const i = draft.findIndex((oc) => oc.chatId === c.chatId);
         c.profilePic = c.profilePic || image;
