@@ -204,6 +204,9 @@ const App = () => {
         handleDBQuery(res);
       });
     }
+    if (newChat && chats[0].chatId === newChat.chatId) {
+      updateAfterNewChat(chats[0].chatId)
+    }
     return () => {
       if (socket) {
         socket.off("newMessage");
@@ -433,6 +436,14 @@ const App = () => {
     }
   };
 
+  const updateAfterNewChat = (chatId) => {
+    console.log(findIdxById(chatId));
+    console.log(chats[0]);
+    handleSetAgent(false, chatId);
+    setSelectedChatIndex(0);
+    selectChat(chatId);
+  }
+
   const addSentMessageToConversations = (msg) => {
     const data = { chatId: msg.chatId, message: msg };
 
@@ -445,13 +456,6 @@ const App = () => {
       setChats((draft) => {
         draft.unshift(data);
       });
-      console.log(newChat);
-      if (newChat && data.chatId === newChat.chatId) {
-        handleSetAgent(false, newChat.chatId);
-        setNewChat(false);
-        setSelectedChatIndex(0);
-        selectChat(newChat.chatId);
-      }
       return;
     }
 
@@ -509,10 +513,10 @@ const App = () => {
         c.more = true;
         c.firstClick = true;
         c.displayName = c.customName || c.name;
-        if (c.messages.length && c.messages[0].mine) {
-          c.unread = 0;
-        } else if (!c.messages.length) {
+        if (!c.messages || !c.messages.length) {
           c.messages = ["none"];
+        } else if (c.messages.length && c.messages[0].mine) {
+          c.unread = 0;
         }
         if (i < 0) {
           draft.push(c);
