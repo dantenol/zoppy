@@ -1,1 +1,1 @@
-cd /home/ec2-user/app/ && rm -r * && aws s3 cp s3://zoppy-app/${1-latest} . --recursive && docker-compose down && docker-compose up -d --build
+cd /home/ec2-user/app/ && rm -r * && aws s3 cp s3://zoppy-app/${1-latest} . --recursive && docker-compose down && sed -i "s@~\/@\/home\/ec2-user\/@" docker-compose.yml && docker-compose up -d --build
