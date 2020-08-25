@@ -8,11 +8,18 @@ import sendImg from "../../assets/images/send.svg";
 import emojiFace from "../../assets/images/emoji.svg";
 import camera from "../../assets/images/camera.svg";
 import mic from "../../assets/images/mic.svg";
+import redMic from "../../assets/images/redMic.svg";
 import bag from "../../assets/images/bag.svg";
 import outslideClickListener from "../../hooks/outslideClickListener";
 import useRecorder from "../../hooks/useRecorder";
 
-const MessageField = ({ message, handleChangeMessage, send, handleModal }) => {
+const MessageField = ({
+  message,
+  handleChangeMessage,
+  send,
+  handleModal,
+  sendAudio,
+}) => {
   const [rows, setRows] = useState(1);
   const [emoji, setEmoji] = useState();
   const [focused, setFocused] = useState(false);
@@ -25,51 +32,70 @@ const MessageField = ({ message, handleChangeMessage, send, handleModal }) => {
   const handleRecord = (e) => {
     e.preventDefault();
     setStartedRecording(new Date().valueOf());
-    startRecording();
-  };
-  const handleEndTouch = () => {
-    if (startedRecording - new Date() > 300) {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
     }
-    stopRecording();
   };
 
-  useEffect(() => {
-    if (
-      localStorage.settings &&
-      JSON.parse(localStorage.settings).salesOptions
-    ) {
-      setSalesButon(true);
-    } else {
-      setSalesButon(false);
+  const handleEndTouch = () => {
+    if (startedRecording - new Date() > 300) {
+      console.log(startedRecording - new Date() > 300);
+      return;
     }
-  }, [localStorage.settings]);
+    // stopRecording();
+  };
+
+  // useEffect(() => {
+  //   if (
+  //     localStorage.settings &&
+  //     JSON.parse(localStorage.settings).salesOptions
+  //   ) {
+  //     setSalesButon(true);
+  //   } else {
+  //     setSalesButon(false);
+  //   }
+  // }, [localStorage.settings]);
 
   // useEffect(() => {
   //   navigator.getUserMedia(
   //     { audio: true },
   //     () => {
   //       console.log("Permission Granted");
-  //       setAllowsRecording(true);
+  //       // setAllowsRecording(true);
   //     },
   //     () => {
   //       console.log("Permission Denied");
   //     }
   //   );
-  //   document
-  //     .getElementById("recorder")
-  //     .addEventListener("touchstart", handleStartTouch);
+  //   // document
+  //   //   .getElementById("recorder")
+  //   //   .addEventListener("touchstart", handleStartTouch);
   //   document
   //     .getElementById("recorder")
   //     .addEventListener("touchend", handleEndTouch);
-  //   return () => (
+  //   return () =>
+  //     // document
+  //     //   .getElementById("recorder")
+  //     //   .removeEventListener("touchstart", handleStartTouch),
   //     document
   //       .getElementById("recorder")
-  //       .removeEventListener("touchstart", handleStartTouch),
-  //     document
-  //       .getElementById("recorder")
-  //       .addEventListener("touchend", handleEndTouch)
-  //   );
+  //       .addEventListener("touchend", handleEndTouch);
   // }, []);
+
+  // useEffect(() => {
+  //   if (!isRecording && audioURL) {
+  //     var reader = new window.FileReader();
+  //     reader.readAsDataURL(audioURL);
+  //     reader.onloadend = function () {
+  //       let base64 = reader.result;
+  //       base64 = base64.split(",")[1];
+  //       console.log(base64);
+  //     };
+  //     sendAudio(audioURL);
+  //   }
+  // }, [audioURL, isRecording]);
 
   const closeEmoji = () => {
     setEmoji(false);
@@ -169,19 +195,23 @@ const MessageField = ({ message, handleChangeMessage, send, handleModal }) => {
           placeholder="Digite uma mensagem"
         ></textarea>
         {/* {message.length ? ( */}
-        <button onClick={() => handlesendButton()}>
-          <img src={sendImg} alt="Enviar" />
-        </button>
+          <button onClick={() => handlesendButton()}>
+            <img src={sendImg} alt="Enviar" />
+          </button>
         {/* ) : (
-        <button
-          class={classNames(classes.record, classes[isRecording])}
-          id="recorder"
-          onClick={handleRecord}
-        >
-          <img src={mic} alt="Enviar áudio" />
-        </button>
-        )}
-        <audio src={this.state.blobURL} controls="controls" hidden /> */}
+          <button
+            className={classNames(classes.record, classes[isRecording])}
+            id="recorder"
+            onClick={handleRecord}
+          >
+            <img src={mic} alt="Gravar áudio" />
+            <img
+              className={classes.recording}
+              src={redMic}
+              alt="Enviar áudio"
+            />
+          </button>
+        )} */}
       </div>
     </>
   );

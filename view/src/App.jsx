@@ -153,6 +153,13 @@ const App = () => {
       socket.on("reload", () => {
         window.location.reload();
       });
+      socket.on("QR", (img) => {
+        console.log(img);
+        setModal({
+          type: "qr",
+          qr: img,
+        });
+      });
       socket.on("setAgent", (data) => {
         handleChangeAgent(data);
       });
@@ -205,7 +212,7 @@ const App = () => {
       });
     }
     if (newChat && chats[0].chatId === newChat.chatId) {
-      updateAfterNewChat(chats[0].chatId)
+      updateAfterNewChat(chats[0].chatId);
     }
     return () => {
       if (socket) {
@@ -442,7 +449,7 @@ const App = () => {
     handleSetAgent(false, chatId);
     setSelectedChatIndex(0);
     selectChat(chatId);
-  }
+  };
 
   const addSentMessageToConversations = (msg) => {
     const data = { chatId: msg.chatId, message: msg };
@@ -645,6 +652,25 @@ const App = () => {
     }
   };
 
+  const handleSendAudio = async (e) => {
+    const file = e;
+    const formData = new FormData();
+    formData.append("", file);
+
+    const msg = await axios.post(
+      `${url}chats/${currentChat}/sendAudio`,
+      formData,
+      {
+        ...params,
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/form-data",
+        },
+      }
+    );
+    console.log(msg);
+  };
+
   const handleShowMedia = (type, id) => {
     setModal({ type, id });
   };
@@ -726,6 +752,19 @@ const App = () => {
         localStorage.setItem("connected", true);
         window.location.reload();
       } else {
+        socket = io({
+          secure: true,
+          query: {
+            access_token: localStorage.access_token,
+          },
+        });
+        socket.on("QR", (img) => {
+          console.log(img);
+          setModal({
+            type: "qr",
+            qr: img,
+          });
+        });
         await axios.post(
           `${url}chats/init`,
           {},
@@ -736,25 +775,9 @@ const App = () => {
           }
         );
         localStorage.removeItem("chats");
-        setInterval(async () => {
-          setModal({
-            type: "qr",
-            token: res.data.id,
-            update: Math.random(),
-          });
-          const check = (
-            await axios(`${url}chats/online`, {
-              params: {
-                access_token: res.data.id,
-              },
-            })
-          ).data;
-          if (check) {
-            localStorage.removeItem("chats");
-            localStorage.setItem("connected", true);
-            window.location.reload();
-          }
-        }, 2000);
+        setModal({
+          type: "qr",
+        });
       }
     } catch (error) {
       console.log(error);
@@ -916,6 +939,7 @@ const App = () => {
           handleBack={() => goTo("conversations")}
           showing={String(isMobile && page === "chat")}
           handleModal={handleModal}
+          handleSendAudio={handleSendAudio}
           showMedia={handleShowMedia}
           handleSend={send}
           handleChangeName={handleChangeName}

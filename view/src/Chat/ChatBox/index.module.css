@@ -15,16 +15,20 @@
 }
 
 .chat .container {
-  flex-grow: 1;
   width: 100%;
   position: absolute;
   bottom: 0;
   height: 100%;
   overflow-y: scroll;
-  padding: 32px 0;
   padding-right: 2px;
+}
+
+.chat .messages {
+  padding: 32px 0;
   display: flex;
   flex-direction: column-reverse;
+  flex-grow: 1;
+  bottom: 0;
 }
 
 .chat .input {
@@ -52,7 +56,7 @@
   background: none;
   opacity: 0.3;
   padding: 0;
-  width: 30px;
+  min-width: 28px;
   margin-right: 8px;
   transition: all ease 0.2s;
 }
@@ -105,6 +109,7 @@
 
 .input img {
   width: 100%;
+  min-width: 12x;
 }
 
 
@@ -117,6 +122,24 @@
   padding: 0;
   width: 0;
   margin: 0;
+  min-width: 0;
+}
+
+
+.record.true {
+  opacity: 1;
+}
+
+.record.true img {
+  display: none;
+}
+
+.record img.recording {
+  display: none;
+}
+
+.record.true img.recording {
+  display: block;
 }
 
 @keyframes indeterminate_first {

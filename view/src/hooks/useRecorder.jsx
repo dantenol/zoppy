@@ -15,12 +15,13 @@ const useRecorder = () => {
 
     if (isRecording) {
       recorder.start();
+      setAudioURL("");
     } else {
       recorder.stop();
     }
 
     const handleData = (e) => {
-      setAudioURL(URL.createObjectURL(e.data));
+      setAudioURL(e.data);
     };
 
     recorder.addEventListener("dataavailable", handleData);

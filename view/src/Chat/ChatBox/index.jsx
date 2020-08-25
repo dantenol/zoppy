@@ -15,78 +15,91 @@ const Chat = ({
   chatId,
   handleLoadMore,
   send,
+  sendAudio,
   showMedia,
 }) => {
   const [message, setMessage] = useState("");
+  const [scroll, setScroll] = useState(false);
   const isGroup = chatId.includes("-");
   const messagesEndRef = useRef();
 
   let lastDay = new Date(messages[0].timestamp);
 
   const scrollToBottom = () => {
+    setScroll(scroll + 1);
     messagesEndRef.current.scrollIntoView();
   };
 
-  useEffect(scrollToBottom, []);
+  useEffect(() =>{
+    if (scroll < 3) {
+      scrollToBottom();
+    }
+  }, [messages]);
+
+  useEffect(() =>{
+    setMessage("")
+  }, [chatId]);
 
   return (
     <div className={classes.chat}>
       <div className={classes.scroll}>
         <div className={classes.container}>
-          <div ref={messagesEndRef} />
-          <>
-            {messages.length &&
-              messages.map((msg, i) => {
-                const m = { ...msg };
-                const last = lastDay;
-                const current = m.timestamp;
-                if (m.mine && !m.agentId) {
-                  m.agentId = "wpp";
-                }
-                lastDay = current;
-                if (m === "none" || m.chatId !== chatId) {
-                  return;
-                } else if (i === messages.length - 1) {
-                  return (
-                    <Fragment key={m.messageId}>
+          <div className={classes.messages}>
+            <div ref={messagesEndRef} id="bottom" />
+            <>
+              {messages.length &&
+                messages.map((msg, i) => {
+                  const m = { ...msg };
+                  const last = lastDay;
+                  const current = m.timestamp;
+                  if (m.mine && !m.agentId) {
+                    m.agentId = "wpp";
+                  }
+                  lastDay = current;
+                  if (m === "none" || m.chatId !== chatId) {
+                    return;
+                  } else if (i === messages.length - 1) {
+                    return (
+                      <Fragment key={m.messageId}>
+                        <Bubble
+                          showMedia={showMedia}
+                          key={m.messageId}
+                          message={m}
+                          isGroup={isGroup}
+                        />
+                        <Day day={last} />
+                      </Fragment>
+                    );
+                  } else if (!moment(last).isSame(lastDay, "day")) {
+                    return (
+                      <Fragment key={m.messageId}>
+                        <Day day={last} />
+                        <Bubble
+                          showMedia={showMedia}
+                          message={m}
+                          isGroup={isGroup}
+                        />
+                      </Fragment>
+                    );
+                  } else {
+                    return (
                       <Bubble
                         showMedia={showMedia}
                         key={m.messageId}
                         message={m}
                         isGroup={isGroup}
                       />
-                      <Day day={last} />
-                    </Fragment>
-                  );
-                } else if (!moment(last).isSame(lastDay, "day")) {
-                  return (
-                    <Fragment key={m.messageId}>
-                      <Day day={last} />
-                      <Bubble
-                        showMedia={showMedia}
-                        message={m}
-                        isGroup={isGroup}
-                      />
-                    </Fragment>
-                  );
-                } else {
-                  return (
-                    <Bubble
-                      showMedia={showMedia}
-                      key={m.messageId}
-                      message={m}
-                      isGroup={isGroup}
-                    />
-                  );
-                }
-              })}
-            {loading && <Spinner />}
-            {more && (
-              <div onClick={handleLoadMore} className={classes.loadMore}>
-                Carregar mais
-              </div>
-            )}
-          </>
+                    );
+                  }
+                })}
+              {loading && <Spinner />}
+              {more && (
+                <div onClick={handleLoadMore} className={classes.loadMore}>
+                  Carregar mais
+                </div>
+              )}
+            </>
+          </div>
         </div>
       </div>
       <MessageField
@@ -94,6 +107,7 @@ const Chat = ({
         message={message}
         handleChangeMessage={setMessage}
         send={send}
+        sendAudio={sendAudio}
       />
     </div>
   );

@@ -136,13 +136,13 @@ const Modal = ({
   } else if (file && file.type === "qr") {
     return (
       <>
-        <div onClick={onClose} className={classes.modalBackground} />
+        <div className={classes.modalBackground} />
         <div className={classNames(classes.modal, classes.opaque)}>
           <p>{file.update}</p>
           <h2>Escaneie o QR code pelo WhatsApp</h2>
           <img
             className={classes.qr}
-            src={`${url}chats/qr?access_token=${file.token}&${file.update}`}
+            src={file.qr}
             alt="QR code"
           />
         </div>
@@ -421,7 +421,7 @@ const Modal = ({
           <div onClick={onClose} className={classes.close}>
             &times;
           </div>
-          <h2>Venda</h2>
+          <h2>Sacolinha</h2>
           <form action="" onSubmit={handleSaveSale} noValidate>
             <input
               type="number"
