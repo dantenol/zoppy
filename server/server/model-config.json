@@ -50,6 +50,7 @@
           "markSeen": true,
           "loadMore": true,
           "sendMessage": true,
+          "sendAudio": true,
           "checkRecentMessages": true,
           "loadFile": true,
           "uploadMedia": true,

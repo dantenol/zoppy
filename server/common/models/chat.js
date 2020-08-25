@@ -1,22 +1,21 @@
 'use strict';
 const moment = require('moment');
-const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 const wa = require('@open-wa/wa-automate');
 
-require('axios-debug-log')({
-  request: function (debug, config) {
-    debug('Request with ', config);
-  },
-  response: function (debug, response) {
-    debug('Response with ' + response.data, 'from ' + response.config.url);
-  },
-  error: function (debug, error) {
-    // Read https://www.npmjs.com/package/axios#handling-errors for more info
-    debug('Boom', error);
-  },
-});
+// require('axios-debug-log')({
+//   request: function (debug, config) {
+//     debug('Request with ', config);
+//   },
+//   response: function (debug, response) {
+//     debug('Response with ' + response.data, 'from ' + response.config.url);
+//   },
+//   error: function (debug, error) {
+//     // Read https://www.npmjs.com/package/axios#handling-errors for more info
+//     debug('Boom', error);
+//   },
+// });
 
 let model, wp, QRbuffer, myNumber, battery, charging, startedSetup, sts;
 const sentMessages = [];
@@ -42,11 +41,21 @@ function sleep(ms) {
 module.exports = function (Chat) {
   let io;
   wa.ev.on('qr.**', async (qrcode) => {
-    QRbuffer = Buffer.from(
-      qrcode.replace('data:image/png;base64,', ''),
-      'base64',
-    );
-    console.log(QRbuffer);
+    // QRbuffer = Buffer.from(
+    //   qrcode.replace('data:image/png;base64,', ''),
+    //   'base64',
+    // );
+    // console.log(QRbuffer);
+    io.sockets.emit('QR', qrcode);
+  });
+
+  wa.ev.on('**', async (data, sessionId, namespace) => {
+    console.log('\n----------');
+    console.log('EV', data, namespace);
+    console.log('----------');
+    // if (data.includes()) {
+      
+    // }
   });
 
   function isSent({chatId, body}) {
@@ -79,7 +88,7 @@ module.exports = function (Chat) {
   }
 
   async function start(wpp) {
-    if (!Chat.app.io) {
+    if (!io && !Chat.app.io) {
       return setTimeout(() => {
         console.log('retrying');
         start(wpp);
@@ -89,23 +98,7 @@ module.exports = function (Chat) {
       console.log('GOT IO');
     }
 
-    // await sleep(5000);
-    const send = await wpp
-      .getPage()
-      .evaluate(() => window.WAPI.sendMessage.toString());
-    console.log('WAPI', send);
-    if (!send.includes('0x')) {
-      wpp.kill();
-      return Chat.setup();
-    }
-    wp = wpp;
-
-    myNumber = (await wpp.getMe()).wid;
-    console.log('My number %s', myNumber);
-    wpp.onAnyMessage((msg) => {
-      saveMsg(msg);
-    });
-
+    
     io.on('connection', (socket) => {
       console.log('connected on Chat');
       socket.on('getChats', async () => {
@@ -129,6 +122,22 @@ module.exports = function (Chat) {
       });
     });
     io.sockets.emit('reload');
+    
+    const send = await wpp
+      .getPage()
+      .evaluate(() => window.WAPI.sendMessage.toString());
+    console.log('WAPI', send);
+    // if (!send.includes('0x')) {
+    //   wpp.kill();
+    //   return Chat.setup();
+    // }
+    wp = wpp;
+
+    myNumber = (await wpp.getMe()).wid;
+    console.log('My number %s', myNumber);
+    wpp.onAnyMessage((msg) => {
+      saveMsg(msg);
+    });
 
     process.on('SIGINT', () => {
       wpp.close();
@@ -255,26 +264,23 @@ module.exports = function (Chat) {
       console.log(loaded);
       await wp.cutMsgCache();
     }
-    if (!ignoreChat(chat)) {
-      if (!msg.fromMe || msg.from !== myNumber) {
-        isConversion(msg);
-      } else if (msg.fromMe && chat) {
-        isStarting(msg, {
-          previousTimestamp,
-          newConversation: chat.newConversation,
-        });
-      }
-    }
+    // if (!ignoreChat(chat)) {
+    //   if (!msg.fromMe || msg.from !== myNumber) {
+    //     isConversion(msg);
+    //   } else if (msg.fromMe && chat) {
+    //     isStarting(msg, {
+    //       previousTimestamp,
+    //       newConversation: chat.newConversation,
+    //     });
+    //   }
+    // }
   }
 
   async function loadAllMessages(client) {
     const Message = model.app.models.Message;
-    // const chats = await client
-    //   .getPage()
-    //   .evaluate(() => window.WAPI.getAllChatIds());
-    const t0 = new Date().valueOf()
+    const t0 = new Date().valueOf();
     const chats = await client.getAllChats();
-    console.log("LOADED ALL CHATS IN", new Date() - t0);
+    console.log('LOADED ALL CHATS IN', new Date() - t0);
     console.log(chats.length);
 
     let t = new Date();
@@ -286,11 +292,9 @@ module.exports = function (Chat) {
 
     const TREE_MONTHS = moment().subtract(3, 'M').valueOf() / 1000;
     await Promise.all(
-      // chats.map(async (chatId) => {
-      chats.map(async (oc) => {
+      chats.map(async (oc, i) => {
         const t2 = new Date().valueOf();
         const currChat = await model.findById(oc.id);
-        // const chat = await client.getChatById(chatId);
         const chat = oc;
         const chatId = oc.id;
 
@@ -298,6 +302,9 @@ module.exports = function (Chat) {
           currChat.updateAttributes({lastMessageAt: chat.t * 1000});
         } else {
           try {
+            if (!chat.kind) {
+              return;
+            }
             await model.create({
               chatId,
               name:
@@ -312,10 +319,12 @@ module.exports = function (Chat) {
               mute: Boolean(chat.mute),
               pin: chat.pin,
             });
-          } catch (error) {}
+          } catch (error) {
+            console.log(error);
+          }
         }
 
-        if (chat.t < TREE_MONTHS) {
+        if (chat.t < TREE_MONTHS || i > 500) {
           console.log('loaded only chat in', new Date() - t2);
           return;
         }
@@ -441,7 +450,7 @@ module.exports = function (Chat) {
   });
 
   Chat.refocus = async () => {
-    return await wp.forceRefocus()
+    return await wp.forceRefocus();
   };
 
   Chat.remoteMethod('refocus', {
@@ -458,6 +467,7 @@ module.exports = function (Chat) {
       // await wa.kill();
       return Chat.setup();
     }
+    io = Chat.app.io;
     startedSetup = true;
     let source = {executablePath: '/usr/bin/google-chrome-stable'};
     if (process.env.NODE_ENV === 'production') {
@@ -468,15 +478,16 @@ module.exports = function (Chat) {
       restartOnCrash: start,
       licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
       disableSpins: true,
-      cacheEnabled: false,
+      // cacheEnabled: false,
       sessionDataPath: './session',
       headless: !process.env.HEADLESS,
-      devtools: false,
+      // devtools: false,
       ...source,
-      debug: true,
+      // debug: true,
       logQR: true,
-      qrRefreshS: 15,
-      qrTimeout: 40,
+      autoRefresh: true,
+      // qrRefreshS: 15,
+      qrTimeout: 90,
       authTimeout: 90,
     }).then((client) => start(client));
   };
@@ -487,27 +498,27 @@ module.exports = function (Chat) {
     http: {path: '/init', verb: 'post'},
   });
 
-  Chat.loadQR = async (res) => {
-    if (wp) {
-      throw new Error('WhatApp already set');
-    } else if (!QRbuffer) {
-      return false;
-    }
+  // Chat.loadQR = async (res) => {
+  //   if (wp) {
+  //     throw new Error('WhatApp already set');
+  //   } else if (!QRbuffer) {
+  //     return false;
+  //   }
 
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Content-Length', QRbuffer.length);
+  //   res.setHeader('Content-Type', 'image/png');
+  //   res.setHeader('Content-Length', QRbuffer.length);
 
-    res.send(QRbuffer);
-  };
+  //   res.send(QRbuffer);
+  // };
 
-  Chat.remoteMethod('loadQR', {
-    description: 'Retrieves QR code for setup',
-    accepts: [
-      {arg: 'res', type: 'object', required: true, http: {source: 'res'}},
-    ],
-    returns: {root: true},
-    http: {path: '/qr', verb: 'get'},
-  });
+  // Chat.remoteMethod('loadQR', {
+  //   description: 'Retrieves QR code for setup',
+  //   accepts: [
+  //     {arg: 'res', type: 'object', required: true, http: {source: 'res'}},
+  //   ],
+  //   returns: {root: true},
+  //   http: {path: '/qr', verb: 'get'},
+  // });
 
   Chat.getAll = async () => {
     const unread = await getUnreadChats();
@@ -767,6 +778,34 @@ module.exports = function (Chat) {
     description: 'Send message to chat',
     returns: {root: true},
     http: {path: '/:chatId/send', verb: 'post'},
+  });
+
+  Chat.sendAudio = async (chatId, req) => {
+    const k = Object.keys(req.files)[0];
+    const file = req.files[k];
+    const base64 = Buffer.from(file.data).toString('base64');
+    const uri = `data:audio/webm;codecs=opus;base64,${base64}`;
+    const wpMsg = await wp.sendImage(
+      chatId,
+      uri,
+      'ptt.ogg',
+      '',
+      undefined,
+      true,
+      true,
+    );
+    console.log(wpMsg);
+    return wpMsg;
+  };
+
+  Chat.remoteMethod('sendAudio', {
+    accepts: [
+      {arg: 'chatId', type: 'string', required: true},
+      {arg: 'req', type: 'object', http: {source: 'req'}},
+    ],
+    description: 'Send voice note to chat',
+    returns: {root: true},
+    http: {path: '/:chatId/sendAudio', verb: 'post'},
   });
 
   Chat.checkRecentMessages = async (since) => {
