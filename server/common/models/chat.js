@@ -27,6 +27,7 @@ const validMsgTypes = [
   'chat',
   'image',
   'sticker',
+  'audio',
   'ptt',
   'video',
   'ciphertext',
@@ -555,6 +556,18 @@ module.exports = function (Chat) {
     http: {path: '/all', verb: 'get'},
   });
 
+  Chat.saveAllConversations = async () => {
+    const conversations = await Chat.find();
+
+    return conversations;
+  };
+
+  Chat.remoteMethod('saveAllConversations', {
+    description: 'save all conversations',
+    returns: {root: true},
+    http: {path: '/all', verb: 'get'},
+  });
+
   Chat.profilePicUrl = async (userId) => {
     const chat = await Chat.findById(userId);
 
@@ -784,15 +797,12 @@ module.exports = function (Chat) {
     const k = Object.keys(req.files)[0];
     const file = req.files[k];
     const base64 = Buffer.from(file.data).toString('base64');
-    const uri = `data:audio/webm;codecs=opus;base64,${base64}`;
-    const wpMsg = await wp.sendImage(
+    const uri = `data:audio/mp3;base64,${base64}`;
+    const wpMsg = await wp.sendFile(
       chatId,
       uri,
-      'ptt.ogg',
-      '',
-      undefined,
-      true,
-      true,
+      'ptt.mp3',
+      ''
     );
     console.log(wpMsg);
     return wpMsg;
