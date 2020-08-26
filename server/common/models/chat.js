@@ -102,6 +102,7 @@ module.exports = function (Chat) {
     
     io.on('connection', (socket) => {
       console.log('connected on Chat');
+      socket.emit('reload');
       socket.on('getChats', async () => {
         console.log('GET CHATS', new Date());
         const chats = await model.getAll();
