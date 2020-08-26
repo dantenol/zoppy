@@ -41,6 +41,7 @@ const App = () => {
   const [lowBattery, setLowBattery] = useState(false);
   const [settings, setSettings] = useState(initialSettings);
   const [URLMessageNumber, setURLMessageNumber] = useState("");
+  const [URLMessageText, setURLMessageText] = useState("");
   const isMobile = window.innerWidth <= 600;
   const audio = new Audio(notificationSound);
   const me = localStorage.salesAgentId || localStorage.userId;
@@ -141,7 +142,6 @@ const App = () => {
 
   useEffect(() => {
     window.agents = JSON.parse(localStorage.agents || 0);
-    window.location.hash = "";
     if (localStorage.access_token) {
       checkOnline();
       socket = io({
@@ -229,7 +229,7 @@ const App = () => {
       setSelectedChatIndex(idx);
     }
     if (chats.length && !urlChecked) {
-      setUrlChecked(false);
+      setUrlChecked(true);
       checkUrl();
     }
     cacheConversations();
@@ -281,20 +281,29 @@ const App = () => {
   };
 
   const checkUrl = async () => {
-    const thisURL = window.location.pathname.split("/")[1];
-    if (thisURL.length < 12) {
-      return;
+    const search = window.location.search.substring(1);
+    let number, removeNine, parsed, formatted;
+    if (search) {
+      const parsed = JSON.parse(
+        '{"' + search.replace(/&/g, '","').replace(/=/g, '":"') + '"}',
+        (key, value) => (key === "" ? value : decodeURIComponent(value))
+      );
+      number = /^55(\d{2})([89]?)(\d{4})(\d{4})$/g.exec(parsed.phone);
+      setURLMessageText(parsed.text);
+      console.log(parsed.text);
+    } else {
+      const thisURL = window.location.pathname.split("/")[1];
+      if (thisURL.length < 12) {
+        return;
+      }
+      number = /^55(\d{2})([89]?)(\d{4})(\d{4})$/g.exec(thisURL);
     }
-    const number = /^55(\d{2})([89]?)(\d{4})(\d{4})$/g.exec(thisURL);
     if (!number) {
       return;
     }
-    const parsed = 55 + number[1] + number[2] + number[3] + number[4] + "@c.us";
-    const formatted = `(${number[1]}) ${number[2] || 9}${number[3]}-${
-      number[4]
-    }`;
-    const removeNine =
-      parsed.substring(0, 4) + parsed.substring(5, parsed.length);
+    parsed = 55 + number[1] + number[2] + number[3] + number[4] + "@c.us";
+    formatted = `(${number[1]}) ${number[2] || 9}${number[3]}-${number[4]}`;
+    removeNine = parsed.substring(0, 4) + parsed.substring(5, parsed.length);
     setURLMessageNumber(formatted);
     if (findIdxById(removeNine) >= 0) {
       selectChat(removeNine);
@@ -308,6 +317,7 @@ const App = () => {
       getChat(number[3] + number[4]);
     }
     window.history.pushState({}, "Zoppy", "/");
+    window.location.hash = "";
   };
 
   const selectChat = async (id) => {
@@ -936,6 +946,7 @@ const App = () => {
           handleNewContactModal={handleNewContactModal}
         />
         <Chat
+          initialText={URLMessageText}
           handleBack={() => goTo("conversations")}
           showing={String(isMobile && page === "chat")}
           handleModal={handleModal}

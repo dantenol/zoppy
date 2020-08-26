@@ -15,10 +15,11 @@ const Chat = ({
   handleSendAudio,
   handleLoadMore,
   handleModal,
-  showMedia,
-  showing,
   handlePin,
   handleBack,
+  initialText,
+  showMedia,
+  showing,
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   if (chat) {
@@ -46,6 +47,7 @@ const Chat = ({
           handleChangeName={handleChangeName}
           messages={chat.messages}
           loading={chat.firstClick}
+          initialText={initialText}
           />
         <ContactDetails
           show={showDetails}

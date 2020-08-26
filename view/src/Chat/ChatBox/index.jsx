@@ -12,13 +12,14 @@ const Chat = ({
   more,
   handleModal,
   loading,
+  initialText,
   chatId,
   handleLoadMore,
   send,
   sendAudio,
   showMedia,
 }) => {
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(false);
   const [scroll, setScroll] = useState(false);
   const isGroup = chatId.includes("-");
   const messagesEndRef = useRef();
@@ -30,15 +31,19 @@ const Chat = ({
     messagesEndRef.current.scrollIntoView();
   };
 
+  useEffect(() => {
+    if (initialText && message === false) {
+      setMessage(initialText);
+    } else if (message !== initialText) {
+      setMessage("");
+    }
+  }, [initialText, chatId]);
+
   useEffect(() =>{
     if (scroll < 4) {
       scrollToBottom();
     }
   }, [messages]);
-
-  useEffect(() =>{
-    setMessage("")
-  }, [chatId]);
 
   return (
     <div className={classes.chat}>
