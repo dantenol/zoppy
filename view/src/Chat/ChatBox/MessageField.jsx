@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
 import classNames from "classnames";
+import MicRecorder from "mic-recorder-to-mp3";
 
 import classes from "./index.module.css";
 import sendImg from "../../assets/images/send.svg";
@@ -11,7 +12,12 @@ import mic from "../../assets/images/mic.svg";
 import redMic from "../../assets/images/redMic.svg";
 import bag from "../../assets/images/bag.svg";
 import outslideClickListener from "../../hooks/outslideClickListener";
-import useRecorder from "../../hooks/useRecorder";
+
+const recorder = new MicRecorder({
+  bitRate: 128,
+});
+
+const isMobile = window.innerWidth <= 600;
 
 const MessageField = ({
   message,
@@ -25,77 +31,106 @@ const MessageField = ({
   const [focused, setFocused] = useState(false);
   const [salesButon, setSalesButon] = useState(false);
   const [startedRecording, setStartedRecording] = useState(0);
+  const [audioURL, setAudioURL] = useState("");
   const emojiRef = useRef();
 
-  let [audioURL, isRecording, startRecording, stopRecording] = useRecorder();
-
   const handleRecord = (e) => {
+    if (isMobile) {
+      return;
+    }
     e.preventDefault();
     setStartedRecording(new Date().valueOf());
-    if (isRecording) {
+    if (startedRecording) {
       stopRecording();
     } else {
       startRecording();
     }
   };
 
-  const handleEndTouch = () => {
-    if (startedRecording - new Date() > 300) {
-      console.log(startedRecording - new Date() > 300);
-      return;
-    }
-    // stopRecording();
+  const startRecording = () => {
+    console.log("STARTED");
+    recorder.start();
+    setAudioURL("");
   };
 
-  // useEffect(() => {
-  //   if (
-  //     localStorage.settings &&
-  //     JSON.parse(localStorage.settings).salesOptions
-  //   ) {
-  //     setSalesButon(true);
-  //   } else {
-  //     setSalesButon(false);
-  //   }
-  // }, [localStorage.settings]);
+  const stopRecording = () => {
+    setStartedRecording(0);
+    recorder
+      .stop()
+      .getMp3()
+      .then(([buffer, blob]) => {
+        setAudioURL(blob);
+      });
+  };
 
-  // useEffect(() => {
-  //   navigator.getUserMedia(
-  //     { audio: true },
-  //     () => {
-  //       console.log("Permission Granted");
-  //       // setAllowsRecording(true);
-  //     },
-  //     () => {
-  //       console.log("Permission Denied");
-  //     }
-  //   );
-  //   // document
-  //   //   .getElementById("recorder")
-  //   //   .addEventListener("touchstart", handleStartTouch);
-  //   document
-  //     .getElementById("recorder")
-  //     .addEventListener("touchend", handleEndTouch);
-  //   return () =>
-  //     // document
-  //     //   .getElementById("recorder")
-  //     //   .removeEventListener("touchstart", handleStartTouch),
-  //     document
-  //       .getElementById("recorder")
-  //       .addEventListener("touchend", handleEndTouch);
-  // }, []);
+  const handleStartTouch = () => {
+    console.log(123123, startedRecording);
+    if (!startedRecording) {
+      setStartedRecording(new Date().valueOf());
+      startRecording();
+    }
+  };
 
-  // useEffect(() => {
-  //   if (!isRecording && audioURL) {
-  //     var reader = new window.FileReader();
-  //     reader.readAsDataURL(audioURL);
-  //     reader.onloadend = function () {
-  //       let base64 = reader.result;
-  //       base64 = base64.split(",")[1];
-  //       console.log(base64);
-  //     };
-  //     sendAudio(audioURL);
-  //   }
-  // }, [audioURL, isRecording]);
+  const handleEndTouch = () => {
+    console.log("finish", startedRecording - new Date());
+    stopRecording();
+  };
+
+  useEffect(() => {
+    if (
+      localStorage.settings &&
+      JSON.parse(localStorage.settings).salesOptions
+    ) {
+      setSalesButon(true);
+    } else {
+      setSalesButon(false);
+    }
+  }, [localStorage.settings]);
+
+  useEffect(() => {
+    navigator.getUserMedia(
+      { audio: true },
+      () => {
+        console.log("Permission Granted");
+      },
+      () => {
+        console.log("Permission Denied");
+      }
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!startedRecording && audioURL.size > 1) {
+      console.log(audioURL);
+      sendAudio(audioURL);
+    }
+  }, [audioURL, startedRecording]);
+
+  useEffect(() => {
+    document
+      .getElementById("recorder")
+      .addEventListener("touchstart", handleStartTouch);
+
+    document.getElementById("recorder").oncontextmenu = function (event) {
+      event.preventDefault();
+      event.stopPropagation(); // not necessary in my case, could leave in case stopImmediateProp isn't available?
+      event.stopImmediatePropagation();
+      return false;
+    };
+
+    document
+      .getElementById("recorder")
+      .addEventListener("touchend", handleEndTouch);
+
+    return () => {
+      document
+        .getElementById("recorder")
+        .removeEventListener("touchstart", handleStartTouch);
+      document
+        .getElementById("recorder")
+        .addEventListener("touchend", handleEndTouch);
+    };
+  }, [startedRecording]);
 
   const closeEmoji = () => {
     setEmoji(false);
@@ -138,6 +173,12 @@ const MessageField = ({
       e.target.scrollTop = e.target.scrollHeight;
     }
 
+    if (e.target.value.length > 0 && !focused) {
+      setFocused(true);
+    } else if (e.target.value.length < 1) {
+      setFocused(false);
+    }
+
     handleChangeMessage(e.target.value);
     setRows(currentRows < maxRows ? currentRows : maxRows);
   };
@@ -148,12 +189,6 @@ const MessageField = ({
 
   const addEmoji = (e) => {
     handleChangeMessage(message + e.native);
-  };
-
-  const handleCollapse = () => {
-    if (!message) {
-      setFocused(false);
-    }
   };
 
   return (
@@ -190,17 +225,18 @@ const MessageField = ({
           value={message}
           onKeyDown={enterListener}
           onChange={handleChange}
-          onFocus={() => setFocused(true)}
-          onBlur={handleCollapse}
           placeholder="Digite uma mensagem"
         ></textarea>
-        {/* {message.length ? ( */}
+        {message.length ? (
           <button onClick={() => handlesendButton()}>
             <img src={sendImg} alt="Enviar" />
           </button>
-        {/* ) : (
+        ) : (
           <button
-            className={classNames(classes.record, classes[isRecording])}
+            className={classNames(
+              classes.record,
+              classes[Boolean(startedRecording)]
+            )}
             id="recorder"
             onClick={handleRecord}
           >
@@ -211,7 +247,7 @@ const MessageField = ({
               alt="Enviar áudio"
             />
           </button>
-        )} */}
+        )}
       </div>
     </>
   );

@@ -22,7 +22,7 @@ const Bubble = ({ message, isGroup, showMedia }) => {
     BubbleComponent = Image;
   } else if (message.type === "sticker") {
     BubbleComponent = Sticker;
-  } else if (message.type === "ptt") {
+  } else if (message.type === "ptt" || message.type === "audio" ) {
     BubbleComponent = VoiceMessage;
   }
 

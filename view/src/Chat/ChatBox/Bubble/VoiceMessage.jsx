@@ -6,13 +6,21 @@ import { url } from "../../../connector";
 
 import classes from "./index.module.css";
 
+
 const VoiceMessage = ({ message, isGroup }) => {
   const [audio, setAudio] = useState(null);
   const [playing, setPlaying] = useState(false);
-
+  const agents = window.agents;
+  
   const toggle = async () => {
     setPlaying(!playing);
   };
+
+  let senderName = "WhatsApp";
+
+  if (message.agentId) {
+    senderName = agents[message.agentId].fullName;
+  }
 
   useEffect(() => {
     try {
@@ -49,6 +57,7 @@ const VoiceMessage = ({ message, isGroup }) => {
       <div>
         <div className={classes.message}>
           {isGroup && !message.mine && <p>{message.sender}</p>}
+          {message.agentId && <p>{senderName}</p>}
           <div className={classes.msg}>
             <div onClick={toggle} className={classes.audio}>
               <div

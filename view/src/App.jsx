@@ -389,7 +389,7 @@ const App = () => {
       if (
         notifyable &&
         msg.timestamp >= chats[idx].lastMessageAt &&
-        !data.mine
+        !msg.mine
       ) {
         sound = true;
       }
