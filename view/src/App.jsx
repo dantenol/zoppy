@@ -874,7 +874,6 @@ const App = () => {
         let str = true;
         let pin = true;
         if (string) {
-          console.log(c.chatId);
           str =
             (c.displayName && c.displayName.toLowerCase().includes(lowerStr)) ||
             c.chatId.slice(0, 12).includes(lowerStr);
