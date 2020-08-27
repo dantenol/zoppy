@@ -76,7 +76,10 @@
       "principalType": "ROLE",
       "principalId": "$everyone",
       "permission": "ALLOW",
-      "property": "setup"
+      "property": [
+        "setup",
+        "status"
+      ]
     }
   ],
   "methods": {}
