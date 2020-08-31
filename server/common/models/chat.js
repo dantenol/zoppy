@@ -128,10 +128,10 @@ module.exports = function (Chat) {
       .getPage()
       .evaluate(() => window.WAPI.sendMessage.toString());
     console.log('WAPI', send);
-    // if (!send.includes('0x')) {
-    //   wpp.kill();
-    //   return Chat.setup();
-    // }
+    if (!send.includes('0x')) {
+      wpp.kill();
+      return Chat.setup();
+    }
     wp = wpp;
 
     myNumber = (await wpp.getMe()).wid;
@@ -172,7 +172,7 @@ module.exports = function (Chat) {
           console.log(342);
           break;
         case 'UNPAIRED':
-          model.kill();
+          wpp.kill(); // TESTAR
           break;
         default:
           break;
