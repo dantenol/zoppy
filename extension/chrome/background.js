@@ -1,6 +1,6 @@
 function saveUrl(url) {
   const subdomain = url.match(/:\/\/(.+?).zoppy/g)[0];
-  const domain = "https://" + subdomain + ".zoppy.app"
+  const domain = "https" + subdomain + ".app";
   // const domain = "http://localhost:3000"
   chrome.storage.local.set({ url: domain }, function () {
     console.log("Value is set to " + domain);
