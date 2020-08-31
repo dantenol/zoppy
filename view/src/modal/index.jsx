@@ -165,6 +165,7 @@ const Modal = ({
           <h1>
             Parece que o celular principal não está online. Verifique e aguarde.
           </h1>
+          <h3>{file.reason}</h3>
         </div>
       </>
     );

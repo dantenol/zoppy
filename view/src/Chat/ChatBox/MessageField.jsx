@@ -31,6 +31,7 @@ const MessageField = ({
   const [focused, setFocused] = useState(false);
   const [salesButon, setSalesButon] = useState(false);
   const [startedRecording, setStartedRecording] = useState(0);
+  const [allowsRecording, setAllowsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState("");
   const emojiRef = useRef();
 
@@ -88,15 +89,20 @@ const MessageField = ({
   }, [localStorage.settings]);
 
   useEffect(() => {
-    navigator.getUserMedia(
-      { audio: true },
-      () => {
-        console.log("Permission Granted");
-      },
-      () => {
-        console.log("Permission Denied");
-      }
-    );
+    if (!navigator.getUserMedia) {
+      setAllowsRecording(false);
+    } else {
+      navigator.getUserMedia(
+        { audio: true },
+        () => {
+          console.log("Permission Granted");
+          setAllowsRecording(true);
+        },
+        () => {
+          console.log("Permission Denied");
+        }
+      );
+    }
   }, []);
 
   useEffect(() => {
@@ -107,30 +113,32 @@ const MessageField = ({
   }, [audioURL, startedRecording]);
 
   useEffect(() => {
-    document
-      .getElementById("recorder")
-      .addEventListener("touchstart", handleStartTouch);
-
-    document.getElementById("recorder").oncontextmenu = function (event) {
-      event.preventDefault();
-      event.stopPropagation(); // not necessary in my case, could leave in case stopImmediateProp isn't available?
-      event.stopImmediatePropagation();
-      return false;
-    };
-
-    document
-      .getElementById("recorder")
-      .addEventListener("touchend", handleEndTouch);
-
-    return () => {
+    if (allowsRecording) {
       document
         .getElementById("recorder")
-        .removeEventListener("touchstart", handleStartTouch);
+        .addEventListener("touchstart", handleStartTouch);
+
+      document.getElementById("recorder").oncontextmenu = function (event) {
+        event.preventDefault();
+        event.stopPropagation(); // not necessary in my case, could leave in case stopImmediateProp isn't available?
+        event.stopImmediatePropagation();
+        return false;
+      };
+
       document
         .getElementById("recorder")
         .addEventListener("touchend", handleEndTouch);
-    };
-  }, [startedRecording]);
+
+      return () => {
+        document
+          .getElementById("recorder")
+          .removeEventListener("touchstart", handleStartTouch);
+        document
+          .getElementById("recorder")
+          .addEventListener("touchend", handleEndTouch);
+      };
+    }
+  }, [startedRecording, allowsRecording]);
 
   const closeEmoji = () => {
     setEmoji(false);
@@ -157,13 +165,17 @@ const MessageField = ({
     e.persist();
     const textareaLineHeight = 24;
     const minRows = 1;
-    const maxRows = 3;
+    let maxRows = 3;
+    if (isMobile) {
+      maxRows = 10
+    }
 
     const previousRows = e.target.rows;
     e.target.rows = minRows;
 
     const currentRows = ~~(e.target.scrollHeight / textareaLineHeight);
 
+    // TODO ajustar isso
     if (currentRows === previousRows) {
       e.target.rows = currentRows;
     }
@@ -227,7 +239,7 @@ const MessageField = ({
           onChange={handleChange}
           placeholder="Digite uma mensagem"
         ></textarea>
-        {message.length ? (
+        {message.length || !allowsRecording ? (
           <button onClick={() => handlesendButton()}>
             <img src={sendImg} alt="Enviar" />
           </button>

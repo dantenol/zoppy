@@ -80,7 +80,7 @@ const App = () => {
     const onlineStates = ["TIMEOUT", "CONNECTED", "PAIRING", "OPENING"];
     if (!onlineStates.includes(data.connection)) {
       console.log("OFFLINE", data);
-      setModal({ type: "offline" });
+      setModal({ type: "offline", reason: data.connection });
       axios.post(`${url}/chats/refocus`, {}, params);
     } else if (
       onlineStates.includes(data.connection) &&
@@ -502,7 +502,6 @@ const App = () => {
       if (draft[idx] && draft[idx].messages[0] === "none") {
         draft[idx].messages.splice(0, 1);
       }
-      console.log(idx);
       msgArr.forEach((m) => {
         const i = draft[idx].messages.findIndex(
           (c) => c.messageId === m.messageId
@@ -546,7 +545,6 @@ const App = () => {
   };
 
   const loadOldMessages = async (e, chatId = currentChat) => {
-    console.log(chatId);
     const idx = findIdxById(chatId);
     const curr = [...chats];
     const msgsNumber = curr[idx].messages.length;
