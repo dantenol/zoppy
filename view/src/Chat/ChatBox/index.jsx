@@ -19,7 +19,7 @@ const Chat = ({
   sendAudio,
   showMedia,
 }) => {
-  const [message, setMessage] = useState(false);
+  const [message, setMessage] = useState("");
   const [scroll, setScroll] = useState(false);
   const isGroup = chatId.includes("-");
   const messagesEndRef = useRef();
@@ -34,8 +34,8 @@ const Chat = ({
   useEffect(() => {
     if (initialText && message === false) {
       setMessage(initialText);
-    } else if (message !== initialText) {
-      setMessage("");
+    // } else if (message !== initialText) {
+    //   setMessage("");
     }
   }, [initialText, chatId]);
 
