@@ -28,6 +28,7 @@ const initialSettings = JSON.parse(localStorage.settings || 0) || {
   manageUsersLocally: false,
   salesOptions: false,
 };
+const admin = JSON.parse(localStorage.adminSettings || 0);
 
 let socket, addedChats;
 const App = () => {
@@ -42,6 +43,7 @@ const App = () => {
   const [settings, setSettings] = useState(initialSettings);
   const [URLMessageNumber, setURLMessageNumber] = useState("");
   const [URLMessageText, setURLMessageText] = useState("");
+  const [adminSetings, setAdminSetings] = useState(admin || {});
   const isMobile = window.innerWidth <= 600;
   const audio = new Audio(notificationSound);
   const me = localStorage.salesAgentId || localStorage.userId;
@@ -57,6 +59,7 @@ const App = () => {
       if (isSetup) {
         loadChats(socket);
         getStatus();
+        // getUser(); // TODO carregar as configs do user
         window.socket = socket;
       } else {
         alert(
@@ -160,9 +163,6 @@ const App = () => {
           qr: img,
         });
       });
-      socket.on("setAgent", (data) => {
-        handleChangeAgent(data);
-      });
       socket.on("loadedChats", (res) => {
         console.log(res);
         addChatWithoutDuplicate(res.data);
@@ -210,6 +210,9 @@ const App = () => {
       socket.on("queryResult", (res) => {
         handleDBQuery(res);
       });
+      socket.on("setAgent", (data) => {
+        handleChangeAgent(data);
+      });
     }
     if (newChat && chats[0].chatId === newChat.chatId) {
       updateAfterNewChat(chats[0].chatId);
@@ -217,6 +220,7 @@ const App = () => {
     return () => {
       if (socket) {
         socket.off("newMessage");
+        socket.off("setAgent");
         socket.off("sentMessage");
         socket.off("queryResult");
       }
@@ -253,6 +257,7 @@ const App = () => {
 
   const loadChats = async (socketS) => {
     loadAgents();
+    loadSettings();
     console.log("requesting chats");
     socketS.emit("getChats");
   };
@@ -376,6 +381,9 @@ const App = () => {
 
     const idx = findIdxById(msg.chatId, chats);
     console.log(idx);
+    if (!adminSetings.viewOthersChats && data.agentId && data.agentId !== me) {
+      return
+    }
     if (idx < 0) {
       data.profilePic = colors[Math.floor(Math.random() * 6)];
       data.displayName = idToPhone(msg.chatId);
@@ -514,6 +522,8 @@ const App = () => {
   };
 
   const addChatWithoutDuplicate = (chatArr, skipDuplicate) => {
+    const onlyMine = !adminSetings.viewOthersChats;
+    console.log(adminSetings);
     setChats((draft) => {
       if (!addedChats) {
         addedChats = 1;
@@ -529,6 +539,9 @@ const App = () => {
         c.more = true;
         c.firstClick = true;
         c.displayName = c.customName || c.name;
+        if (onlyMine && c.agentId && window.me !== c.agentId) {
+          return;
+        }
         if (!c.messages || !c.messages.length) {
           c.messages = ["none"];
         } else if (c.messages.length && c.messages[0].mine) {
@@ -541,6 +554,8 @@ const App = () => {
         }
       });
       draft.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
+      const myPos = draft.findIndex((c) => c.chatId === currentChat);
+      setSelectedChatIndex(myPos)
     });
   };
 
@@ -820,20 +835,31 @@ const App = () => {
         params
       );
     } catch (error) {
-      console.log(error);
+      console.log(error.response);
+      alert(error.response.message);
       throw new Error("error");
     }
   };
 
   const handleChangeAgent = (data) => {
+    console.log(data);
+    const onlyMine = !adminSetings.viewOthersChats;
     const { agentId, agentLetter } = data;
-    updateChat(
-      {
-        agentId,
-        agentLetter,
-      },
-      data.chatId
-    );
+    const idx = findIdxById(data.chatId);
+    if (idx >= 0) {
+      setChats((draft) => {
+        console.log(idx);
+        draft[idx].agentId = agentId;
+        draft[idx].agentLetter = agentLetter;
+        if (onlyMine && agentId && agentId !== me) {
+          draft.splice(idx, 1);
+        }
+      });
+    } else if (onlyMine && !agentId) {
+      console.log("searching");
+      handleQuery(data.chatId.slice(0, 11));
+      handleQuery("");
+    }
   };
 
   const loadAgents = async () => {
@@ -842,6 +868,17 @@ const App = () => {
       data.wpp = { fullName: "WhatsApp" };
       window.agents = data;
       localStorage.setItem("agents", JSON.stringify(data));
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const loadSettings = async () => {
+    try {
+      const { data } = await axios(`${url}admins`, params);
+      localStorage.setItem("adminSettings", JSON.stringify(data));
+      console.log(data);
+      setAdminSetings(data);
     } catch (err) {
       console.log(err);
     }

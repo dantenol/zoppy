@@ -20,6 +20,9 @@
     "isSalesAgent": {
       "type": "boolean"
     },
+    "settings": {
+      "type": "object"
+    },
     "createdAt": {
       "type": "date"
     }

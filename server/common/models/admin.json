@@ -9,7 +9,26 @@
     "ignoreNumbers": {
       "type": [
         "string"
-      ]
+      ],
+      "default": []
+    },
+    "agentsPool": {
+      "type": [
+        "string"
+      ],
+      "default": []
+    },
+    "preventChatChange": {
+      "type": "boolean",
+      "default": false
+    },
+    "randomizeNewChats": {
+      "type": "boolean",
+      "default": false
+    },
+    "viewOthersChats": {
+      "type": "boolean",
+      "default": true
     }
   },
   "validations": [],

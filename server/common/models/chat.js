@@ -17,7 +17,7 @@ const wa = require('@open-wa/wa-automate');
 //   },
 // });
 
-let model, wp, QRbuffer, myNumber, battery, charging, startedSetup, sts;
+let model, wp, QRbuffer, myNumber, battery, charging, startedSetup, sts, settings;
 const sentMessages = [];
 const status = {
   connection: 'CONNECTED',
@@ -63,6 +63,11 @@ module.exports = function (Chat) {
     return sentMessages.findIndex((m) => m.to === chatId && m.message === body);
   }
 
+  Chat.loadSettings = async () => {
+    settings = await Chat.app.models.Admin.get();
+    console.log(settings);
+  }
+
   async function query(string) {
     const pattern = new RegExp('.*' + string + '.*', 'i');
     return await Chat.find({
@@ -99,7 +104,7 @@ module.exports = function (Chat) {
       console.log('GOT IO');
     }
 
-    
+    Chat.loadSettings();
     io.on('connection', (socket) => {
       console.log('connected on Chat');
       socket.on('getChats', async () => {
@@ -180,6 +185,12 @@ module.exports = function (Chat) {
     });
   }
 
+  function assignAgent() {
+    const agents = settings.agentsPool;
+    const rand = Math.round(Math.random() * (agents.length - 1))
+    return agents[rand];
+  }
+
   async function createMessage(msg, latest, starting, newChat) {
     const Message = model.app.models.Message;
     const waMsg = await wp.getMessageById(msg.id);
@@ -232,10 +243,14 @@ module.exports = function (Chat) {
     const chat = await model.findById(msg.chatId);
     let previousTimestamp;
     let newChat;
+    let agent;
     if (!chat) {
       const waMsg = await wp.getMessageById(msg.id);
       const wpChat = waMsg.chat;
       console.log('new chat:');
+      if (!msg.fromMe && settings.randomizeNewChats) {
+        agent = assignAgent();
+      }
       newChat = await model.create({
         chatId: msg.chatId,
         name:
@@ -249,6 +264,7 @@ module.exports = function (Chat) {
         mute: false,
         pin: false,
         newConversation: true,
+        agentId: agent,
       });
       io.sockets.emit('newChat', newChat);
     } else {
@@ -943,6 +959,9 @@ module.exports = function (Chat) {
     }
     const usr = await Agent.findById(customId || req.accessToken.userId);
 
+    if (settings.preventChatChange && !remove && chat.agentId) {
+      throw 'Você não tem permissão para pegar a venda!'
+    }
     let upd;
     if (remove) {
       upd = await chat.updateAttributes({

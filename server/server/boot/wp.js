@@ -9,4 +9,10 @@ module.exports = async function(app) {
   if (bool) {
     app.models.Chat.setup();
   }
+  const admin = await app.models.Admin.get();
+  console.log(admin);
+  if (!admin) {
+    const admin = await app.models.Admin.new();
+    console.log(admin);
+  }
 };
