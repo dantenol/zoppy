@@ -358,10 +358,10 @@ module.exports = function (Chat) {
           }
         }
 
-        if (chat.t < TREE_MONTHS || i > 500) {
-          console.log('loaded only chat in', new Date() - t2);
-          return;
-        }
+        // if (chat.t < TREE_MONTHS || i > 500) {
+        //   console.log('loaded only chat in', new Date() - t2);
+        //   return;
+        // }
         let allMessages = await client.getAllMessagesInChat(chatId, true);
         // console.log(
         //   'loaded %d messages on chat %s',
