@@ -3,6 +3,7 @@ const moment = require('moment');
 const fs = require('fs');
 const path = require('path');
 const wa = require('@open-wa/wa-automate');
+const {worker} = require('cluster');
 
 // require('axios-debug-log')({
 //   request: function (debug, config) {
@@ -17,7 +18,15 @@ const wa = require('@open-wa/wa-automate');
 //   },
 // });
 
-let model, wp, QRbuffer, myNumber, battery, charging, startedSetup, sts, settings;
+let model,
+  wp,
+  QRbuffer,
+  myNumber,
+  battery,
+  charging,
+  startedSetup,
+  sts,
+  settings;
 const sentMessages = [];
 const status = {
   connection: 'CONNECTED',
@@ -52,11 +61,11 @@ module.exports = function (Chat) {
 
   wa.ev.on('**', async (data, sessionId, namespace) => {
     console.log('\n----------');
-    console.log('EV', data, namespace);
+    console.log('EV', data, namespace, typeof data);
     console.log('----------');
-    // if (data.includes()) {
-      
-    // }
+    if (data === 'successfulScan') {
+      io.sockets.emit('scanned');
+    }
   });
 
   function isSent({chatId, body}) {
@@ -66,7 +75,7 @@ module.exports = function (Chat) {
   Chat.loadSettings = async () => {
     settings = await Chat.app.models.Admin.get();
     console.log(settings);
-  }
+  };
 
   async function query(string) {
     const pattern = new RegExp('.*' + string + '.*', 'i');
@@ -128,7 +137,7 @@ module.exports = function (Chat) {
       });
     });
     io.sockets.emit('reload');
-    
+
     const send = await wpp
       .getPage()
       .evaluate(() => window.WAPI.sendMessage.toString());
@@ -187,7 +196,7 @@ module.exports = function (Chat) {
 
   function assignAgent() {
     const agents = settings.agentsPool;
-    const rand = Math.round(Math.random() * (agents.length - 1))
+    const rand = Math.round(Math.random() * (agents.length - 1));
     return agents[rand];
   }
 
@@ -251,21 +260,25 @@ module.exports = function (Chat) {
       if (!msg.fromMe && settings.randomizeNewChats) {
         agent = assignAgent();
       }
-      newChat = await model.create({
-        chatId: msg.chatId,
-        name:
-          wpChat.name ||
-          wpChat.pushname ||
-          (wpChat.contact && wpChat.contact.verifiedName) ||
-          (wpChat.contact && wpChat.contact.formattedName) ||
-          wpChat.formattedTitle,
-        type: wpChat.kind,
-        lastMessageAt: wpChat.t * 1000,
-        mute: false,
-        pin: false,
-        newConversation: true,
-        agentId: agent,
-      });
+      try {
+        newChat = await model.create({
+          chatId: msg.chatId,
+          name:
+            wpChat.name ||
+            wpChat.pushname ||
+            (wpChat.contact && wpChat.contact.verifiedName) ||
+            (wpChat.contact && wpChat.contact.formattedName) ||
+            wpChat.formattedTitle,
+          type: wpChat.kind,
+          lastMessageAt: wpChat.t * 1000,
+          mute: false,
+          pin: false,
+          newConversation: true,
+          agentId: agent,
+        });
+      } catch (error) {
+        console.log("CAN'T READ", msg, waMsg);
+      }
       io.sockets.emit('newChat', newChat);
     } else {
       previousTimestamp = chat.lastMessageAt;
@@ -275,6 +288,9 @@ module.exports = function (Chat) {
       });
     }
     const newChatFromMe = msg.fromMe && !chat ? true : undefined;
+    if (!newChat) {
+      newChat = chat;
+    }
     await createMessage(msg, true, newChatFromMe, newChat);
     const loaded = await wp.getAmountOfLoadedMessages();
     if (loaded > 3000) {
@@ -572,16 +588,50 @@ module.exports = function (Chat) {
     http: {path: '/all', verb: 'get'},
   });
 
+  async function saveMsgAll(msgs) {
+    const Message = Chat.app.models.Message;
+    const p = await Promise.all(
+      msgs.map(async (m) => {
+        return await Message.create({
+          messageId: m.id,
+          chatId: m.chatId._serialized,
+          body: m.body,
+          sender:
+            m.sender.pushname ||
+            (m.contact && m.contact.verifiedName) ||
+            (m.contact && m.contact.formattedName) ||
+            m.sender.id ||
+            m.sender,
+          type: m.type,
+          mine: m.sender.id === myNumber || m.fromMe,
+          timestamp: m.t * 1000,
+          quote: m.quotedMsg || undefined,
+          clientUrl: m.clientUrl,
+          mediaKey: m.mediaKey,
+          mimetype: m.mimetype,
+          caption: m.caption,
+        });
+      }),
+    );
+    return p;
+  }
+
   Chat.saveAllConversations = async () => {
     const conversations = await Chat.find();
-
+    await Promise.all(
+      conversations.map(async (c) => {
+        const msgs = await wp.loadAndGetAllMessagesOnChat(c.chatId, true);
+        await wp.cutMsgCache();
+        return await saveMsgAll(msgs);
+      }),
+    );
     return conversations;
   };
 
   Chat.remoteMethod('saveAllConversations', {
     description: 'save all conversations',
     returns: {root: true},
-    http: {path: '/all', verb: 'get'},
+    http: {path: '/saveAll', verb: 'post'},
   });
 
   Chat.profilePicUrl = async (userId) => {
@@ -670,7 +720,6 @@ module.exports = function (Chat) {
   });
 
   Chat.kill = async () => {
-    //TODO try catch
     try {
       fs.unlinkSync(path.resolve(__dirname, '../../session/session.data.json'));
     } catch (error) {
@@ -814,12 +863,7 @@ module.exports = function (Chat) {
     const file = req.files[k];
     const base64 = Buffer.from(file.data).toString('base64');
     const uri = `data:audio/mp3;base64,${base64}`;
-    const wpMsg = await wp.sendFile(
-      chatId,
-      uri,
-      'ptt.mp3',
-      ''
-    );
+    const wpMsg = await wp.sendFile(chatId, uri, 'ptt.mp3', '');
     console.log(wpMsg);
     return wpMsg;
   };
@@ -867,11 +911,15 @@ module.exports = function (Chat) {
     const msg = await Message.findById(messageId);
 
     let mediaData;
-    if (msg.type === 'sticker') {
-      let stickerDecryptable = await wp.getStickerDecryptable(messageId);
-      mediaData = await wa.decryptMedia(stickerDecryptable);
-    } else {
-      mediaData = await wa.decryptMedia(msg);
+    try {
+      if (msg.type === 'sticker') {
+        const stickerDecryptable = await wp.getStickerDecryptable(messageId);
+        mediaData = await wa.decryptMedia(stickerDecryptable);
+      } else {
+        mediaData = await wa.decryptMedia(msg);
+      }
+    } catch (error) {
+      console.log('FAILED TO LOAD' + messageId);
     }
 
     res.setHeader('Content-Type', msg.mimetype.split(';')[0]);
@@ -954,28 +1002,32 @@ module.exports = function (Chat) {
   Chat.claimChat = async (req, chatId, remove, customId) => {
     const Agent = model.app.models.Agent;
     const chat = await Chat.findById(chatId);
-    if (!chat) {
-      throw 'Invalid chatId';
-    }
-    const usr = await Agent.findById(customId || req.accessToken.userId);
+    try {
+      if (!chat) {
+        throw 'Invalid chatId';
+      }
+      const usr = await Agent.findById(customId || req.accessToken.userId);
 
-    if (settings.preventChatChange && !remove && chat.agentId) {
-      throw 'Você não tem permissão para pegar a venda!'
+      if (settings.preventChatChange && !remove && chat.agentId) {
+        throw 'Você não tem permissão para pegar a venda!';
+      }
+      let upd;
+      if (remove) {
+        upd = await chat.updateAttributes({
+          agentId: null,
+          agentLetter: null,
+        });
+      } else {
+        upd = await chat.updateAttributes({
+          agentId: usr.id,
+          agentLetter: usr.firstLetter,
+        });
+      }
+      io.sockets.emit('setAgent', upd);
+      return upd;
+    } catch (error) {
+      console.log(error);
     }
-    let upd;
-    if (remove) {
-      upd = await chat.updateAttributes({
-        agentId: null,
-        agentLetter: null,
-      });
-    } else {
-      upd = await chat.updateAttributes({
-        agentId: usr.id,
-        agentLetter: usr.firstLetter,
-      });
-    }
-    io.sockets.emit('setAgent', upd);
-    return upd;
   };
 
   Chat.remoteMethod('claimChat', {

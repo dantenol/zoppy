@@ -140,11 +140,10 @@ const Modal = ({
         <div className={classNames(classes.modal, classes.opaque)}>
           <p>{file.update}</p>
           <h2>Escaneie o QR code pelo WhatsApp</h2>
-          <img
-            className={classes.qr}
-            src={file.qr}
-            alt="QR code"
-          />
+          {file.qr ? (
+            <img className={classes.qr} src={file.qr} alt="QR code" />
+          ) : null}
+          {file.status ? <h1>QR code validado. Carregando...</h1> : null}
         </div>
       </>
     );

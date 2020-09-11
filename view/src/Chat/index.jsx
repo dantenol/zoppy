@@ -30,6 +30,7 @@ const Chat = ({
           "mobile-fullwidth",
           showing
         )}
+        id="main"
       >
         <Header
           data={chat}

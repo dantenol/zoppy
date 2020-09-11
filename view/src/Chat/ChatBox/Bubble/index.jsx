@@ -10,6 +10,7 @@ import Sticker from "./Sticker";
 
 const Bubble = ({ message, isGroup, showMedia }) => {
   const side = message.mine ? classes.right : classes.left;
+  const inS = message.mine ? 'message-out' : 'message-in';
   let opacity = 1;
   if (message.sending) {
     opacity = 0.8;
@@ -34,7 +35,7 @@ const Bubble = ({ message, isGroup, showMedia }) => {
     );
   } else if (BubbleComponent) {
     return (
-      <div className={classNames(classes.container, side)} style={{ opacity }}>
+      <div className={classNames(classes.container, side, inS)} style={{ opacity }}>
         <BubbleComponent
           showMedia={showMedia}
           message={message}

@@ -43,7 +43,7 @@ const App = () => {
   const [settings, setSettings] = useState(initialSettings);
   const [URLMessageNumber, setURLMessageNumber] = useState("");
   const [URLMessageText, setURLMessageText] = useState("");
-  const [adminSetings, setAdminSetings] = useState(admin || {});
+  const [adminSettings, setadminSettings] = useState(admin || {});
   const isMobile = window.innerWidth <= 600;
   const audio = new Audio(notificationSound);
   const me = localStorage.salesAgentId || localStorage.userId;
@@ -155,13 +155,6 @@ const App = () => {
       });
       socket.on("reload", () => {
         window.location.reload();
-      });
-      socket.on("QR", (img) => {
-        console.log(img);
-        setModal({
-          type: "qr",
-          qr: img,
-        });
       });
       socket.on("loadedChats", (res) => {
         console.log(res);
@@ -380,9 +373,9 @@ const App = () => {
     const msg = data.message;
 
     const idx = findIdxById(msg.chatId, chats);
-    console.log(idx);
-    if (!adminSetings.viewOthersChats && data.agentId && data.agentId !== me) {
-      return
+    console.log(idx, data);
+    if (!adminSettings.viewOthersChats && data.agentId && data.agentId !== me) {
+      return;
     }
     if (idx < 0) {
       data.profilePic = colors[Math.floor(Math.random() * 6)];
@@ -414,7 +407,7 @@ const App = () => {
     }
 
     let unreadCount = chats[idx].unread;
-    if (idx !== selectedChatIndex && !data.mine) {
+    if (idx !== selectedChatIndex && !msg.mine) {
       if (unreadCount) {
         unreadCount += 1;
       } else {
@@ -473,6 +466,11 @@ const App = () => {
     const data = { chatId: msg.chatId, message: msg };
 
     const idx = findIdxById(data.chatId);
+    if (newChat && msg.agentId === me) {
+      console.log("adding");
+    } else if (idx < 0 && !adminSettings.viewOthersChats) {
+      return;
+    }
     if (idx < 0) {
       data.profilePic = colors[Math.floor(Math.random() * 6)];
       data.displayName = idToPhone(data.chatId);
@@ -522,8 +520,7 @@ const App = () => {
   };
 
   const addChatWithoutDuplicate = (chatArr, skipDuplicate) => {
-    const onlyMine = !adminSetings.viewOthersChats;
-    console.log(adminSetings);
+    const onlyMine = !adminSettings.viewOthersChats;
     setChats((draft) => {
       if (!addedChats) {
         addedChats = 1;
@@ -555,7 +552,7 @@ const App = () => {
       });
       draft.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
       const myPos = draft.findIndex((c) => c.chatId === currentChat);
-      setSelectedChatIndex(myPos)
+      setSelectedChatIndex(myPos);
     });
   };
 
@@ -781,6 +778,13 @@ const App = () => {
             access_token: localStorage.access_token,
           },
         });
+        socket.on("scanned", () => {
+          console.log("SCANNED");
+          setModal({ type: "qr", status: "scanned" });
+        });
+        socket.on("reload", () => {
+          window.location.reload();
+        });
         socket.on("QR", (img) => {
           console.log(img);
           setModal({
@@ -843,7 +847,7 @@ const App = () => {
 
   const handleChangeAgent = (data) => {
     console.log(data);
-    const onlyMine = !adminSetings.viewOthersChats;
+    const onlyMine = !adminSettings.viewOthersChats;
     const { agentId, agentLetter } = data;
     const idx = findIdxById(data.chatId);
     if (idx >= 0) {
@@ -878,7 +882,7 @@ const App = () => {
       const { data } = await axios(`${url}admins`, params);
       localStorage.setItem("adminSettings", JSON.stringify(data));
       console.log(data);
-      setAdminSetings(data);
+      setadminSettings(data);
     } catch (err) {
       console.log(err);
     }

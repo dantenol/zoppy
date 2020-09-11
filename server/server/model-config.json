@@ -64,7 +64,8 @@
           "status": true,
           "reset": true,
           "findChat": true,
-          "refocus": true
+          "refocus": true,
+          "saveAllConversations": true
         }
       }
     }
@@ -98,7 +99,8 @@
         "sharedMethods": {
           "*": false,
           "get": true,
-          "change": true
+          "change": true,
+          "version": true
         }
       }
     }

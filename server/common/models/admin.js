@@ -1,4 +1,5 @@
 'use strict';
+const pkg = require('../../package.json')
 
 module.exports = function(Admin) {
   Admin.new = async () => {
@@ -30,5 +31,15 @@ module.exports = function(Admin) {
     description: 'load settings',
     returns: {root: true},
     http: {path: '/', verb: 'get'},
+  });
+
+  Admin.version = async () => {
+    return pkg.version;
+  }
+
+  Admin.remoteMethod('version', {
+    description: 'app version',
+    returns: {root: true},
+    http: {path: '/versoin', verb: 'get'},
   });
 };
