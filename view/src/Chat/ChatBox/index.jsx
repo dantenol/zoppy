@@ -44,7 +44,7 @@ const Chat = ({
   }, [chatId]);
 
   useEffect(() =>{
-    if (scroll < 4 || messages[0].mine) {
+    if (scroll < 3 || messages[0].mine) {
       scrollToBottom();
     }
   }, [messages]);

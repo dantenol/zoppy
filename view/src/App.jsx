@@ -43,7 +43,7 @@ const App = () => {
   const [settings, setSettings] = useState(initialSettings);
   const [URLMessageNumber, setURLMessageNumber] = useState("");
   const [URLMessageText, setURLMessageText] = useState("");
-  const [adminSettings, setadminSettings] = useState(admin || {});
+  const [adminSettings, setAdminSettings] = useState(admin || {});
   const isMobile = window.innerWidth <= 600;
   const audio = new Audio(notificationSound);
   const me = localStorage.salesAgentId || localStorage.userId;
@@ -57,16 +57,16 @@ const App = () => {
     try {
       const isSetup = (await axios(`${url}chats/online`, params)).data;
       if (isSetup) {
-        loadChats(socket);
         getStatus();
-        // getUser(); // TODO carregar as configs do user
+        await loadChats(socket);
+        getUser(); // TODO carregar as configs do user
         window.socket = socket;
       } else {
         alert(
           "Ops, sua conexão foi perdida. Continue para sincronizar novamente."
         );
         clearLoginData();
-        window.location.reload();
+        window.location.reload(true);
       }
     } catch (error) {
       if (error.response.status === 401) {
@@ -74,7 +74,7 @@ const App = () => {
           "Fizemos alguns ajustes por aqui, e você vai ter que logar novamente"
         );
         clearLoginData();
-        window.location.reload();
+        window.location.reload(true);
       }
     }
   };
@@ -154,11 +154,7 @@ const App = () => {
         },
       });
       socket.on("reload", () => {
-        window.location.reload();
-      });
-      socket.on("loadedChats", (res) => {
-        console.log(res);
-        addChatWithoutDuplicate(res.data);
+        window.location.reload(true);
       });
       socket.on("status", (data) => {
         console.log(data);
@@ -178,7 +174,7 @@ const App = () => {
           salesOptions: false,
         })
       );
-      // window.location.reload();
+      // window.location.reload(true);
     } else if (
       window.location.pathname === "/" &&
       JSON.parse(localStorage.settings).manageUsersLocally
@@ -190,6 +186,17 @@ const App = () => {
     });
     window.addEventListener("hashchange", navigator);
   }, []);
+
+  useEffect(() => {
+    console.log("UPDATED");
+    socket.on("loadedChats", (res) => {
+      console.log(res);
+      addChatWithoutDuplicate(res.data);
+    });
+    return () => {
+      socket.off("loadedChats");
+    };
+  }, [adminSettings]);
 
   useEffect(() => {
     if (socket) {
@@ -520,6 +527,7 @@ const App = () => {
   };
 
   const addChatWithoutDuplicate = (chatArr, skipDuplicate) => {
+    console.log(adminSettings);
     const onlyMine = !adminSettings.viewOthersChats;
     setChats((draft) => {
       if (!addedChats) {
@@ -770,7 +778,7 @@ const App = () => {
       console.log(isSetup);
       if (isSetup) {
         localStorage.setItem("connected", true);
-        window.location.reload();
+        window.location.reload(true);
       } else {
         socket = io({
           secure: true,
@@ -783,7 +791,7 @@ const App = () => {
           setModal({ type: "qr", status: "scanned" });
         });
         socket.on("reload", () => {
-          window.location.reload();
+          window.location.reload(true);
         });
         socket.on("QR", (img) => {
           console.log(img);
@@ -882,7 +890,28 @@ const App = () => {
       const { data } = await axios(`${url}admins`, params);
       localStorage.setItem("adminSettings", JSON.stringify(data));
       console.log(data);
-      setadminSettings(data);
+      setAdminSettings(data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const getUser = async () => {
+    try {
+      const { data } = await axios(
+        `${url}agents/${localStorage.userId}`,
+        params
+      );
+      if (data.settings) {
+        setSettings(data.settings);
+      }
+      if (data.settings && data.settings.isAdmin && adminSettings) {
+        console.log(data.settings);
+        const newAdm = { ...adminSettings, viewOthersChats: true };
+        localStorage.setItem("settings", JSON.stringify(newAdm));
+        setAdminSettings(newAdm);
+        socket.emit("getChats");
+      }
     } catch (err) {
       console.log(err);
     }

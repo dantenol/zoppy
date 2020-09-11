@@ -83,6 +83,7 @@
           "*": false,
           "create": true,
           "login": true,
+          "findById": true,
           "logout": true,
           "loadAgentsObj": true,
           "patchAgentData": true,
