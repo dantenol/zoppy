@@ -344,6 +344,9 @@ const App = () => {
       console.log("fail to load pic");
     }
     const obj = { unread: 0, profilePic: pic.data || curr.profilePic };
+    if (settings.isAdmin) {
+      delete obj.unread;
+    }
     if (curr.firstClick) {
       const msgs = await loadMessages(curr.chatId);
 
@@ -351,7 +354,9 @@ const App = () => {
     } else {
       updateChat(obj, curr.chatId);
     }
-    axios.patch(`${url}chats/${curr.chatId}/seen`, {}, params);
+    if (!settings.isAdmin) {
+      axios.patch(`${url}chats/${curr.chatId}/seen`, {}, params);
+    }
   };
 
   const handleChangeName = async (name, id = currentChat) => {
