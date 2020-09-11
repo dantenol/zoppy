@@ -333,7 +333,11 @@ module.exports = function (Chat) {
         const chatId = oc.id;
 
         if (currChat) {
-          currChat.updateAttributes({lastMessageAt: chat.t * 1000});
+          let agentId;
+          if (!currChat.agentId && settings.randomizeNewChats) {
+            agentId = assignAgent();
+          }
+          currChat.updateAttributes({lastMessageAt: chat.t * 1000, agentId});
         } else {
           try {
             if (!chat.kind) {
