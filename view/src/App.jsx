@@ -189,6 +189,9 @@ const App = () => {
 
   useEffect(() => {
     console.log("UPDATED");
+    if (!socket) {
+      return;
+    }
     socket.on("loadedChats", (res) => {
       console.log(res);
       addChatWithoutDuplicate(res.data);
