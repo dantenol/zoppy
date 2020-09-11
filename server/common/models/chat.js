@@ -196,8 +196,8 @@ module.exports = function (Chat) {
 
   function assignAgent() {
     const agents = settings.agentsPool;
-    const rand = Math.round(Math.random() * (agents.length - 1));
-    return agents[rand];
+    const r = random.uniformInt(0, agents.length - 1);
+    return agents[r()];
   }
 
   async function createMessage(msg, latest, starting, newChat) {
