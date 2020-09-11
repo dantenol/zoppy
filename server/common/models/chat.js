@@ -1,6 +1,7 @@
 'use strict';
 const moment = require('moment');
 const fs = require('fs');
+const random = require("random");
 const path = require('path');
 const wa = require('@open-wa/wa-automate');
 const {worker} = require('cluster');
