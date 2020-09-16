@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import moment from "moment";
 import classNames from "classnames";
 
@@ -6,12 +6,27 @@ import { url } from "../../../connector";
 
 import classes from "./index.module.css";
 
+const secondsToTime = (s) => {
+  if (!s) {
+    return "";
+  }
+  const m = Math.floor(s / 60);
+  const sec = Math.round(s % 60);
+  let parsedSec = sec;
+  if (sec < 10) {
+    parsedSec = "0" + sec;
+  }
+  return m + ":" + parsedSec;
+};
 
 const VoiceMessage = ({ message, isGroup }) => {
   const [audio, setAudio] = useState(null);
   const [playing, setPlaying] = useState(false);
+  const [duration, setDuration] = useState("");
+  const componentIsMounted = useRef(true);
+
   const agents = window.agents;
-  
+
   const toggle = async () => {
     setPlaying(!playing);
   };
@@ -22,13 +37,24 @@ const VoiceMessage = ({ message, isGroup }) => {
     senderName = agents[message.agentId].fullName;
   }
 
+  const saveDuration = (audioEl) => {
+    if (componentIsMounted.current) {
+      setDuration(secondsToTime(audioEl.duration));
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      componentIsMounted.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     try {
-      setAudio(
-        new Audio(
-          `${url}chats/download/${message.messageId}?access_token=${localStorage.access_token}`
-        )
+      const audioBuff = new Audio(
+        `${url}chats/download/${message.messageId}?access_token=${localStorage.access_token}`
       );
+      setAudio(audioBuff);
     } catch (error) {
       console.log(error);
     }
@@ -41,9 +67,10 @@ const VoiceMessage = ({ message, isGroup }) => {
         for (let i = 0; i < sounds.length; i++) sounds[i].pause();
         playing ? audio.play() : audio.pause();
         audio.addEventListener("ended", () => setPlaying(false));
-
+        audio.addEventListener("loadeddata", () => saveDuration(audio));
         return () => {
           audio.removeEventListener("ended", () => setPlaying(false));
+          audio.removeEventListener("loadeddata", () => saveDuration(audio));
         };
       } catch (e) {
         alert("erro ao reproduzir!");
@@ -67,6 +94,7 @@ const VoiceMessage = ({ message, isGroup }) => {
                 )}
               ></div>
             </div>
+            <span>{duration}</span>
           </div>
         </div>
         <div className={classes.time}>

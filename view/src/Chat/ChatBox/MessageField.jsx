@@ -41,11 +41,7 @@ const MessageField = ({
     }
     e.preventDefault();
     setStartedRecording(new Date().valueOf());
-    if (startedRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
+    startRecording();
   };
 
   const startRecording = () => {
@@ -61,6 +57,16 @@ const MessageField = ({
       .getMp3()
       .then(([buffer, blob]) => {
         setAudioURL(blob);
+      });
+  };
+
+  const cancelRecording = () => {
+    setStartedRecording(0);
+    recorder
+      .stop()
+      .getMp3()
+      .then(() => {
+        setAudioURL("");
       });
   };
 
@@ -106,7 +112,7 @@ const MessageField = ({
   }, []);
 
   useEffect(() => {
-    if (!startedRecording && audioURL.size > 1) {
+    if (!startedRecording && audioURL && audioURL.size > 1) {
       console.log(audioURL);
       sendAudio(audioURL);
     }
@@ -167,7 +173,7 @@ const MessageField = ({
     const minRows = 1;
     let maxRows = 3;
     if (isMobile) {
-      maxRows = 10
+      maxRows = 10;
     }
 
     const previousRows = e.target.rows;
