@@ -25,6 +25,7 @@ const MessageField = ({
   send,
   handleModal,
   sendAudio,
+  cancelAudio,
 }) => {
   const [rows, setRows] = useState(1);
   const [emoji, setEmoji] = useState();
@@ -42,6 +43,9 @@ const MessageField = ({
     e.preventDefault();
     setStartedRecording(new Date().valueOf());
     startRecording();
+
+    document.getElementById('recorder').insertAdjacentElement('afterbegin', {buttonToCancel});
+
   };
 
   const startRecording = () => {

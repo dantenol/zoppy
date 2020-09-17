@@ -17,6 +17,7 @@ const Chat = ({
   handleLoadMore,
   send,
   sendAudio,
+  cancelAudio,
   showMedia,
 }) => {
   const [message, setMessage] = useState("");
@@ -117,6 +118,7 @@ const Chat = ({
         handleChangeMessage={setMessage}
         send={send}
         sendAudio={sendAudio}
+        cancelAudio={cancelAudio}
       />
     </div>
   );
