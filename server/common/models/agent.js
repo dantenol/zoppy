@@ -48,6 +48,7 @@ module.exports = function (Agent) {
       skip: 1,
     });
 
+    // TODO não deletar se for admin
     tokens.forEach((t) => t.destroy());
   });
 
