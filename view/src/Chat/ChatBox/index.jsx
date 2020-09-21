@@ -24,7 +24,7 @@ const Chat = ({
   const isGroup = chatId.includes("-");
   const messagesEndRef = useRef();
 
-  let lastDay = new Date(messages[0].timestamp);
+  let lastDay = new Date(messages[0].timestamp || null);
 
   const scrollToBottom = () => {
     setScroll(scroll + 1);
@@ -60,6 +60,9 @@ const Chat = ({
                 messages.map((msg, i) => {
                   const m = { ...msg };
                   const last = lastDay;
+                  if (typeof msg !== "object") {
+                    return null
+                  }
                   const current = m.timestamp;
                   if (m.mine && !m.agentId) {
                     m.agentId = "wpp";

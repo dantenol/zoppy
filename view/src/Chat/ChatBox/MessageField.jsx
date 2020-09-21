@@ -41,7 +41,11 @@ const MessageField = ({
     }
     e.preventDefault();
     setStartedRecording(new Date().valueOf());
-    startRecording();
+    if (startedRecording) {
+      stopRecording()
+    } else {
+      startRecording();
+    }
   };
 
   const startRecording = () => {

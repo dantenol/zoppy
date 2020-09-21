@@ -96,6 +96,7 @@
 .message {
   display: inline-flex;
   flex-direction: column;
+  overflow-wrap: anywhere;
 }
 
 .message a,

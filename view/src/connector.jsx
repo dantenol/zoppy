@@ -1,3 +1,5 @@
+import pkg from "../package.json"
+
 export const url = "/api/";
 
 export const params = {
@@ -5,3 +7,5 @@ export const params = {
     access_token: localStorage.access_token,
   },
 };
+
+export const webVersion = pkg.version;

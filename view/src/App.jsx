@@ -5,7 +5,7 @@ import "moment/locale/pt-br";
 import io from "socket.io-client";
 import { useImmer } from "use-immer";
 
-import { url, params } from "./connector";
+import { url, params, webVersion } from "./connector";
 
 import useInterval from "./hooks/useInterval";
 import classes from "./App.module.css";
@@ -29,6 +29,8 @@ const initialSettings = JSON.parse(localStorage.settings || 0) || {
   salesOptions: false,
 };
 const admin = JSON.parse(localStorage.adminSettings || 0);
+
+window.webVersion = webVersion;
 
 let socket, addedChats;
 const App = () => {
@@ -575,7 +577,10 @@ const App = () => {
   const loadOldMessages = async (e, chatId = currentChat) => {
     const idx = findIdxById(chatId);
     const curr = [...chats];
-    const msgsNumber = curr[idx].messages.length;
+    let msgsNumber = curr[idx].messages.length;
+    if (curr[idx].messages[0] === "none") {
+      msgsNumber = 0;
+    }
     const msgs = await axios(
       `${url}chats/${chatId}/messages?filter={"skip":${msgsNumber}}`,
       params
@@ -689,6 +694,10 @@ const App = () => {
   };
 
   const handleSendAudio = async (e) => {
+    const sure = window.confirm("Quer enviar o áudio?");
+    if (!sure) {
+      return;
+    }
     const file = e;
     const formData = new FormData();
     formData.append("", file);
