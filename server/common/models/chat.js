@@ -1,7 +1,7 @@
 'use strict';
 const moment = require('moment');
 const fs = require('fs');
-const random = require("random");
+const random = require('random');
 const path = require('path');
 const wa = require('@open-wa/wa-automate');
 const {worker} = require('cluster');
@@ -203,11 +203,15 @@ module.exports = function (Chat) {
 
   async function createMessage(msg, latest, starting, newChat) {
     const Message = model.app.models.Message;
-    const waMsg = await wp.getMessageById(msg.id);
+    let waMsg = await wp.getMessageById(msg.id);
+    if (!waMsg && msg.chat.lastReceivedKey) {
+      waMsg = msg;
+    }
     if (!validMsgTypes.includes(msg.type)) {
       return;
     }
     let time = waMsg.t;
+    let savedMsg;
     if (latest) {
       time = new Date().valueOf() / 1000;
     }
@@ -216,7 +220,7 @@ module.exports = function (Chat) {
       socketObj = newChat;
     }
     try {
-      const savedMsg = await Message.create({
+      savedMsg = await Message.create({
         messageId: waMsg.id,
         chatId: waMsg.chatId._serialized,
         body: waMsg.body,
@@ -240,14 +244,16 @@ module.exports = function (Chat) {
       if (isSent(savedMsg) < 0 && savedMsg.timestamp > new Date() - 2000) {
         io.sockets.emit('newMessage', socketObj);
       }
+      console.log(savedMsg);
       return savedMsg;
     } catch (error) {
-      // console.log('duplicated %s', waMsg.id);
+      console.log(error);
+      console.log('duplicated %s', waMsg.id);
     }
   }
 
   async function saveMsg(msg) {
-    if (!validMsgTypes.includes(msg.type)) {
+    if (!validMsgTypes.includes(msg.type) || msg.from.includes("status")) {
       return;
     }
     const chat = await model.findById(msg.chatId);
@@ -362,10 +368,10 @@ module.exports = function (Chat) {
           }
         }
 
-        // if (chat.t < TREE_MONTHS || i > 500) {
-        //   console.log('loaded only chat in', new Date() - t2);
-        //   return;
-        // }
+        if (chat.t < TREE_MONTHS || i > 500) {
+          console.log('loaded only chat in', new Date() - t2);
+          return;
+        }
         let allMessages = await client.getAllMessagesInChat(chatId, true);
         // console.log(
         //   'loaded %d messages on chat %s',
@@ -375,17 +381,17 @@ module.exports = function (Chat) {
 
         if (!allMessages.length) {
           allMessages = await client.loadEarlierMessages(chatId);
+        } else {
+          await Promise.all(
+            allMessages.map(async (msg) => {
+              try {
+                await createMessage(msg);
+              } catch (error) {
+                // console.log('duplicated %s', msg.id);
+              }
+            }),
+          );
         }
-
-        await Promise.all(
-          allMessages.map(async (msg) => {
-            try {
-              await createMessage(msg);
-            } catch (error) {
-              // console.log('duplicated %s', msg.id);
-            }
-          }),
-        );
         console.log('loaded chat and messages in', new Date() - t2);
         client.cutMsgCache();
       }),
