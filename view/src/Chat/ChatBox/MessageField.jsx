@@ -140,12 +140,11 @@ const MessageField = ({
         .addEventListener("touchend", handleEndTouch);
 
       return () => {
-        document
-          .getElementById("recorder")
-          .removeEventListener("touchstart", handleStartTouch);
-        document
-          .getElementById("recorder")
-          .addEventListener("touchend", handleEndTouch);
+        const e = document.getElementById("recorder")
+        if (e) {
+          e.removeEventListener("touchstart", handleStartTouch);
+          e.removeEventListener("touchend", handleEndTouch);
+        }
       };
     }
   }, [startedRecording, allowsRecording]);

@@ -247,7 +247,6 @@ module.exports = function (Chat) {
       console.log(savedMsg);
       return savedMsg;
     } catch (error) {
-      console.log(error);
       console.log('duplicated %s', waMsg.id);
     }
   }

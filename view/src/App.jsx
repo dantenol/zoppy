@@ -797,6 +797,13 @@ const App = () => {
         localStorage.setItem("connected", true);
         window.location.reload(true);
       } else {
+        // const sure = window.confirm(
+        //   "O celular está desconectado da Zoppy. Confira sua conexão. Caso esteja com o celular em mãos e queira configurar novamente, pressione ok"
+        // );
+        // if (!sure) {
+        //   window.alert("Avise o responsável sobre o erro de conexão!")
+        //   return;
+        // }
         socket = io({
           secure: true,
           query: {
