@@ -42,7 +42,7 @@ const MessageField = ({
     e.preventDefault();
     setStartedRecording(new Date().valueOf());
     if (startedRecording) {
-      stopRecording()
+      stopRecording();
     } else {
       startRecording();
     }
@@ -123,7 +123,8 @@ const MessageField = ({
   }, [audioURL, startedRecording]);
 
   useEffect(() => {
-    if (allowsRecording) {
+    const e = document.getElementById("recorder");
+    if (allowsRecording && e) {
       document
         .getElementById("recorder")
         .addEventListener("touchstart", handleStartTouch);
@@ -140,11 +141,8 @@ const MessageField = ({
         .addEventListener("touchend", handleEndTouch);
 
       return () => {
-        const e = document.getElementById("recorder")
-        if (e) {
-          e.removeEventListener("touchstart", handleStartTouch);
-          e.removeEventListener("touchend", handleEndTouch);
-        }
+        e.removeEventListener("touchstart", handleStartTouch);
+        e.removeEventListener("touchend", handleEndTouch);
       };
     }
   }, [startedRecording, allowsRecording]);
