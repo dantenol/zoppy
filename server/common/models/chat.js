@@ -252,7 +252,7 @@ module.exports = function (Chat) {
   }
 
   async function saveMsg(msg) {
-    if (!validMsgTypes.includes(msg.type) || msg.from.includes("status")) {
+    if (!validMsgTypes.includes(msg.type) || msg.from.includes('status')) {
       return;
     }
     const chat = await model.findById(msg.chatId);
@@ -928,15 +928,15 @@ module.exports = function (Chat) {
       } else {
         mediaData = await wa.decryptMedia(msg);
       }
+
+      res.setHeader('Content-Type', msg.mimetype.split(';')[0]);
+      res.setHeader('Content-Length', mediaData.length);
+
+      // console.log(mediaData.toString('base64'));
+      res.send(mediaData);
     } catch (error) {
       console.log('FAILED TO LOAD' + messageId);
     }
-
-    res.setHeader('Content-Type', msg.mimetype.split(';')[0]);
-    res.setHeader('Content-Length', mediaData.length);
-
-    // console.log(mediaData.toString('base64'));
-    res.send(mediaData);
   };
 
   Chat.remoteMethod('loadFile', {
