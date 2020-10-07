@@ -16,8 +16,8 @@
     "prod-db": "sed -i 's@\"0.0.0.0\"@\"db\"@' ./server/datasources.json"
   },
   "dependencies": {
-    "@open-wa/wa-automate": "^2.0.28",
-    "aws-sdk": "^2.766.0",
+    "@open-wa/wa-automate": "^2.0.29",
+    "aws-sdk": "^2.769.0",
     "axios": "^0.20.0",
     "axios-debug-log": "^0.8.0",
     "compression": "^1.7.4",
@@ -30,7 +30,7 @@
     "loopback-component-explorer": "^6.5.1",
     "loopback-connector-mongodb": "^5.4.0",
     "mime-types": "^2.1.27",
-    "moment": "^2.29.0",
+    "moment": "^2.29.1",
     "random": "^2.2.0",
     "serve-favicon": "^2.5.0",
     "sharp": "^0.26.1",
