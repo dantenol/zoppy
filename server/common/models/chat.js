@@ -143,13 +143,21 @@ module.exports = function (Chat) {
       .getPage()
       .evaluate(() => window.WAPI.sendMessage.toString());
     console.log('WAPI', send);
+<<<<<<< HEAD
     //if (!send.includes('0x')) {
       //wpp.kill();
       //return Chat.setup();
     //}
+=======
+    // if (!send.includes('0x')) {
+    //   wpp.kill();
+    //   return Chat.setup();
+    // }
+>>>>>>> 1c2e7d5a4d66104e75d15e50f156de03f52c067e
     wp = wpp;
 
     myNumber = (await wpp.getMe()).wid;
+    clearWAMessage();
     console.log('My number %s', myNumber);
     wpp.onAnyMessage((msg) => {
       saveMsg(msg);
@@ -238,13 +246,14 @@ module.exports = function (Chat) {
         mediaKey: waMsg.mediaKey,
         mimetype: waMsg.mimetype,
         caption: waMsg.caption,
+        duration: waMsg.duration,
         starting,
       });
       socketObj.message = savedMsg;
       if (isSent(savedMsg) < 0 && savedMsg.timestamp > new Date() - 2000) {
         io.sockets.emit('newMessage', socketObj);
       }
-      console.log(savedMsg);
+      // console.log(savedMsg);
       return savedMsg;
     } catch (error) {
       console.log('duplicated %s', waMsg.id);
@@ -252,7 +261,7 @@ module.exports = function (Chat) {
   }
 
   async function saveMsg(msg) {
-    if (!validMsgTypes.includes(msg.type) || msg.from.includes("status")) {
+    if (!validMsgTypes.includes(msg.type) || msg.from.includes('status')) {
       return;
     }
     const chat = await model.findById(msg.chatId);
@@ -521,6 +530,7 @@ module.exports = function (Chat) {
       restartOnCrash: start,
       //licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
       disableSpins: true,
+      hostNotificationLang: 'pt-br',
       // cacheEnabled: false,
       sessionDataPath: './session',
       headless: !process.env.HEADLESS,
@@ -928,15 +938,15 @@ module.exports = function (Chat) {
       } else {
         mediaData = await wa.decryptMedia(msg);
       }
+
+      res.setHeader('Content-Type', msg.mimetype.split(';')[0]);
+      res.setHeader('Content-Length', mediaData.length);
+
+      // console.log(mediaData.toString('base64'));
+      res.send(mediaData);
     } catch (error) {
       console.log('FAILED TO LOAD' + messageId);
     }
-
-    res.setHeader('Content-Type', msg.mimetype.split(';')[0]);
-    res.setHeader('Content-Length', mediaData.length);
-
-    // console.log(mediaData.toString('base64'));
-    res.send(mediaData);
   };
 
   Chat.remoteMethod('loadFile', {
@@ -1122,4 +1132,16 @@ module.exports = function (Chat) {
     returns: {root: true},
     http: {path: '/findChat/:query', verb: 'get'},
   });
+
+  async function clearWAMessage() {
+    const msgs = await wp.getAllMessagesInChat(myNumber, true);
+    console.log("CHAT", msgs);
+    if (msgs.length === 1) {
+      wp.deleteChat(myNumber);
+    } else if (msgs.length) {
+      console.log(msgs[msgs.length - 1]);
+      const e = await wp.deleteMessage(myNumber, msgs[msgs.length - 1].id, true);
+      console.log(e);
+    }
+  }
 };
