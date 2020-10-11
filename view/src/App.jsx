@@ -149,7 +149,7 @@ const App = () => {
     window.agents = JSON.parse(localStorage.agents || 0);
     if (localStorage.access_token) {
       checkOnline();
-      socket = io({
+      socket = io("https://demo.zoppy.app", {
         secure: true,
         query: {
           access_token: localStorage.access_token,
@@ -694,10 +694,6 @@ const App = () => {
   };
 
   const handleSendAudio = async (e) => {
-    const sure = window.confirm("Quer enviar o áudio?");
-    if (!sure) {
-      return;
-    }
     const file = e;
     const formData = new FormData();
     formData.append("", file);
@@ -804,7 +800,7 @@ const App = () => {
         //   window.alert("Avise o responsável sobre o erro de conexão!")
         //   return;
         // }
-        socket = io({
+        socket = io("https://demo.zoppy.app",{
           secure: true,
           query: {
             access_token: localStorage.access_token,

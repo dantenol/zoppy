@@ -143,10 +143,10 @@ module.exports = function (Chat) {
       .getPage()
       .evaluate(() => window.WAPI.sendMessage.toString());
     console.log('WAPI', send);
-    if (!send.includes('0x')) {
-      wpp.kill();
-      return Chat.setup();
-    }
+    //if (!send.includes('0x')) {
+      //wpp.kill();
+      //return Chat.setup();
+    //}
     wp = wpp;
 
     myNumber = (await wpp.getMe()).wid;
@@ -519,7 +519,7 @@ module.exports = function (Chat) {
     wa.create({
       killProcessOnBrowserClose: false,
       restartOnCrash: start,
-      licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
+      //licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
       disableSpins: true,
       // cacheEnabled: false,
       sessionDataPath: './session',

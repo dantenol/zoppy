@@ -3,15 +3,17 @@ import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
 import classNames from "classnames";
 import MicRecorder from "mic-recorder-to-mp3";
+import VoiceMessage from "./Bubble/VoiceMessage"
 
 import classes from "./index.module.css";
 import sendImg from "../../assets/images/send.svg";
 import emojiFace from "../../assets/images/emoji.svg";
 import camera from "../../assets/images/camera.svg";
 import mic from "../../assets/images/mic.svg";
-import redMic from "../../assets/images/redMic.svg";
 import bag from "../../assets/images/bag.svg";
 import outslideClickListener from "../../hooks/outslideClickListener";
+import cancel from "../../assets/images/cancel.svg";
+import sucess from "../../assets/images/sucess.svg";
 
 const recorder = new MicRecorder({
   bitRate: 128,
@@ -29,7 +31,7 @@ const MessageField = ({
   const [rows, setRows] = useState(1);
   const [emoji, setEmoji] = useState();
   const [focused, setFocused] = useState(false);
-  const [salesButon, setSalesButon] = useState(false);
+  const [salesButon, setSalesButton] = useState(false);
   const [startedRecording, setStartedRecording] = useState(0);
   const [allowsRecording, setAllowsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState("");
@@ -55,6 +57,7 @@ const MessageField = ({
   };
 
   const stopRecording = () => {
+    console.clear()
     setStartedRecording(0);
     recorder
       .stop()
@@ -92,9 +95,9 @@ const MessageField = ({
       localStorage.settings &&
       JSON.parse(localStorage.settings).salesOptions
     ) {
-      setSalesButon(true);
+      setSalesButton(true);
     } else {
-      setSalesButon(false);
+      setSalesButton(false);
     }
   }, [localStorage.settings]);
 
@@ -248,9 +251,31 @@ const MessageField = ({
         ></textarea>
         {message.length || !allowsRecording ? (
           <button onClick={() => handlesendButton()}>
-            <img src={sendImg} alt="Enviar" />
           </button>
         ) : (
+          <div>
+          <button
+            className={classNames(
+              classes.record,
+              classes[Boolean(startedRecording)]
+            )}
+            id="recorder"
+            onClick={cancelRecording}
+          >
+            audioEl.duration
+            <img
+              className={classes.recording}
+              src={cancel}
+              alt="Cancelar áudio"
+            />
+          </button>
+          </div>
+        )}
+        {message.length || !allowsRecording ? (
+          <button onClick={() => handlesendButton()}>
+            <img src={sendImg} alt="Enviar" />
+          </button>
+        ) : (<div>
           <button
             className={classNames(
               classes.record,
@@ -262,10 +287,11 @@ const MessageField = ({
             <img src={mic} alt="Gravar áudio" />
             <img
               className={classes.recording}
-              src={redMic}
+              src={sucess}
               alt="Enviar áudio"
             />
           </button>
+          </div>
         )}
       </div>
     </>
