@@ -6,18 +6,18 @@ const path = require('path');
 const wa = require('@open-wa/wa-automate');
 const {worker} = require('cluster');
 
-// require('axios-debug-log')({
-//   request: function (debug, config) {
-//     debug('Request with ', config);
-//   },
-//   response: function (debug, response) {
-//     debug('Response with ' + response.data, 'from ' + response.config.url);
-//   },
-//   error: function (debug, error) {
-//     // Read https://www.npmjs.com/package/axios#handling-errors for more info
-//     debug('Boom', error);
-//   },
-// });
+require('axios-debug-log')({
+  request: function (debug, config) {
+    debug('Request with ', config);
+  },
+  response: function (debug, response) {
+    debug('Response with ' + response.data, 'from ' + response.config.url);
+  },
+  error: function (debug, error) {
+    // Read https://www.npmjs.com/package/axios#handling-errors for more info
+    debug('Boom', error);
+  },
+});
 
 let model,
   wp,
@@ -150,7 +150,6 @@ module.exports = function (Chat) {
     wp = wpp;
 
     myNumber = (await wpp.getMe()).wid;
-    clearWAMessage();
     console.log('My number %s', myNumber);
     wpp.onAnyMessage((msg) => {
       saveMsg(msg);
@@ -162,6 +161,7 @@ module.exports = function (Chat) {
 
     loadAllMessages(wpp);
     setStateListeners();
+    clearWAMessage();
   }
 
   function setStateListeners() {
@@ -253,11 +253,18 @@ module.exports = function (Chat) {
     }
   }
 
+  async function saveMessageById(id) {
+    const msg = await wp.getMessageById(id);
+    console.log(msg);
+    if (msg) saveMsg(msg)
+  }
+
   async function saveMsg(msg) {
     if (!validMsgTypes.includes(msg.type) || msg.from.includes('status')) {
       return;
     }
-    const chat = await model.findById(msg.chatId);
+    const chat = await model.findById(msg.chatId._serialized || msg.chatId);
+    console.log(chat);
     let previousTimestamp;
     let newChat;
     let agent;
@@ -518,24 +525,28 @@ module.exports = function (Chat) {
     if (process.env.NODE_ENV === 'production') {
       source = {browserWSEndpoint: 'ws://browser:3000'};
     }
-    wa.create({
-      killProcessOnBrowserClose: false,
-      restartOnCrash: start,
-      licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
-      disableSpins: true,
-      hostNotificationLang: 'pt-br',
-      // cacheEnabled: false,
-      sessionDataPath: './session',
-      headless: !process.env.HEADLESS,
-      // devtools: false,
-      ...source,
-      // debug: true,
-      logQR: true,
-      autoRefresh: true,
-      // qrRefreshS: 15,
-      qrTimeout: 90,
-      authTimeout: 90,
-    }).then((client) => start(client));
+    try {
+      wa.create({
+        killProcessOnBrowserClose: false,
+        restartOnCrash: start,
+        licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
+        disableSpins: true,
+        hostNotificationLang: 'pt-br',
+        // cacheEnabled: false,
+        sessionDataPath: './session',
+        headless: !process.env.HEADLESS,
+        // devtools: false,
+        ...source,
+        // debug: true,
+        logQR: true,
+        autoRefresh: true,
+        // qrRefreshS: 15,
+        qrTimeout: 90,
+        authTimeout: 90,
+      }).then((client) => start(client));
+    } catch (error) {
+      throw new Error('Failed to start: ' + error);
+    }
   };
 
   Chat.remoteMethod('setup', {
@@ -630,12 +641,16 @@ module.exports = function (Chat) {
   }
 
   Chat.saveAllConversations = async () => {
-    const conversations = await Chat.find();
+    const conversations = await wp.getAllChatIds()
     await Promise.all(
       conversations.map(async (c) => {
-        const msgs = await wp.loadAndGetAllMessagesOnChat(c.chatId, true);
+        const msgs = await wp.loadAndGetAllMessagesInChat(c, true);
         await wp.cutMsgCache();
-        return await saveMsgAll(msgs);
+        try { 
+          return await saveMsgAll(msgs);
+        } catch (error) {
+          console.log("failed to save", c);
+        }
       }),
     );
     return conversations;
@@ -876,9 +891,9 @@ module.exports = function (Chat) {
     const file = req.files[k];
     const base64 = Buffer.from(file.data).toString('base64');
     const uri = `data:audio/mp3;base64,${base64}`;
-    const wpMsg = await wp.sendFile(chatId, uri, 'ptt.mp3', '');
+    const wpMsg = await wp.sendPtt(chatId, uri);
     console.log(wpMsg);
-    return wpMsg;
+    saveMessageById(wpMsg);
   };
 
   Chat.remoteMethod('sendAudio', {
@@ -963,6 +978,14 @@ module.exports = function (Chat) {
     'mkv',
     'flv',
     'avi',
+  ];
+  
+  const imageExtensions = [
+    'png',
+    'jpg',
+    'jpeg',
+    'gif',
+    'webp',
   ];
 
   Chat.uploadMedia = async (chatId, req, message) => {
@@ -1127,14 +1150,27 @@ module.exports = function (Chat) {
   });
 
   async function clearWAMessage() {
-    const msgs = await wp.getAllMessagesInChat(myNumber, true);
-    console.log("CHAT", msgs);
-    if (msgs.length === 1) {
-      wp.deleteChat(myNumber);
-    } else if (msgs.length) {
-      console.log(msgs[msgs.length - 1]);
-      const e = await wp.deleteMessage(myNumber, msgs[msgs.length - 1].id, true);
-      console.log(e);
+    const myChat = await wp.getChatById(myNumber);
+    console.log('ME: ', myChat);
+    if (!myChat) {
+      return;
+    }
+    try {
+      const msgs = await wp.getAllMessagesInChat(myNumber, true);
+      console.log('CHAT', msgs);
+      if (msgs.length === 1) {
+        wp.deleteChat(myNumber);
+      } else if (msgs.length) {
+        console.log(msgs[msgs.length - 1]);
+        const e = await wp.deleteMessage(
+          myNumber,
+          msgs[msgs.length - 1].id,
+          true,
+        );
+        console.log(e);
+      }
+    } catch (error) {
+      console.log('PAU PRA APAGAR MENSAGEM', error);
     }
   }
 };
