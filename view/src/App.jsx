@@ -149,7 +149,7 @@ const App = () => {
     window.agents = JSON.parse(localStorage.agents || 0);
     if (localStorage.access_token) {
       checkOnline();
-      socket = io("https://localhost:3001", {
+      socket = io({
         secure: true,
         query: {
           access_token: localStorage.access_token,
@@ -800,7 +800,7 @@ const App = () => {
         //   window.alert("Avise o responsável sobre o erro de conexão!")
         //   return;
         // }
-        socket = io("https://localhost:3001", {
+        socket = io({
           secure: true,
           query: {
             access_token: localStorage.access_token,
