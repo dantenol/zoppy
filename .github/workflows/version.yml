@@ -20,3 +20,5 @@ jobs:
           AWS_REGION: "sa-east-1" # optional: defaults to us-east-1
           SOURCE_DIR: "server" # optional: defaults to entire repository
           DEST_DIR: "${{ steps.release.outputs.version }}"
+      - name: Get version
+        run: echo "The time was ${{ steps.hello.outputs.version }}"
