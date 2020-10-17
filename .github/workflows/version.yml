@@ -2,11 +2,11 @@ name: Release sync s3
 
 on:
   release:
-    types: [released]
-      - master
+    types: [published]
 
 jobs:
   deploy:
+    if: "!github.event.release.prerelease"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
