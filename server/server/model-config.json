@@ -65,7 +65,8 @@
           "reset": true,
           "findChat": true,
           "refocus": true,
-          "saveAllConversations": true
+          "saveAllConversations": true,
+          "deleteMsg": true
         }
       }
     }
