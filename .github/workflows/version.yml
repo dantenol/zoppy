@@ -21,4 +21,4 @@ jobs:
           SOURCE_DIR: "server" # optional: defaults to entire repository
           DEST_DIR: "${{ steps.release.outputs.version }}"
       - name: Get version
-        run: echo "The time was ${{ steps.hello.outputs.version }}"
+        run: echo "The time was ${{ steps.release.outputs.version }}"
