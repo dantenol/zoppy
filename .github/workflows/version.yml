@@ -19,6 +19,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: "sa-east-1" # optional: defaults to us-east-1
           SOURCE_DIR: "server" # optional: defaults to entire repository
-          DEST_DIR: "${{ steps.release.outputs.version }}"
+          DEST_DIR: "${{ github.event.release.tag_name }}"
       - name: Get version
-        run: echo "The time was ${{ steps.release.outputs.version }}"
+        run: echo "The time was ${{ github.event.release.tag_name }}"
