@@ -7,5 +7,4 @@ function generatePassword() {
         random += charset.charAt(Math.floor(Math.random() * n));
     }
     randomPassword.value = random
-    return random;
 }

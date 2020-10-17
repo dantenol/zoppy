@@ -7,6 +7,7 @@ import Image from "./Image";
 import Sale from "./Sale";
 import VoiceMessage from "./VoiceMessage";
 import Sticker from "./Sticker";
+import Video from "./Video";
 
 const Bubble = ({ message, isGroup, showMedia }) => {
   const side = message.mine ? classes.right : classes.left;
@@ -21,6 +22,8 @@ const Bubble = ({ message, isGroup, showMedia }) => {
     BubbleComponent = PureText;
   } else if (message.type === "image") {
     BubbleComponent = Image;
+  } else if (message.type === "video") {
+    BubbleComponent = Video;
   } else if (message.type === "sticker") {
     BubbleComponent = Sticker;
   } else if (message.type === "ptt" || message.type === "audio" ) {
@@ -35,7 +38,7 @@ const Bubble = ({ message, isGroup, showMedia }) => {
     );
   } else if (BubbleComponent) {
     return (
-      <div className={classNames(classes.container, side, inS)} style={{ opacity }}>
+      <div className={classNames(classes.container, side, inS)} style={{ opacity }} data-id={message.messageId}>
         <BubbleComponent
           showMedia={showMedia}
           message={message}

@@ -1,0 +1,73 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  margin: 0;
+}
+.headUser {
+  background-color: #4fb36b;
+  color: white;
+  display: inline-flex;
+  height: 72px;
+  padding: 16px;
+  width: 420px;
+}
+.zoppyImage {
+  background-color: white;
+  border-radius: 8px;
+  height: 40px;
+  padding: 6px;
+  width: 40px;
+}
+.users {
+  flex-grow: 1;
+  font-size: 20px;
+  font-weight: bold;
+  margin: 8px;
+  margin-top: 6px;
+}
+.formBox {
+  direction: ltr;
+  height: 805px;
+  overflow: auto;
+  position: relative;
+  width: 420px;
+  will-change: transform;
+}
+.values {
+  border-bottom: 1px solid #ececec;
+  display: inline-flex;
+  flex-direction: column;
+  height: 81px;
+  left: 0px;
+  padding: 16px;
+  top: 81px;
+  width: 100%;
+}
+.buttonRandom {
+  background-color: white;
+  border-radius: 8px;
+  color: #4fb36b;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  left: 140px;
+  max-width: 140px;
+}
+.submitButton {
+  background-color: #4fb36b;
+  color: white;
+  display: inline-flex;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  font-size: 30px;
+  height: 72px;
+  width: 420px;
+}

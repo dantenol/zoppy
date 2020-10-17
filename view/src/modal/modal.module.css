@@ -20,6 +20,17 @@
   left: calc(50vw - 300px);
   display: flex;
   overflow: hidden;
+  justify-content: center;
+}
+
+.close.absolutePosition {
+  z-index: 9999;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: lightcyan;
+  font-size: 48px;
+  cursor: pointer
 }
 
 .opaque {

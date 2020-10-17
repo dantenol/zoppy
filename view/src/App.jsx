@@ -149,7 +149,7 @@ const App = () => {
     window.agents = JSON.parse(localStorage.agents || 0);
     if (localStorage.access_token) {
       checkOnline();
-      socket = io("https://demo.zoppy.app", {
+      socket = io("https://localhost:3001", {
         secure: true,
         query: {
           access_token: localStorage.access_token,
@@ -760,11 +760,11 @@ const App = () => {
       }
     );
 
-    const idx = findIdxById(currentChat);
+    // const idx = findIdxById(currentChat);
 
-    setChats((draft) => {
-      draft[idx].messages.unshift(msg.data);
-    });
+    // setChats((draft) => {
+    //   draft[idx].messages.unshift(msg.data);
+    // });
     setModal(false);
     return true;
   };
@@ -800,7 +800,7 @@ const App = () => {
         //   window.alert("Avise o responsável sobre o erro de conexão!")
         //   return;
         // }
-        socket = io("https://demo.zoppy.app",{
+        socket = io("https://localhost:3001", {
           secure: true,
           query: {
             access_token: localStorage.access_token,

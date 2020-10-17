@@ -10,14 +10,14 @@
     "start": "node .",
     "preupdate-front": "sed -i 's@\".*/api/\"@\"/api/\"@' ../view/src/connector.jsx",
     "update-front": "rm -rf ./client/* && cd ../view && npm run build && cp -a ./build/* ../server/client",
-    "custom-key": "sed -i 's@openwa.web.app@c.zoppy.app@' node_modules/@open-wa/wa-automate/package.json",
-    "default-key": "sed -i 's@c.zoppy.app/api@openwa.web.app@' node_modules/@open-wa/wa-automate/package.json",
+    "custom-key": "sed -i 's@openwa.dev@c.zoppy.app@' node_modules/@open-wa/wa-automate/package.json",
+    "default-key": "sed -i 's@c.zoppy.app/api@openwa.dev@' node_modules/@open-wa/wa-automate/package.json",
     "dev-db": "sed -i 's@\"db\"@\"0.0.0.0\"@' ./server/datasources.json",
     "prod-db": "sed -i 's@\"0.0.0.0\"@\"db\"@' ./server/datasources.json"
   },
   "dependencies": {
-    "@open-wa/wa-automate": "^2.0.29",
-    "aws-sdk": "^2.769.0",
+    "@open-wa/wa-automate": "^2.1.4",
+    "aws-sdk": "^2.772.0",
     "axios": "^0.20.0",
     "axios-debug-log": "^0.8.0",
     "compression": "^1.7.4",
@@ -33,13 +33,13 @@
     "moment": "^2.29.1",
     "random": "^2.2.0",
     "serve-favicon": "^2.5.0",
-    "sharp": "^0.26.1",
+    "sharp": "^0.26.2",
     "socket.io": "^2.3.0",
-    "strong-error-handler": "^3.5.0",
+    "strong-error-handler": "^4.0.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "eslint": "^7.10.0",
+    "eslint": "^7.11.0",
     "eslint-config-loopback": "^13.1.0",
     "eslint-config-prettier": "^6.12.0",
     "prettier": "^2.1.2"

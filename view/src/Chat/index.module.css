@@ -37,11 +37,21 @@
 
 .header .name {
   flex-grow: 1;
-}
-
-.header .name {
   padding: 8px;
   font-size: 20px;
+  align-items: center;
+  justify-content: start;
+  display: flex;
+}
+
+.header .name .nameContainer {
+  display: grid;
+}
+
+.header .name span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header .pinContainer {
@@ -80,7 +90,7 @@
 
 @media screen and (max-width: 600px) {
   div.chatContainer {
-    max-width: 100%
+    max-width: 100%;
   }
   .header .nameInput {
     background: none;

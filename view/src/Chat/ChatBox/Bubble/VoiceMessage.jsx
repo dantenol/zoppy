@@ -39,7 +39,7 @@ const VoiceMessage = ({ message, isGroup }) => {
 
   const saveDuration = (audioEl) => {
     if (componentIsMounted.current) {
-      setDuration(secondsToTime(audioEl.duration));
+      setDuration(secondsToTime(message.duration));
     }
   };
 

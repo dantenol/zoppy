@@ -151,8 +151,16 @@ const Modal = ({
     return (
       <>
         <div onClick={onClose} className={classes.modalBackground} />
+        <div onClick={onClose} className={classNames(classes.close, classes.absolutePosition)}>
+          &times;
+        </div>
         <div className={classes.modal}>
-          <video src={`${url}chats/download/${file.id}`} alt="Vídeo" autoPlay />
+          <video
+            src={`${url}chats/download/${file.id}?access_token=${localStorage.access_token}`}
+            alt="Vídeo"
+            autoPlay
+            controls
+          />
         </div>
       </>
     );
@@ -178,23 +186,25 @@ const Modal = ({
           </div>
           <h1>Enviar imagem</h1>
           <label htmlFor="upload-button">
-            <div className={classes.button}>Tirar foto agora</div>
+            <div className={classes.button}>Enviar foto ou vídeo</div>
           </label>
           <input
             type="file"
             accept="image/*,video/*"
             capture
+            multiple
             id="upload-button"
             style={{ display: "none" }}
             onChange={handleUpload}
           />
           <label htmlFor="upload-button2">
-            <div className={classes.button}>Enviar foto do dispositivo</div>
+            <div className={classes.button}>Enviar Outros arquivos</div>
           </label>
           <input
             type="file"
-            accept="image/*,video/*"
+            accept="*"
             id="upload-button2"
+            multiple
             style={{ display: "none" }}
             onChange={handleUpload}
           />

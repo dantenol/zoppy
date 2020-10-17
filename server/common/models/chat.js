@@ -256,7 +256,7 @@ module.exports = function (Chat) {
   async function saveMessageById(id) {
     const msg = await wp.getMessageById(id);
     console.log(msg);
-    if (msg) saveMsg(msg)
+    if (msg) saveMsg(msg);
   }
 
   async function saveMsg(msg) {
@@ -502,7 +502,7 @@ module.exports = function (Chat) {
   });
 
   Chat.refocus = async () => {
-    return await wp.forceRefocus();
+    return wp.forceRefocus();
   };
 
   Chat.remoteMethod('refocus', {
@@ -641,15 +641,15 @@ module.exports = function (Chat) {
   }
 
   Chat.saveAllConversations = async () => {
-    const conversations = await wp.getAllChatIds()
+    const conversations = await wp.getAllChatIds();
     await Promise.all(
       conversations.map(async (c) => {
         const msgs = await wp.loadAndGetAllMessagesInChat(c, true);
         await wp.cutMsgCache();
-        try { 
+        try {
           return await saveMsgAll(msgs);
         } catch (error) {
-          console.log("failed to save", c);
+          console.log('failed to save', c);
         }
       }),
     );
@@ -979,14 +979,8 @@ module.exports = function (Chat) {
     'flv',
     'avi',
   ];
-  
-  const imageExtensions = [
-    'png',
-    'jpg',
-    'jpeg',
-    'gif',
-    'webp',
-  ];
+
+  const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
 
   Chat.uploadMedia = async (chatId, req, message) => {
     const Message = model.app.models.Message;
@@ -1009,19 +1003,20 @@ module.exports = function (Chat) {
       null,
       true,
     );
-    console.log('IMAGE SENT', new Date());
+    console.log('IMAGE SENT', new Date(), wpMsg);
 
-    const msgId = await new Promise((resolve) => {
-      const interval = setInterval(async () => {
-        const msg = await Message.findById(wpMsg);
-        if (msg) {
-          resolve(msg);
-          clearInterval(interval);
-        }
-      }, 100);
-    });
+    // const msgId = await new Promise((resolve) => {
+    //   const interval = setInterval(async () => {
+    //     const msg = await Message.findById(wpMsg);
+    //     if (msg) {
+    //       resolve(msg);
+    //       clearInterval(interval);
+    //     }
+    //   }, 100);
+    // });
 
-    return msgId;
+    const recievedMsg = await saveMessageById(wpMsg);
+    return true;
   };
 
   Chat.remoteMethod('uploadMedia', {
@@ -1173,4 +1168,20 @@ module.exports = function (Chat) {
       console.log('PAU PRA APAGAR MENSAGEM', error);
     }
   }
+
+  Chat.deleteMsg = async (chatId, msgs) => {
+    await Promise.all(
+      msgs.map(async (m) => await wp.deleteMessage(chatId, m, true)),
+    );
+  }
+
+  Chat.remoteMethod('deleteMsg', {
+    accepts: [
+      {arg: 'chatId', type: 'string', required: true},
+      {arg: 'msgs', type: 'array', required: true, http: {source: 'body'}},
+    ],
+    description: 'finds chat by chatId',
+    returns: {root: true},
+    http: {path: '/delete/:chatId', verb: 'post'},
+  });
 };

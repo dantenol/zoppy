@@ -146,6 +146,16 @@
   display: block;
 }
 
+.voiceMessageRecorder {
+  display: flex;
+  align-items: center;
+}
+
+.voiceMessageRecorder > div {
+  margin-right: 16px;
+  font-size: 24px;
+}
+
 @keyframes indeterminate_first {
   0% {
     left: -100%;

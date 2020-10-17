@@ -15,7 +15,7 @@ const Header = ({ data, handleBack, handleToggleDetails }) => (
     <div className={classes.headerContent} onClick={handleToggleDetails}>
       <img className={classes.profilePic} src={data.profilePic} alt="Foto" />
       <div className={classes.name}>
-        <div className={classes.name}>
+        <div className={classes.nameContainer}>
           <span title={data.displayName}>{data.displayName}</span>
         </div>
       </div>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="script.js"></script>
+  </head>
+  <body>
+    <div class="userBlock">
+      <div class="headUser">
+        <img class="zoppyImage" src="./assets/icon128.png" alt="Zoppy" />
+        <h1 class="users">Criação de Usuários</h1>
+      </div>
+      <form class="formBox">
+        <div class="values">
+          <label for="name">Url:</label>
+          <input type="text" id="name" name="name" /><br /><br />
+        </div>
+        <div class="values">
+          <label for="name">Nome:</label>
+          <input type="text" id="name" name="name" required /><br /><br />
+        </div>
+        <div class="values">
+          <label for="user">Usuário:</label>
+          <input typed="text" id="user" name="user" /><br /><br />
+        </div>
+        <div class="values">
+          <label for="email">E-mail:</label>
+          <input type="email" id="email" name="email" /><br /><br />
+        </div>
+        <div class="values">
+          <label for="password">Senha:</label>
+          <input type="text" id="password" name="password" required />
+          <input
+            class="buttonRandom"
+            type="button"
+            id="button"
+            name="button"
+            value="Senha Aleatória"
+            onclick="generatePassword()"
+          /><br /><br />
+        </div>
+        <div class="submitBox">
+          <input class="submitButton" type="submit" value="Criar usuário" />
+        </div>
+      </form>
+    </div>
+  </body>
+</html>
