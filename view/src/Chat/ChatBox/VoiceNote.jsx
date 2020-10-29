@@ -34,9 +34,7 @@ const VoiceNote = ({ setIsRecording, sendAudio }) => {
   const [timerId, setTimerId] = useState();
 
   const handleRecord = (e) => {
-    if (isMobile) {
-      return;
-    }
+    console.log(isMobile);
     e.preventDefault();
     if (startedRecording) {
       stopRecording();
@@ -124,30 +122,32 @@ const VoiceNote = ({ setIsRecording, sendAudio }) => {
     setIsRecording(Boolean(startedRecording));
   }, [audioURL, startedRecording]);
 
-  useEffect(() => {
-    const e = document.getElementById("recorder");
-    if (allowsRecording && e) {
-      document
-        .getElementById("recorder")
-        .addEventListener("touchstart", handleStartTouch);
+  // ====================== script pressionar para gravar mobile
+  // useEffect(() => {
+  //   const e = document.getElementById("recorder");
+  //   if (allowsRecording && e) {
+  //     document
+  //       .getElementById("recorder")
+  //       .addEventListener("touchstart", handleStartTouch);
 
-      document.getElementById("recorder").oncontextmenu = function (event) {
-        event.preventDefault();
-        event.stopPropagation(); // not necessary in my case, could leave in case stopImmediateProp isn't available?
-        event.stopImmediatePropagation();
-        return false;
-      };
+  //     document.getElementById("recorder").oncontextmenu = function (event) {
+  //       event.preventDefault();
+  //       event.stopPropagation(); // not necessary in my case, could leave in case stopImmediateProp isn't available?
+  //       event.stopImmediatePropagation();
+  //       return false;
+  //     };
 
-      document
-        .getElementById("recorder")
-        .addEventListener("touchend", handleEndTouch);
+  //     document
+  //       .getElementById("recorder")
+  //       .addEventListener("touchend", handleEndTouch);
 
-      return () => {
-        e.removeEventListener("touchstart", handleStartTouch);
-        e.removeEventListener("touchend", handleEndTouch);
-      };
-    }
-  }, [startedRecording, allowsRecording]);
+  //     return () => {
+  //       e.removeEventListener("touchstart", handleStartTouch);
+  //       e.removeEventListener("touchend", handleEndTouch);
+  //     };
+  //   }
+  // }, [startedRecording, allowsRecording]);
+
   return (
     <div>
       {!startedRecording ? (
