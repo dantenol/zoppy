@@ -1146,7 +1146,7 @@ module.exports = function (Chat) {
 
   async function clearWAMessage() {
     const myChat = await wp.getChatById(myNumber);
-    console.log('ME: ', myChat);
+    console.log('ME: ', myChat); //TODO: corrigir sempre retorna false
     if (!myChat) {
       return;
     }
@@ -1170,9 +1170,10 @@ module.exports = function (Chat) {
   }
 
   Chat.deleteMsg = async (chatId, msgs) => {
-    await Promise.all(
+    const r = await Promise.all(
       msgs.map(async (m) => await wp.deleteMessage(chatId, m, true)),
     );
+    return r;
   }
 
   Chat.remoteMethod('deleteMsg', {
