@@ -42,6 +42,12 @@ boot(app, __dirname, async function (err) {
 
   // start the server if `$ node server.js`
   if (require.main === module) {
-    app.io = require('socket.io')(await app.start());
+    app.io = require('socket.io')(await app.start(), {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+        credentials: true
+      }
+    });
   }
 });

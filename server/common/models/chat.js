@@ -4,8 +4,7 @@ const fs = require('fs');
 const random = require('random');
 const path = require('path');
 const wa = require('@open-wa/wa-automate');
-const pkg = require('../../package.json')
-
+const pkg = require('../../package.json');
 
 require('axios-debug-log')({
   request: function (debug, config) {
@@ -71,7 +70,14 @@ module.exports = function (Chat) {
   });
 
   function isSent({chatId, body}) {
-    return sentMessages.findIndex((m) => m.to === chatId && m.message === body);
+    const isSent = sentMessages.findIndex(
+      (m) => m.to === chatId && m.message === body,
+    );
+    if (isSent >= 0) {
+      const e = sentMessages[isSent].agentId;
+      return e.toJSON();
+    }
+    return -1;
   }
 
   Chat.loadSettings = async () => {
@@ -117,9 +123,7 @@ module.exports = function (Chat) {
 
     Chat.loadSettings();
     io.on('connection', (socket) => {
-      console.log('connected on Chat');
       socket.on('getChats', async () => {
-        console.log('GET CHATS', new Date());
         const chats = await model.getAll();
         console.log('LOADED', new Date());
         let count = 0;
@@ -184,9 +188,7 @@ module.exports = function (Chat) {
       io.sockets.emit('status', status);
       switch (s) {
         case 'CONFLICT':
-          console.log(12321312123);
-          await wpp.forceRefocus();
-          console.log(342);
+          wpp.forceRefocus();
           break;
         case 'UNPAIRED':
           wpp.kill(); // TESTAR
@@ -244,10 +246,17 @@ module.exports = function (Chat) {
         starting,
       });
       socketObj.message = savedMsg;
-      if (isSent(savedMsg) < 0 && savedMsg.timestamp > new Date() - 2000) {
+      const sent = isSent(savedMsg);
+      if (sent < 0 && savedMsg.timestamp > new Date() - 2000) {
         io.sockets.emit('newMessage', socketObj);
+      } else if (
+        // TODO waiting WA fix
+        typeof sent === 'string' &&
+        savedMsg.timestamp > new Date() - 2000
+      ) {
+        savedMsg.agentId = sent.toString();
+        io.sockets.emit('sentMessage', savedMsg);
       }
-      // console.log(savedMsg);
       return savedMsg;
     } catch (error) {
       console.log('duplicated %s', waMsg.id);
@@ -824,21 +833,21 @@ module.exports = function (Chat) {
 
   Chat.sendMessage = async (req, to, message, from, customId) => {
     const Message = model.app.models.Message;
-    sentMessages.push({to, message});
+    const agentId = from || req.accessToken.userId;
+    sentMessages.push({to, message, agentId});
     const t = new Date();
-    console.log(t);
     const wpMsg = await wp.sendText(to, message);
-    console.log('FINISHED', new Date().valueOf() - t);
+    console.log('FINISHED', new Date().valueOf() - t, wpMsg);
     if (typeof wpMsg === 'string') {
       const msg = await Message.findById(wpMsg);
       if (msg) {
         const newMsg = {...msg.toJSON()};
         await msg.updateAttributes({
-          agentId: from || req.accessToken.userId,
+          agentId,
         });
         newMsg.customId = customId;
-        newMsg.agentId = from || req.accessToken.userId;
-        io.sockets.emit('sentMessage', newMsg);
+        newMsg.agentId = agentId;
+        // io.sockets.emit('sentMessage', newMsg); TODO fix for proper WA fix
         const msgIdx = isSent(to, message);
         sentMessages.splice(msgIdx, 1);
         return newMsg;
@@ -1111,7 +1120,7 @@ module.exports = function (Chat) {
       online: conn,
       status: sts,
       connection: status,
-      version: pkg.version
+      version: pkg.version,
     };
   };
 
@@ -1178,7 +1187,7 @@ module.exports = function (Chat) {
       msgs.map(async (m) => await wp.deleteMessage(chatId, m, true)),
     );
     return r;
-  }
+  };
 
   Chat.remoteMethod('deleteMsg', {
     accepts: [

@@ -661,7 +661,7 @@ const App = () => {
     };
     if (to === currentChat) {
       const idx = selectedChatIndex;
-      if (!chats[idx].agentId) {
+      if (chats[idx].agentId !== me && !settings.preventChatChange ) {
         handleSetAgent();
       }
       setChats((draft) => {
