@@ -24,6 +24,7 @@ const Modal = ({
   selectUser,
   saveSales,
   handleChangeSettings,
+  handleSearch,
   passiveSearch,
 }) => {
   const [message, setMessage] = useState("");
@@ -43,6 +44,8 @@ const Modal = ({
       setNumber(file.newNumber);
     } else if (file && file.type === "sale") {
       setNumber("sale");
+    } else if (file && file.type === "advancedSearch") {
+      setMessage(window.me);
     }
   }, [file]);
 
@@ -125,6 +128,10 @@ const Modal = ({
     }
   };
 
+  const handleFilter = () => {
+    handleSearch(message, number);
+  };
+
   if (file && file.type === "image") {
     return (
       <Lightbox
@@ -151,7 +158,10 @@ const Modal = ({
     return (
       <>
         <div onClick={onClose} className={classes.modalBackground} />
-        <div onClick={onClose} className={classNames(classes.close, classes.absolutePosition)}>
+        <div
+          onClick={onClose}
+          className={classNames(classes.close, classes.absolutePosition)}
+        >
           &times;
         </div>
         <div className={classes.modal}>
@@ -474,6 +484,58 @@ const Modal = ({
               "salvar"
             )}
           </button>
+          <form action=""></form>
+        </div>
+      </>
+    );
+  } else if (file && file.type === "advancedSearch") {
+    let options;
+    if (window.agents) {
+      options = [];
+      _.forEach(window.agents, (a, k) => {
+        if (a.fullName !== "WhatsApp") {
+          options.push([k, a.fullName]);
+        }
+      });
+    }
+
+    return (
+      <>
+        <div className={classes.modalBackground} onClick={onclose} />
+        <div className={classNames(classes.modal, classes.opaque)}>
+          <div onClick={onClose} className={classes.close}>
+            &times;
+          </div>
+          <h2>Atendente</h2>
+          <form>
+            <select
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            >
+              <option value="" disabled>
+                Selecione...
+              </option>
+              <option value="all" >
+                Todos
+              </option>
+              {options.map((a) => (
+                <option value={a[0]} key={a[0]}>
+                  {a[1]}
+                </option>
+              ))}
+            </select>
+            <br />
+            <br />
+            <label>
+              Apenas não lidas
+              <input
+                type="checkbox"
+                checked={number}
+                onChange={() => setNumber(!number)}
+              />
+            </label>
+          </form>
+          <button onClick={() => handleFilter()}>Filtrar</button>
           <form action=""></form>
         </div>
       </>

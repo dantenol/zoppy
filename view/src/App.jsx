@@ -975,6 +975,26 @@ const App = () => {
     });
   };
 
+  const handleAdvancedSearch = (agent, unread) => {
+    setModal(false);
+    setChats((draft) => {
+      draft.map((c) => {
+        let pass = false;
+        if (agent === "all" && !unread) {
+          pass = true;
+        } else if (agent === "all" && unread && c.unread) {
+          pass = true;
+        } else if (c.agentId === agent && !unread) {
+          pass = true;
+        } else if (c.agentId === agent && unread && c.unread) {
+          pass = true;
+        }
+        c.filtered = pass;
+        return c;
+      });
+    });
+  };
+
   const handleSettingsModal = () => {
     setModal({
       type: "settings",
@@ -1017,6 +1037,7 @@ const App = () => {
         handleChangeSettings={handleChangeSettings}
         handleLogin={login}
         handleUpload={handleUploadModal}
+        handleSearch={handleAdvancedSearch}
         saveSales={saveSales}
         selectUser={selectUser}
         passiveSearch={backgroundContactQuery}
@@ -1031,6 +1052,7 @@ const App = () => {
           handleSelectChat={selectChat}
           lowBattery={lowBattery}
           handleNewContactModal={handleNewContactModal}
+          handleModal={handleModal}
         />
         <Chat
           initialText={URLMessageText}

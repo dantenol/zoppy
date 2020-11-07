@@ -22,6 +22,7 @@ const Conversations = ({
   data,
   handleQuery,
   handleSelectChat,
+  handleModal,
   handleNewContactModal,
   handleSettingsModal,
   showing,
@@ -41,6 +42,7 @@ const Conversations = ({
       <Search
         handleNewContact={handleNewContactModal}
         handleQuery={handleQuery}
+        handleModal={handleModal}
       />
       {lowBattery && <LowBattery />}
       <div className={classes.chatsList}>

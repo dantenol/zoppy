@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "v59.0.0",
+  "version": "v60.0.0",
   "main": "server/server.js",
   "engines": {
     "node": ">=4"
@@ -16,15 +16,15 @@
     "prod-db": "sed -i 's@\"0.0.0.0\"@\"db\"@' ./server/datasources.json"
   },
   "dependencies": {
-    "@open-wa/wa-automate": "^3.0.6",
-    "aws-sdk": "^2.781.0",
+    "@open-wa/wa-automate": "^3.0.13",
+    "aws-sdk": "^2.787.0",
     "axios": "^0.21.0",
-    "axios-debug-log": "^0.8.0",
+    "axios-debug-log": "^0.8.2",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express-fileupload": "^1.2.0",
-    "helmet": "^4.1.1",
+    "helmet": "^4.2.0",
     "loopback": "^3.27.0",
     "loopback-boot": "^3.3.1",
     "loopback-component-explorer": "^6.5.1",
@@ -34,12 +34,12 @@
     "random": "^2.2.0",
     "serve-favicon": "^2.5.0",
     "sharp": "^0.26.2",
-    "socket.io": "^2.3.0",
+    "socket.io": "^3.0.0",
     "strong-error-handler": "^4.0.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "eslint": "^7.12.1",
+    "eslint": "^7.13.0",
     "eslint-config-loopback": "^13.1.0",
     "eslint-config-prettier": "^6.15.0",
     "prettier": "^2.1.2"

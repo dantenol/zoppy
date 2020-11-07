@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import classNames from "classnames";
 
 import newPhone from "../assets/images/call.svg";
+import search from "../assets/images/search.svg";
 import classes from "./index.module.css";
 
-const Search = ({ handleNewContact, handleQuery }) => {
+const Search = ({ handleNewContact, handleQuery, handleModal }) => {
   const [query, setQuery] = useState("");
   const [queryPin, setQueryPin] = useState(false);
 
@@ -30,8 +31,11 @@ const Search = ({ handleNewContact, handleQuery }) => {
       <button onClick={handleChangePin}>
         <div className={classNames(classes.pin, classes[queryPin])}></div>
       </button>
+      <button onClick={() => handleModal("advancedSearch")}>
+        <img src={search} alt="Busca avançada" />
+      </button>
       <button onClick={handleNewContact}>
-        <img src={newPhone} alt="New contact" />
+        <img src={newPhone} alt="Nova conversa" />
       </button>
     </div>
   );

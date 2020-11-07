@@ -4,7 +4,8 @@ const fs = require('fs');
 const random = require('random');
 const path = require('path');
 const wa = require('@open-wa/wa-automate');
-const {worker} = require('cluster');
+const pkg = require('../../package.json')
+
 
 require('axios-debug-log')({
   request: function (debug, config) {
@@ -515,9 +516,10 @@ module.exports = function (Chat) {
     if (wp) {
       throw new Error('WhatApp already set');
     } else if (startedSetup) {
-      startedSetup = false;
+      // startedSetup = false;
+      return;
       // await wa.kill();
-      return Chat.setup();
+      // return Chat.setup();
     }
     io = Chat.app.io;
     startedSetup = true;
@@ -748,6 +750,7 @@ module.exports = function (Chat) {
   });
 
   Chat.kill = async () => {
+    startedSetup = false;
     try {
       fs.unlinkSync(path.resolve(__dirname, '../../session/session.data.json'));
     } catch (error) {
@@ -1108,6 +1111,7 @@ module.exports = function (Chat) {
       online: conn,
       status: sts,
       connection: status,
+      version: pkg.version
     };
   };
 
