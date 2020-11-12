@@ -1,9 +1,8 @@
 {
   "manifest_version": 2,
-
   "name": "Zoppy",
   "description": "Extensão para configuração automática do Zoppy para conversas de WhatsApp",
-  "version": "1.7",
+  "version": "1.8",
   "browser_action": {
     "default_icon": "icon.png"
   },
@@ -17,7 +16,7 @@
       "js": ["saveUrl.js"]
     },
     {
-      "matches": ["https://www.rmdata.com.br/action/*"],
+      "matches": ["https://www.rmdata.com.br/*"],
       "js": ["changeHref.js"]
     }
   ],
