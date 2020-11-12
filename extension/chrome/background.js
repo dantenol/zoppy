@@ -1,7 +1,6 @@
 function saveUrl(url) {
   const subdomain = url.match(/:\/\/(.+?).zoppy/g)[0];
   const domain = "https" + subdomain + ".app";
-  // const domain = "http://localhost:3000"
   chrome.storage.local.set({ url: domain }, function () {
     console.log("Value is set to " + domain);
   });
@@ -27,12 +26,13 @@ function redirect(id, url) {
 }
 
 chrome.tabs.onUpdated.addListener((idx, change, tab) => {
+  const url = tab.url;
   if (
-    tab.url.startsWith("https://wa.me") ||
-    tab.url.startsWith("https://web.wha") ||
-    tab.url.startsWith("https://api.whatsa")
+    url.startsWith("https://wa.me") ||
+    url.startsWith("https://web.wha") ||
+    url.startsWith("https://api.whatsa")
   ) {
-    redirect(idx, tab.url);
+    redirect(idx, url);
   }
 });
 

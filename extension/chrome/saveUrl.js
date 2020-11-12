@@ -1,1 +1,1 @@
-chrome.runtime.sendMessage('save');
+chrome.runtime.sendMessage("save");
