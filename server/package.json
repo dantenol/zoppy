@@ -16,8 +16,8 @@
     "prod-db": "sed -i 's@\"0.0.0.0\"@\"db\"@' ./server/datasources.json"
   },
   "dependencies": {
-    "@open-wa/wa-automate": "^3.0.13",
-    "aws-sdk": "^2.787.0",
+    "@open-wa/wa-automate": "^3.0.15",
+    "aws-sdk": "^2.790.0",
     "axios": "^0.21.0",
     "axios-debug-log": "^0.8.2",
     "compression": "^1.7.4",
@@ -34,7 +34,7 @@
     "random": "^2.2.0",
     "serve-favicon": "^2.5.0",
     "sharp": "^0.26.2",
-    "socket.io": "^3.0.0",
+    "socket.io": "^3.0.1",
     "strong-error-handler": "^4.0.0",
     "uuid": "^8.3.1"
   },
