@@ -3,16 +3,13 @@ version: '3.8'
 services:
   server:
     container_name: SERVER
-    build: .
+    image: dantenol/zoppy
     volumes:
       - ~/session1:/app/session
-      # - ./node_modules:/node-app/node_modules
     environment:
       NODE_ENV: production
       WA_BROWSER_WS_ENDPOINT: 'http://browser:3000'
       WA_DISABLE_SPINS: 'true'
-      # ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      # ME_CONFIG_MONGODB_ADMINPASSWORD: pass
     depends_on:
       - db
       - browser
