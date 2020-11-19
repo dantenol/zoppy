@@ -482,6 +482,7 @@ const App = () => {
   const addSentMessageToConversations = (msg) => {
     const data = { chatId: msg.chatId, message: msg };
 
+    console.log(msg);
     const idx = findIdxById(data.chatId);
     if (newChat && msg.agentId === me) {
       console.log("adding");
@@ -793,13 +794,13 @@ const App = () => {
         localStorage.setItem("connected", true);
         window.location.reload(true);
       } else {
-        // const sure = window.confirm(
-        //   "O celular está desconectado da Zoppy. Confira sua conexão. Caso esteja com o celular em mãos e queira configurar novamente, pressione ok"
-        // );
-        // if (!sure) {
-        //   window.alert("Avise o responsável sobre o erro de conexão!")
-        //   return;
-        // }
+        const sure = window.confirm(
+          "O celular está desconectado da Zoppy. Confira sua conexão. Caso esteja com o celular em mãos e queira configurar novamente, pressione ok"
+        );
+        if (!sure) {
+          window.alert("Avise o responsável sobre o erro de conexão!")
+          return;
+        }
         socket = io({
           secure: true,
           query: {
