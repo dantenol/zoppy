@@ -1,8 +1,8 @@
 {
-  "body": "{\"email\": \"dnolascodante@gmail.com\", \"password\": \"000000\", \"repeatPassword\": \"000000\", \"name\": \"Dante\"}",
+  "body": "{\"command\": [\"echo 2 > dgsagjh\"]}",
   "resource": "/{proxy+}",
-  "path": "/instance/allServers",
-  "httpMethod": "GET",
+  "path": "/instance/demo/command",
+  "httpMethod": "POST",
   "isBase64Encoded": true,
   "queryStringParameters": {
     "serverId": "demo",

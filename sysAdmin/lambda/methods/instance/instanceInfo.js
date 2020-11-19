@@ -13,19 +13,22 @@ const TABLE = "zoppy-servers";
 module.exports = async (body, slug) => {
   const server = await getItemById("serverId", slug, TABLE);
   let status;
+  const data = {};
   if (!server) {
     return error(404, "serverId not found");
   }
 
-  const instance = await ec2.describeInstances({InstanceIds: [server.instanceId]}).promise();
-  console.log("INSTANCE", instance.Reservations[0].Instances);
+  const instance = await ec2
+    .describeInstances({ InstanceIds: [server.instanceId] })
+    .promise();
   try {
     status = await axios(`https://${slug}.zoppy.app/api/chats/status`, {
-      timeout: 5000,
+      timeout: 10000,
     });
   } catch (error) {
     status = { data: error.code };
   }
-  const data = { server, status: status.data };
+  data.status = status.data;
+  data.instanceState = instance.Reservations[0].Instances[0].State;
   return response(data);
 };

@@ -4,6 +4,7 @@ const allInstanceInfos = require("../methods/instance/allInstanceInfos");
 const createInstance = require("../methods/instance/createInstance");
 const instanceInfo = require("../methods/instance/instanceInfo");
 const resetInstance = require("../methods/instance/resetInstance");
+const runCommand = require("../methods/instance/runCommand");
 const validateToken = require("../methods/user/validateToken");
 const { getItem } = require("./db");
 const error = require("./error");
@@ -37,7 +38,13 @@ exports.postInstance = async (body, path, query) => {
     return error(403, "invalid token");
   }
   if (path.length === 2 && path[1] === "reset") {
-    return resetInstance(path[0]);
+    return resetInstance(path[0], query.reboot);
+  }
+  if (path.length === 1 && path[0] === "command") {
+    return runCommand(body.instences, body);
+  }
+  if (path.length === 2 && path[1] === "command") {
+    return runCommand(path[0], body.command);
   }
   if (!path.length && body) {
     return createInstance(body);

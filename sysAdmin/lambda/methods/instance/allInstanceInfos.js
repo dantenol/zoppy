@@ -27,19 +27,23 @@ module.exports = async () => {
 
   const instance = await ec2.describeInstances(params).promise();
   const consolidatedServers = instance.Reservations.map((i) => {
-    return i.Instances[0];
+    return {
+      instanceState: i.Instances[0].State,
+      instanceId: i.Instances[0].InstanceId,
+    };
   });
 
   await Promise.all(
     servers.map(async (a, i) => {
       try {
         status = await axios(`https://${a.slug}.zoppy.app/api/chats/status`, {
-          timeout: 5000,
+          timeout: 10000,
         });
       } catch (error) {
         status = { data: error.code };
       }
       consolidatedServers[i].status = status.data;
+      consolidatedServers[i].slug = a.slug;
     })
   );
   return response(consolidatedServers);
