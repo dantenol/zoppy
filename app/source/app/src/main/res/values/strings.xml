@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Zoppy</string>
+    <string name="filter_view_http_gizmos">Zoppy</string>
+
+    <string name="entersubdomain">Insira seu subdomínio</string>
+    <string name="save">Salvar</string>
+    <string name="notvalid">Insira um subdomínio válido</string>
+</resources>
