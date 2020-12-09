@@ -16,8 +16,8 @@
     "prod-db": "sed -i 's@\"0.0.0.0\"@\"db\"@' ./server/datasources.json"
   },
   "dependencies": {
-    "@open-wa/wa-automate": "^3.0.15",
-    "aws-sdk": "^2.790.0",
+    "@open-wa/wa-automate": "^3.1.5",
+    "aws-sdk": "^2.804.0",
     "axios": "^0.21.0",
     "axios-debug-log": "^0.8.2",
     "compression": "^1.7.4",
@@ -25,24 +25,24 @@
     "dotenv": "^8.2.0",
     "express-fileupload": "^1.2.0",
     "helmet": "^4.2.0",
-    "loopback": "^3.27.0",
+    "loopback": "^3.28.0",
     "loopback-boot": "^3.3.1",
     "loopback-component-explorer": "^6.5.1",
-    "loopback-connector-mongodb": "^5.4.0",
+    "loopback-connector-mongodb": "^5.5.0",
     "mime-types": "^2.1.27",
     "moment": "^2.29.1",
     "random": "^2.2.0",
     "serve-favicon": "^2.5.0",
-    "sharp": "^0.26.2",
-    "socket.io": "^3.0.1",
+    "sharp": "^0.26.3",
+    "socket.io": "^3.0.4",
     "strong-error-handler": "^4.0.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "eslint": "^7.13.0",
+    "eslint": "^7.15.0",
     "eslint-config-loopback": "^13.1.0",
-    "eslint-config-prettier": "^6.15.0",
-    "prettier": "^2.1.2"
+    "eslint-config-prettier": "^7.0.0",
+    "prettier": "^2.2.1"
   },
   "repository": {
     "type": "",
