@@ -1,5 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import classNames from "classnames";
+
+import deleteIcon from "../../../assets/images/delete.svg";
+import copy from "../../../assets/images/copy.svg";
+import reply from "../../../assets/images/reply.svg";
 
 import classes from "./index.module.css";
 import PureText from "./PureText";
@@ -9,12 +13,46 @@ import VoiceMessage from "./VoiceMessage";
 import Sticker from "./Sticker";
 import Video from "./Video";
 
-const Bubble = ({ message, isGroup, showMedia }) => {
+const Options = ({ selected, mine, text }) => {
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    console.log("COPIED");
+  };
+
+  return (
+    <div className={classNames(classes.options, classes[selected])}>
+      <div>
+        <img src={reply} alt="Copiar" className={classes.option} />
+      </div>
+      <div>
+        {text ? (
+          <img
+            src={copy}
+            alt="Copiar"
+            className={classes.option}
+            onClick={handleCopy}
+          />
+        ) : null}
+      </div>
+      <div>
+        <img src={deleteIcon} alt="Copiar" className={classes.option} />
+      </div>
+    </div>
+  );
+};
+
+const Bubble = ({ message, isGroup, showMedia, handleD }) => {
   const side = message.mine ? classes.right : classes.left;
-  const inS = message.mine ? 'message-out' : 'message-in';
+  const inS = message.mine ? "message-out" : "message-in";
+  const [selected, setSelected] = useState(false);
   let opacity = 1;
+  let backgroundColor = "transparent";
+  let clicked;
   if (message.sending) {
     opacity = 0.8;
+  }
+  if (selected === true) {
+    backgroundColor = "#add8e66b";
   }
 
   let BubbleComponent;
@@ -26,11 +64,23 @@ const Bubble = ({ message, isGroup, showMedia }) => {
     BubbleComponent = Video;
   } else if (message.type === "sticker") {
     BubbleComponent = Sticker;
-  } else if (message.type === "ptt" || message.type === "audio" ) {
+  } else if (message.type === "ptt" || message.type === "audio") {
     BubbleComponent = VoiceMessage;
   }
 
-  if (message.type ==='sale') {
+  // const listenDoubleclick = (e) => {
+  //   if (!selected && !clicked) {
+  //     clicked = e.timeStamp;
+  //   } else if (e.timeStamp - clicked < 200) {
+  //     setSelected(true);
+  //     setTimeout(() => {
+  //       setSelected(false);
+  //       clicked = 0;
+  //     }, 5000);
+  //   }
+  // };
+
+  if (message.type === "sale") {
     return (
       <div className={classes.container}>
         <Sale message={message} />
@@ -38,11 +88,21 @@ const Bubble = ({ message, isGroup, showMedia }) => {
     );
   } else if (BubbleComponent) {
     return (
-      <div className={classNames(classes.container, side, inS)} style={{ opacity }} data-id={message.messageId}>
+      <div
+        className={classNames(classes.container, side, inS)}
+        style={{ opacity, backgroundColor }}
+        data-id={message.messageId}
+        // onClick={listenDoubleclick}
+      >
         <BubbleComponent
           showMedia={showMedia}
           message={message}
           isGroup={isGroup}
+        />
+        <Options
+          selected={selected}
+          mine={message.mine}
+          text={message.type === "chat" ? message.body : 0}
         />
       </div>
     );

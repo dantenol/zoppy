@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import _ from "lodash";
@@ -211,6 +212,9 @@ const App = () => {
       });
       socket.on("sentMessage", (data) => {
         addSentMessageToConversations(data);
+      });
+      socket.on("deleteMsgs", (data) => {
+        deleteMessages(data);
       });
       socket.on("queryResult", (res) => {
         handleDBQuery(res);
@@ -662,7 +666,7 @@ const App = () => {
     };
     if (to === currentChat) {
       const idx = selectedChatIndex;
-      if (chats[idx].agentId !== me && !settings.preventChatChange ) {
+      if (chats[idx].agentId !== me && !settings.preventChatChange) {
         handleSetAgent();
       }
       setChats((draft) => {
@@ -798,7 +802,7 @@ const App = () => {
           "O celular está desconectado da Zoppy. Confira sua conexão. Caso esteja com o celular em mãos e queira configurar novamente, pressione ok"
         );
         if (!sure) {
-          window.alert("Avise o responsável sobre o erro de conexão!")
+          window.alert("Avise o responsável sobre o erro de conexão!");
           return;
         }
         socket = io({
@@ -859,7 +863,7 @@ const App = () => {
 
   const handleSetAgent = async (val, chat = currentChat) => {
     try {
-      const { data } = await axios.patch(
+      await axios.patch(
         `${url}chats/${chat}/claim`,
         {
           remove: !!val,
@@ -936,6 +940,13 @@ const App = () => {
     } catch (err) {
       console.log(err);
     }
+  };
+
+  const deleteMessages = ({ chatId, deleted }) => {
+    const idx = findIdxById(chatId);
+    setChats((draft) => {
+        _.remove(draft[idx].messages, (d) => deleted.includes(d.messageId));
+    });
   };
 
   const handleDBQuery = ({ res, pinned }) => {
