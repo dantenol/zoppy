@@ -66,6 +66,12 @@
           "findChat": true,
           "refocus": true,
           "saveAllConversations": true,
+          "launchGroupsParticipants": true,
+          "launchSendMessages": true,
+          "launchCreateGroup": true,
+          "dumpGroup": true,
+          "getReaders": true,
+          "getLaunchs": true,
           "deleteMsg": true
         }
       }

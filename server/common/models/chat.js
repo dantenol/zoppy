@@ -5,6 +5,7 @@ const random = require('random');
 const path = require('path');
 const wa = require('@open-wa/wa-automate');
 const pkg = require('../../package.json');
+const {url} = require('inspector');
 
 require('axios-debug-log')({
   request: function (debug, config) {
@@ -27,6 +28,7 @@ let model,
   charging,
   startedSetup,
   sts,
+  lastSent,
   settings;
 const sentMessages = [];
 const status = {
@@ -181,6 +183,10 @@ module.exports = function (Chat) {
       io.sockets.emit('status', status);
     });
 
+    wp.onGlobalParicipantsChanged((e) => {
+      console.log(e);
+    });
+
     wp.onStateChanged(async (s) => {
       console.log(s);
       sts = s;
@@ -274,16 +280,20 @@ module.exports = function (Chat) {
       return;
     }
     const chat = await model.findById(msg.chatId._serialized || msg.chatId);
-    console.log(chat);
+    // console.log(chat);
     let previousTimestamp;
     let newChat;
     let agent;
     if (!chat) {
       const waMsg = await wp.getMessageById(msg.id);
       const wpChat = waMsg.chat;
+      let url;
       console.log('new chat:');
       if (!msg.fromMe && settings.randomizeNewChats) {
         agent = assignAgent();
+      }
+      if (wpChat.kind === 'group') {
+        url = await retrieveGroupLink(msg.chatId);
       }
       try {
         newChat = await model.create({
@@ -300,6 +310,7 @@ module.exports = function (Chat) {
           pin: false,
           newConversation: true,
           agentId: agent,
+          url,
         });
       } catch (error) {
         console.log("CAN'T READ", msg, waMsg);
@@ -364,8 +375,11 @@ module.exports = function (Chat) {
           currChat.updateAttributes({lastMessageAt: chat.t * 1000, agentId});
         } else {
           try {
+            let url;
             if (!chat.kind) {
               return;
+            } else if (chat.kind === 'group') {
+              url = await retrieveGroupLink(chatId);
             }
             await model.create({
               chatId,
@@ -380,6 +394,7 @@ module.exports = function (Chat) {
               profilePic: chat.contact.profilePicThumbObj.eurl,
               mute: Boolean(chat.mute),
               pin: chat.pin,
+              url,
             });
           } catch (error) {
             console.log(error);
@@ -1183,10 +1198,22 @@ module.exports = function (Chat) {
   }
 
   Chat.deleteMsg = async (chatId, msgs) => {
-    const r = await Promise.all(
-      msgs.map(async (m) => await wp.deleteMessage(chatId, m, true)),
-    );
-    return r;
+    const Message = model.app.models.Message;
+    try {
+      await wp.deleteMessage(chatId, msgs, false);
+    } catch (error) {
+      console.log('Failed to delete message', error);
+      throw 'cannot delete messages';
+    }
+    msgs.forEach((id) => {
+      try {
+        Message.destroyById(id);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+    io.sockets.emit('deleteMsgs', {chatId, deleted: msgs});
+    return msgs;
   };
 
   Chat.remoteMethod('deleteMsg', {
@@ -1196,6 +1223,215 @@ module.exports = function (Chat) {
     ],
     description: 'finds chat by chatId',
     returns: {root: true},
-    http: {path: '/delete/:chatId', verb: 'post'},
+    http: {path: '/:chatId/deleteMessages', verb: 'delete'},
+  });
+
+  async function getGroups(launchName) {
+    const {launch} = await Chat.app.models.Admin.get();
+    let pattern;
+    if (launch[launchName]) {
+      pattern = launch[launchName].namePattern;
+    } else {
+      throw 'No lauch found';
+    }
+
+    const regex = new RegExp('.*' + pattern + '.*', 'i');
+    const chats = await Chat.find({
+      where: {and: [{name: {like: regex}}, {type: 'group'}]},
+    });
+    return chats;
+  }
+
+  Chat.launchGroupsParticipants = async (launchName) => {
+    const chats = await getGroups(launchName);
+    const participants = {};
+    await Promise.all(
+      chats.map(async (group) => {
+        try {
+          const n = await wp.getGroupMembersId(group.id);
+          participants[group.id] = {
+            name: group.name,
+            participants: n.length,
+          };
+          return;
+        } catch (error) {
+          console.log(error);
+        }
+      }),
+    );
+    return participants;
+  };
+
+  Chat.remoteMethod('launchGroupsParticipants', {
+    accepts: {arg: 'name', type: 'string', http: {source: 'query'}},
+    description: 'count launch group participants',
+    returns: {root: true},
+    http: {path: '/launch/countAllGroupParticipants', verb: 'get'},
+  });
+
+  async function sendMsgLoop(msg, to) {
+    try {
+      sentMessages.push({to, msg});
+      await wp.sendText(to, msg);
+      return true;
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+  }
+
+  Chat.launchSendMessages = async ({msg}, launchName) => {
+    if (lastSent > new Date().valueOf - 60000) {
+      throw 'Need to wait 60 seconds to send message';
+    }
+    lastSent = new Date().valueOf();
+    const chats = await getGroups(launchName);
+
+    const r = await new Promise((resolve) => {
+      let i = 0;
+      let lastSentId;
+      const res = {};
+      const id = setInterval(async () => {
+        console.log(i);
+        if (chats[i]) {
+          const chat = chats[i].id;
+          if (chat !== lastSentId) {
+            console.log(chat);
+            const e = await sendMsgLoop(msg, chat);
+            lastSentId = chat;
+            res[chat] = e;
+            // console.log(res);
+            i++;
+          } else {
+            console.log('MISMATCH');
+          }
+        } else {
+          clearInterval(id);
+          resolve(res);
+        }
+      }, 1000);
+    });
+    return r;
+  };
+
+  Chat.remoteMethod('launchSendMessages', {
+    accepts: [
+      {arg: 'body', type: 'object', required: true, http: {source: 'body'}},
+      {arg: 'name', type: 'string', http: {source: 'query'}},
+    ],
+    description: 'count launch group participants',
+    returns: {root: true},
+    http: {path: '/launch/sendBulkMsg', verb: 'post'},
+  });
+
+  async function retrieveGroupLink(gId) {
+    try {
+      const url = await wp.getGroupInviteLink(gId);
+      return url;
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+  }
+
+  Chat.launchCreateGroup = async (launchName) => {
+    const admin = Chat.app.models.Admin;
+    const curr = await admin.get();
+    const {defaultNumber, newGroupName, latestGroupNumber} = curr.launch[
+      launchName
+    ];
+    if (!newGroupName) {
+      throw 'No launch found';
+    }
+    const nextGroupNumber = latestGroupNumber + 1;
+    const newGroupNameN = newGroupName.replace('&#', nextGroupNumber);
+    const gp = await wp.createGroup(newGroupNameN, defaultNumber);
+    const gId = gp.gid._serialized;
+    if (Array.isArray(defaultNumber)) {
+      defaultNumber.forEach((n) => wp.promoteParticipant(gId, n));
+    } else {
+      await wp.promoteParticipant(gId, defaultNumber);
+    }
+    await wp.setGroupToAdminsOnly(gId, true);
+    await sleep(500);
+    await sendMsgLoop('Grupo criado!', gId);
+    const newData = {...curr.launch};
+    newData[launchName].latestGroupNumber = nextGroupNumber;
+    await admin.change({
+      launch: newData,
+    });
+    return gId;
+  };
+
+  Chat.remoteMethod('launchCreateGroup', {
+    accepts: {arg: 'name', type: 'string', http: {source: 'query'}},
+    description: 'Creates a new group',
+    returns: {root: true},
+    http: {path: '/launch/createGroup', verb: 'post'},
+  });
+
+  Chat.dumpGroup = async (gId) => {
+    const ids = await wp.getGroupMembersId(gId);
+    await Promise.all(
+      ids.map(async (i) => {
+        if (i !== myNumber) {
+          await wp.removeParticipant(gId, i);
+        }
+        return;
+      }),
+    );
+    await wp.leaveGroup(gId);
+    sleep(500);
+    await wp.deleteChat(gId);
+    return true;
+  };
+
+  Chat.remoteMethod('dumpGroup', {
+    accepts: {
+      arg: 'gid',
+      type: 'string',
+      required: true,
+    },
+    description: 'clears and delete a group',
+    returns: {root: true},
+    http: {path: '/launch/:gId/dump', verb: 'post'},
+  });
+
+  Chat.getReaders = async (msgId) => {
+    const Message = Chat.app.models.Message;
+    const msg = await Message.findById(msgId);
+    const sentAt = new Date(msg.timestamp);
+    const readers = await wp.getMessageReaders(msgId);
+    const parsed = readers.map((r) => {
+      return {
+        timestamp: new Date(r.t * 1000),
+        number: r.id,
+        timeToOpen: new Date(r.t * 1000).valueOf() - sentAt.valueOf(),
+      };
+    });
+    return parsed;
+  };
+
+  Chat.remoteMethod('getReaders', {
+    accepts: {
+      arg: 'messageId',
+      type: 'string',
+      required: true,
+    },
+    description: 'get message readers data',
+    returns: {root: true},
+    http: {path: '/launch/:messageId/readers', verb: 'get'},
+  });
+
+  Chat.getLaunchs = async () => {
+    const data = await Chat.app.models.Admin.get();
+    const launchs = Object.keys(data.launch).map((o) => data.launch[o]);
+    return launchs;
+  };
+
+  Chat.remoteMethod('getLaunchs', {
+    description: 'gets all launchs',
+    returns: {root: true},
+    http: {path: '/launch/list', verb: 'get'},
   });
 };
