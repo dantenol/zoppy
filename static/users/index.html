@@ -12,10 +12,10 @@
         <img class="zoppyImage" src="./assets/icon128.png" alt="Zoppy" />
         <h1 class="users">Criação de Usuários</h1>
       </div>
-      <form class="formBox">
+      <form id="myForm" class="formBox" onsubmit="createUser()">
         <div class="values">
-          <label for="name">Url:</label>
-          <input type="text" id="name" name="name" /><br /><br />
+          <label for="url">Url:</label>
+          <input type="text" id="url" name="url" /><br /><br />
         </div>
         <div class="values">
           <label for="name">Nome:</label>
@@ -24,10 +24,6 @@
         <div class="values">
           <label for="user">Usuário:</label>
           <input typed="text" id="user" name="user" /><br /><br />
-        </div>
-        <div class="values">
-          <label for="email">E-mail:</label>
-          <input type="email" id="email" name="email" /><br /><br />
         </div>
         <div class="values">
           <label for="password">Senha:</label>
