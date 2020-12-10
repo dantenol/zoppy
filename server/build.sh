@@ -20,10 +20,17 @@ echo $v
 echo Building $v...
 npm run update-front
 npm run custom-key
+cp -r ../static/launch ./client
 docker build -t dantenol/zoppy:$v .
 docker push dantenol/zoppy:$v
 docker tag dantenol/zoppy:$v dantenol/zoppy:latest
 docker push dantenol/zoppy:latest
+git add ./LATEST
+git add ./package.json
+git add ../view/package.json
+git add ./client
+git commit -m 'replace version'
+git push
 
 if [ $save -eq 1 ]
 then
