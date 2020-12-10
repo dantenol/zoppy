@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zoppy Lançamentos</title>
+    <meta name="robots" content="noindex" />
+    <link rel="stylesheet" href="index.css" />
+    <link rel="stylesheet" href="./index/style.css" />
+    <script src="./index/script.js"></script>
+    <script src="index.js"></script>
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <img src="./assets/logo.png" alt="Zoppy" />
+        <div class="buffer"></div>
+        <select id="launchOptions" onchange="loadLaunch()">
+          <option value="" selected disabled>Selecionar lançamento</option>
+        </select>
+      </header>
+      <main>
+        <div id="selectLaunch">
+          <p>Selecione um lançamento para continuar</p>
+        </div>
+        <div id="launches">
+          <button id="newGroup" onclick="createGroup()">
+            Criar novo grupo <img src="./assets/loading.gif" alt="loading" />
+          </button>
+          <table>
+            <thead>
+              <tr>
+                <th>Nome do grupo</th>
+                <th>Num. participantes</th>
+              </tr>
+            </thead>
+            <tbody id="launchesTable"></tbody>
+          </table>
+          <div id="send">
+            <h3>Enviar mensagem para grupos</h3>
+            <textarea id="messageToSend" rows="4"></textarea>
+            <button onclick="bulkSend()">
+              Enviar<img src="./assets/loading.gif" alt="loading" />
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
