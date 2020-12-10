@@ -546,6 +546,11 @@ module.exports = function (Chat) {
       // return Chat.setup();
     }
     io = Chat.app.io;
+    if (!io) {
+      console.log("no socket found. retrying");
+      await sleep(100);
+      return Chat.setup();
+    }
     startedSetup = true;
     let source = {executablePath: '/usr/bin/google-chrome-stable'};
     if (process.env.NODE_ENV === 'production') {
