@@ -1,0 +1,16 @@
+{
+  "name": "globalHelpers",
+  "version": "1.0.0",
+  "description": "",
+  "main": "putNumberOnAllGroups.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.0",
+    "mongodb": "^3.6.3"
+  }
+}
