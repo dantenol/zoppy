@@ -31,6 +31,7 @@
     "loopback-connector-mongodb": "^5.5.0",
     "mime-types": "^2.1.27",
     "moment": "^2.29.1",
+    "p-queue": "^6.6.2",
     "random": "^2.2.0",
     "serve-favicon": "^2.5.0",
     "sharp": "^0.26.3",

@@ -5,7 +5,9 @@ const random = require('random');
 const path = require('path');
 const wa = require('@open-wa/wa-automate');
 const pkg = require('../../package.json');
-const {url} = require('inspector');
+const {default: PQueue} = require('p-queue');
+
+const queue = new PQueue({concurrency: 1, timeout: 2000});
 
 require('axios-debug-log')({
   request: function (debug, config) {
@@ -112,6 +114,13 @@ module.exports = function (Chat) {
     });
   }
 
+  async function validateSocket(access_token) {
+    const AccessToken = Chat.app.models.AccessToken;
+    const tokn = await AccessToken.findById(access_token);
+    console.log(tokn);
+    return Boolean(tokn);
+  }
+
   async function start(wpp) {
     if (!io && !Chat.app.io) {
       return setTimeout(() => {
@@ -124,7 +133,18 @@ module.exports = function (Chat) {
     }
 
     Chat.loadSettings();
-    io.on('connection', (socket) => {
+    io.on('connection', async (socket) => {
+      if (!socket.handshake.query || !socket.handshake.query.access_token) {
+        console.log('failed socket connectoin');
+        return socket.disconnect();
+      }
+      const canConnect = await validateSocket(
+        socket.handshake.query.access_token,
+      );
+      if (!canConnect) {
+        console.log('failed socket connectoin');
+        return socket.disconnect();
+      }
       socket.on('getChats', async () => {
         const chats = await model.getAll();
         console.log('LOADED', new Date());
@@ -144,7 +164,7 @@ module.exports = function (Chat) {
         socket.emit('queryResult', {res, pinned});
       });
     });
-    io.sockets.emit('reload');
+    // io.sockets.emit('reload');
 
     const send = await wpp
       .getPage()
@@ -192,15 +212,16 @@ module.exports = function (Chat) {
       sts = s;
       status.connection = s;
       io.sockets.emit('status', status);
-      switch (s) {
-        case 'CONFLICT':
-          wpp.forceRefocus();
-          break;
-        case 'UNPAIRED':
-          wpp.kill(); // TESTAR
-          break;
-        default:
-          break;
+      if (s === 'CONFLICT' || s === 'UNLAUNCHED') {
+        console.log(wp.forceRefocus.toString());
+        wp.forceRefocus();
+      }
+
+      if (s === 'UNPAIRED') {
+        console.log('LOGGED OUT!!!!');
+        wp.kill();
+        wp = undefined;
+        startedSetup = false;
       }
     });
   }
@@ -230,9 +251,27 @@ module.exports = function (Chat) {
       socketObj = newChat;
     }
     try {
+      let chatId = waMsg.chatId;
+      if (typeof chatId === 'object') {
+        chatId = waMsg.chatId._serialized;
+      }
+      let quote;
+      if (waMsg.quotedMsg) {
+        const data = waMsg.quotedMsgObj;
+        quote = {
+          body: data.body,
+          sender: data.sender.formattedName,
+          id: data.id,
+          mine: data.fromMe,
+          clientUrl: data.clientUrl,
+          mediaKey: data.mediaKey,
+          caption: data.caption,
+          duration: data.duration,
+        };
+      }
       savedMsg = await Message.create({
         messageId: waMsg.id,
-        chatId: waMsg.chatId._serialized,
+        chatId,
         body: waMsg.body,
         sender:
           waMsg.sender.pushname ||
@@ -243,7 +282,7 @@ module.exports = function (Chat) {
         type: waMsg.type,
         mine: waMsg.sender.id === myNumber || waMsg.fromMe,
         timestamp: time * 1000,
-        quote: waMsg.quotedMsg || undefined,
+        quote,
         clientUrl: waMsg.clientUrl,
         mediaKey: waMsg.mediaKey,
         mimetype: waMsg.mimetype,
@@ -415,6 +454,7 @@ module.exports = function (Chat) {
         if (!allMessages.length) {
           allMessages = await client.loadEarlierMessages(chatId);
         } else {
+          console.log(chatId, allMessages.length);
           await Promise.all(
             allMessages.map(async (msg) => {
               try {
@@ -537,6 +577,7 @@ module.exports = function (Chat) {
   });
 
   Chat.setup = async () => {
+    console.log("starting");
     if (wp) {
       throw new Error('WhatApp already set');
     } else if (startedSetup) {
@@ -547,7 +588,7 @@ module.exports = function (Chat) {
     }
     io = Chat.app.io;
     if (!io) {
-      console.log("no socket found. retrying");
+      console.log('no socket found. retrying');
       await sleep(100);
       return Chat.setup();
     }
@@ -557,10 +598,10 @@ module.exports = function (Chat) {
       source = {browserWSEndpoint: 'ws://browser:3000'};
     }
     try {
-      wa.create({
+      const client = await wa.create({
         killProcessOnBrowserClose: false,
         restartOnCrash: start,
-        licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
+        // licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
         disableSpins: true,
         hostNotificationLang: 'pt-br',
         // cacheEnabled: false,
@@ -574,9 +615,10 @@ module.exports = function (Chat) {
         // qrRefreshS: 15,
         qrTimeout: 90,
         authTimeout: 90,
-      }).then((client) => start(client));
+      })
+      start(client);
     } catch (error) {
-      throw new Error('Failed to start: ' + error);
+      console.log("Failed to start: " + error );
     }
   };
 
@@ -851,12 +893,21 @@ module.exports = function (Chat) {
     http: {path: '/:chatId/reload', verb: 'post'},
   });
 
-  Chat.sendMessage = async (req, to, message, from, customId) => {
+  Chat.sendMessage = async (req, to, message, from, customId, quoted) => {
     const Message = model.app.models.Message;
     const agentId = from || req.accessToken.userId;
     sentMessages.push({to, message, agentId});
     const t = new Date();
-    const wpMsg = await wp.sendText(to, message);
+    let wpMsg;
+    console.log('QUOTE', quoted);
+    if (quoted) {
+      const waMsg = await wp.getMessageById(quoted);
+      console.log('result of getmessagebyid', waMsg);
+      wpMsg = await wp.reply(to, message, quoted, true);
+      console.log('answerId', wpMsg);
+    } else {
+      wpMsg = await wp.sendText(to, message);
+    }
     console.log('FINISHED', new Date().valueOf() - t, wpMsg);
     if (typeof wpMsg === 'string') {
       const msg = await Message.findById(wpMsg);
@@ -912,6 +963,7 @@ module.exports = function (Chat) {
       {arg: 'message', type: 'string', required: true},
       {arg: 'from', type: 'string', required: false},
       {arg: 'customId', type: 'number', required: false},
+      {arg: 'quoted', type: 'string', required: false},
     ],
     description: 'Send message to chat',
     returns: {root: true},
@@ -1275,54 +1327,39 @@ module.exports = function (Chat) {
   });
 
   async function sendMsgLoop(msg, to) {
+    console.log(msg, to);
     try {
       sentMessages.push({to, msg});
-      await wp.sendText(to, msg);
-      return true;
+      const msgId = await wp.sendText(to, msg);
+      return msgId;
     } catch (error) {
       console.log(error);
       return false;
     }
   }
 
-  Chat.launchSendMessages = async ({msg}, launchName) => {
+  Chat.launchSendMessages = async ({msg, groups}) => {
+    console.log(lastSent, lastSent > new Date().valueOf);
     if (lastSent > new Date().valueOf - 60000) {
       throw 'Need to wait 60 seconds to send message';
     }
     lastSent = new Date().valueOf();
-    const chats = await getGroups(launchName);
-
-    const r = await new Promise((resolve) => {
-      let i = 0;
-      let lastSentId;
-      const res = {};
-      const id = setInterval(async () => {
-        console.log(i);
-        if (chats[i]) {
-          const chat = chats[i].id;
-          if (chat !== lastSentId) {
-            console.log(chat);
-            const e = await sendMsgLoop(msg, chat);
-            lastSentId = chat;
-            res[chat] = e;
-            // console.log(res);
-            i++;
-          } else {
-            console.log('MISMATCH');
-          }
-        } else {
-          clearInterval(id);
-          resolve(res);
-        }
-      }, 1000);
+    const id = groups.map(async (gId, i) => {
+      return await queue.add(async () => await sendMsgLoop(msg, gId));
     });
-    return r;
+    console.log(id);
+    return id;
   };
 
   Chat.remoteMethod('launchSendMessages', {
     accepts: [
-      {arg: 'body', type: 'object', required: true, http: {source: 'body'}},
-      {arg: 'name', type: 'string', http: {source: 'query'}},
+      {
+        arg: 'body',
+        type: 'object',
+        required: true,
+        http: {source: 'body'},
+        required: true,
+      },
     ],
     description: 'count launch group participants',
     returns: {root: true},
@@ -1339,7 +1376,7 @@ module.exports = function (Chat) {
     }
   }
 
-  Chat.launchCreateGroup = async (launchName) => {
+  Chat.launchCreateGroup = async (launchName, {groupNumber}) => {
     const admin = Chat.app.models.Admin;
     const curr = await admin.get();
     const {defaultNumber, newGroupName, latestGroupNumber} = curr.launch[
@@ -1348,9 +1385,10 @@ module.exports = function (Chat) {
     if (!newGroupName) {
       throw 'No launch found';
     }
-    const nextGroupNumber = latestGroupNumber + 1;
+    const nextGroupNumber = groupNumber || latestGroupNumber + 1;
     const newGroupNameN = newGroupName.replace('&#', nextGroupNumber);
     const gp = await wp.createGroup(newGroupNameN, defaultNumber);
+    await sleep(1000);
     const gId = gp.gid._serialized;
     if (Array.isArray(defaultNumber)) {
       defaultNumber.forEach((n) => wp.promoteParticipant(gId, n));
@@ -1369,7 +1407,10 @@ module.exports = function (Chat) {
   };
 
   Chat.remoteMethod('launchCreateGroup', {
-    accepts: {arg: 'name', type: 'string', http: {source: 'query'}},
+    accepts: [
+      {arg: 'name', type: 'string', http: {source: 'query'}, required: true},
+      {arg: 'body', type: 'object', http: {source: 'body'}},
+    ],
     description: 'Creates a new group',
     returns: {root: true},
     http: {path: '/launch/createGroup', verb: 'post'},
@@ -1430,8 +1471,7 @@ module.exports = function (Chat) {
 
   Chat.getLaunchs = async () => {
     const data = await Chat.app.models.Admin.get();
-    const launchs = Object.keys(data.launch).map((o) => data.launch[o]);
-    return launchs;
+    return data.launch;
   };
 
   Chat.remoteMethod('getLaunchs', {
