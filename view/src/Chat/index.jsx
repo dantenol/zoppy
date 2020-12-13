@@ -12,6 +12,7 @@ const Chat = ({
   chat,
   handleChangeName,
   handleSend,
+  handleDelete,
   handleSendAudio,
   handleLoadMore,
   handleModal,
@@ -42,6 +43,7 @@ const Chat = ({
           showMedia={showMedia}
           handleLoadMore={handleLoadMore}
           send={handleSend}
+          handleDelete={handleDelete}
           sendAudio={handleSendAudio}
           more={chat.more}
           chatId={chat.chatId}

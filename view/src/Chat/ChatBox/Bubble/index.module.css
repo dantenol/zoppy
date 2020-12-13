@@ -57,7 +57,7 @@
 }
 
 .right .options.false div:nth-child(1) {
-  margin-right: -26px;
+  margin-right: -28px;
 }
 
 /* handle left side animation */
@@ -277,4 +277,31 @@ div.noBg::before {
 
 .image ~ .msg {
   max-width: 200px;
+}
+
+.quote {
+  padding: 4px;
+  width: 100%;
+  border-radius: 4px;
+  background-color: #cfe9b9;
+  border-left: 3px solid #35cd96;
+}
+
+.left .quote {
+  background-color: #f0f0f0;
+}
+
+.quote .from {
+  display: inline-block;
+  padding-bottom: 8px;
+  font-weight: bold;
+  color: #35cd96;
+}
+
+.quote.true {
+  border-left: 3px solid #6bcbef;
+}
+
+.quote.true .from {
+  color: #6bcbef;
 }

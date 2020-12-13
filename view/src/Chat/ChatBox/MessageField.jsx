@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
 import classNames from "classnames";
-import MicRecorder from "mic-recorder-to-mp3";
 
 import classes from "./index.module.css";
 import sendImg from "../../assets/images/send.svg";
@@ -12,16 +11,14 @@ import bag from "../../assets/images/bag.svg";
 import outslideClickListener from "../../hooks/outslideClickListener";
 import VoiceNote from "./VoiceNote";
 
-const recorder = new MicRecorder({
-  bitRate: 128,
-});
-
 const isMobile = window.innerWidth <= 600;
 
 const MessageField = ({
   message,
   handleChangeMessage,
   send,
+  replyId,
+  handleReply,
   handleModal,
   sendAudio,
 }) => {
@@ -33,59 +30,6 @@ const MessageField = ({
   const [isRecording, setIsRecording] = useState(false);
   const emojiRef = useRef();
 
-  // const handleRecord = (e) => {
-  //   if (isMobile) {
-  //     return;
-  //   }
-  //   e.preventDefault();
-  //   setStartedRecording(new Date().valueOf());
-  //   if (startedRecording) {
-  //     stopRecording();
-  //   } else {
-  //     startRecording();
-  //   }
-  // };
-
-  // const startRecording = () => {
-  //   console.log("STARTED");
-  //   recorder.start();
-  //   setAudioURL("");
-  // };
-
-  // const stopRecording = () => {
-  //   console.clear()
-  //   setStartedRecording(0);
-  //   recorder
-  //     .stop()
-  //     .getMp3()
-  //     .then(([buffer, blob]) => {
-  //       setAudioURL(blob);
-  //     });
-  // };
-
-  // const cancelRecording = () => {
-  //   setStartedRecording(0);
-  //   recorder
-  //     .stop()
-  //     .getMp3()
-  //     .then(() => {
-  //       setAudioURL("");
-  //     });
-  // };
-
-  // const handleStartTouch = () => {
-  //   console.log(123123, startedRecording);
-  //   if (!startedRecording) {
-  //     setStartedRecording(new Date().valueOf());
-  //     startRecording();
-  //   }
-  // };
-
-  // const handleEndTouch = () => {
-  //   console.log("finish", startedRecording - new Date());
-  //   stopRecording();
-  // };
-
   useEffect(() => {
     if (
       localStorage.settings &&
@@ -96,55 +40,6 @@ const MessageField = ({
       setSalesButton(false);
     }
   }, [localStorage.settings]);
-
-  // useEffect(() => {
-  //   if (!navigator.getUserMedia) {
-  //     setAllowsRecording(false);
-  //   } else {
-  //     navigator.getUserMedia(
-  //       { audio: true },
-  //       () => {
-  //         console.log("Permission Granted");
-  //         setAllowsRecording(true);
-  //       },
-  //       () => {
-  //         console.log("Permission Denied");
-  //       }
-  //     );
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   if (!startedRecording && audioURL && audioURL.size > 1) {
-  //     console.log(audioURL);
-  //     sendAudio(audioURL);
-  //   }
-  // }, [audioURL, startedRecording]);
-
-  // useEffect(() => {
-  //   const e = document.getElementById("recorder");
-  //   if (allowsRecording && e) {
-  //     document
-  //       .getElementById("recorder")
-  //       .addEventListener("touchstart", handleStartTouch);
-
-  //     document.getElementById("recorder").oncontextmenu = function (event) {
-  //       event.preventDefault();
-  //       event.stopPropagation(); // not necessary in my case, could leave in case stopImmediateProp isn't available?
-  //       event.stopImmediatePropagation();
-  //       return false;
-  //     };
-
-  //     document
-  //       .getElementById("recorder")
-  //       .addEventListener("touchend", handleEndTouch);
-
-  //     return () => {
-  //       e.removeEventListener("touchstart", handleStartTouch);
-  //       e.removeEventListener("touchend", handleEndTouch);
-  //     };
-  //   }
-  // }, [startedRecording, allowsRecording]);
 
   const closeEmoji = () => {
     setEmoji(false);
@@ -162,7 +57,8 @@ const MessageField = ({
   };
 
   const handlesendButton = () => {
-    send(message);
+    console.log(message, replyId);
+    send(message, replyId);
     handleChangeMessage("");
     setRows(1);
   };
@@ -251,10 +147,7 @@ const MessageField = ({
             <img src={sendImg} alt="Enviar" />
           </button>
         ) : (
-          <VoiceNote
-            setIsRecording={setIsRecording}
-            sendAudio={sendAudio}
-          />
+          <VoiceNote setIsRecording={setIsRecording} sendAudio={sendAudio} />
         )}
       </div>
     </>

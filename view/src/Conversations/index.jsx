@@ -27,6 +27,7 @@ const Conversations = ({
   handleSettingsModal,
   showing,
   logout,
+  isLaunch,
   lowBattery,
 }) => {
   const [dataToShow, setDataToShow] = useState(data);
@@ -37,7 +38,11 @@ const Conversations = ({
   return (
     <div className={classNames(classes.container, "mobile-fullwidth", showing)}>
       {localStorage.agents && localStorage.userId && (
-        <Header logout={logout} handleSettings={handleSettingsModal} />
+        <Header
+          logout={logout}
+          handleSettings={handleSettingsModal}
+          isLaunch={isLaunch}
+        />
       )}
       <Search
         handleNewContact={handleNewContactModal}

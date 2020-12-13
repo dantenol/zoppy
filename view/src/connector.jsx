@@ -1,6 +1,19 @@
 import pkg from "../package.json"
 
-export const url = "/api/";
+let url = "/api/"
+
+let socketParams = [{
+  secure: true,
+  query: {
+    access_token: localStorage.access_token,
+  },
+}]
+if (window.location.href.includes("localhost")) {
+  url = "https://localhost:3001/api/";
+  socketParams.unshift("https://localhost:3001/")
+}
+
+export {url, socketParams};
 
 export const params = {
   params: {

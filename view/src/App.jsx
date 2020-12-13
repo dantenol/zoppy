@@ -6,7 +6,7 @@ import "moment/locale/pt-br";
 import io from "socket.io-client";
 import { useImmer } from "use-immer";
 
-import { url, params, webVersion } from "./connector";
+import { url, socketParams, params, webVersion } from "./connector";
 
 import useInterval from "./hooks/useInterval";
 import classes from "./App.module.css";
@@ -50,6 +50,7 @@ const App = () => {
   const isMobile = window.innerWidth <= 600;
   const audio = new Audio(notificationSound);
   const me = localStorage.salesAgentId || localStorage.userId;
+  const isLaunch = !!adminSettings.launch;
   window.me = me;
 
   function sleep(ms) {
@@ -150,12 +151,7 @@ const App = () => {
     window.agents = JSON.parse(localStorage.agents || 0);
     if (localStorage.access_token) {
       checkOnline();
-      socket = io({
-        secure: true,
-        query: {
-          access_token: localStorage.access_token,
-        },
-      });
+      socket = io(...socketParams);
       socket.on("reload", () => {
         window.location.reload(true);
       });
@@ -214,7 +210,7 @@ const App = () => {
         addSentMessageToConversations(data);
       });
       socket.on("deleteMsgs", (data) => {
-        deleteMessages(data);
+        deleteMessagesFromChat(data);
       });
       socket.on("queryResult", (res) => {
         handleDBQuery(res);
@@ -336,12 +332,13 @@ const App = () => {
 
   const selectChat = async (id) => {
     let index = findIdxById(id);
-    setSelectedChatIndex(index);
     const curr = chats[index];
     setNewChat(false);
     loadOldMessages(null, id);
-    setCurrentChat(curr.chatId);
     goTo("chat");
+    setCurrentChat(curr.chatId);
+    setSelectedChatIndex(index);
+    console.log("54546654", chats[index].messages);
     let pic = {};
 
     try {
@@ -638,7 +635,8 @@ const App = () => {
     setModal(false);
   };
 
-  const send = async (rawMessage, to = currentChat, attempt = 0) => {
+  const send = async (rawMessage, quoted, to = currentChat, attempt = 0) => {
+    console.log(rawMessage, quoted);
     let from;
     const message = rawMessage.trim();
     // setLastSentMessage(new Date());
@@ -683,15 +681,15 @@ const App = () => {
           message,
           from,
           customId: id,
+          quoted,
         },
         params
       );
     } catch (error) {
-      console.log(error.response);
+      console.log(error);
       if (attempt < 3) {
-        setTimeout(async () => {
-          await send(message, to, attempt + 1);
-        }, 200);
+        sleep(200);
+        await send(message, quoted, to, attempt + 1);
       } else {
         throw error;
       }
@@ -805,12 +803,7 @@ const App = () => {
           window.alert("Avise o responsável sobre o erro de conexão!");
           return;
         }
-        socket = io({
-          secure: true,
-          query: {
-            access_token: localStorage.access_token,
-          },
-        });
+        socket = io(...socketParams);
         socket.on("scanned", () => {
           console.log("SCANNED");
           setModal({ type: "qr", status: "scanned" });
@@ -942,10 +935,24 @@ const App = () => {
     }
   };
 
-  const deleteMessages = ({ chatId, deleted }) => {
+  const deleteMessages = async (msgId) => {
+    try {
+      await axios.delete(
+        `${url}chats/${currentChat}/deleteMessages`,
+        {
+          data: [msgId],
+          params: { access_token: params.params.access_token },
+        }
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const deleteMessagesFromChat = ({ chatId, deleted }) => {
     const idx = findIdxById(chatId);
     setChats((draft) => {
-        _.remove(draft[idx].messages, (d) => deleted.includes(d.messageId));
+      _.remove(draft[idx].messages, (d) => deleted.includes(d.messageId));
     });
   };
 
@@ -1060,6 +1067,7 @@ const App = () => {
           data={chats}
           handleSettingsModal={handleSettingsModal}
           logout={logout}
+          isLaunch={isLaunch}
           handleQuery={handleQuery}
           handleSelectChat={selectChat}
           lowBattery={lowBattery}
@@ -1074,6 +1082,7 @@ const App = () => {
           handleSendAudio={handleSendAudio}
           showMedia={handleShowMedia}
           handleSend={send}
+          handleDelete={deleteMessages}
           handleChangeName={handleChangeName}
           handleLoadMore={loadOldMessages}
           chat={newChat || chats[selectedChatIndex]}

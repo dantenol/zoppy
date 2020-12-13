@@ -5,6 +5,7 @@ import clock from "../../../assets/images/clock.svg";
 
 import classes from "./index.module.css";
 import FormattedSpan from "../../../hooks/FormattedSpan";
+import QuoteBox from "./QuoteBox";
 
 const PureText = ({ message, isGroup }) => {
   const agents = window.agents;
@@ -19,8 +20,9 @@ const PureText = ({ message, isGroup }) => {
     <div>
       <div className={classes.message}>
         {isGroup && !message.mine && <p>{message.sender}</p>}
-        {message.agentId && <p>{senderName}</p>}
+        {message.mine && message.agentId && <p>{senderName}</p>}
         <div className={classes.msg}>
+          {message.quote ? <QuoteBox data={message.quote} /> : null}
           <FormattedSpan text={message.body} />
           <span className={classes.buffer}></span>
         </div>

@@ -7,6 +7,7 @@ import MessageField from "./MessageField";
 import Bubble from "./Bubble";
 import Day from "./Bubble/Day";
 
+
 const Chat = ({
   messages,
   more,
@@ -16,26 +17,33 @@ const Chat = ({
   chatId,
   handleLoadMore,
   send,
+  handleDelete,
   sendAudio,
   showMedia,
 }) => {
   const [message, setMessage] = useState("");
   const [scroll, setScroll] = useState(false);
+  const [replyId, setReplyId] = useState("");
   const isGroup = chatId.includes("-");
   const messagesEndRef = useRef();
 
-  let lastDay = new Date(messages[0].timestamp || null);
+  let lastDay = new Date(messages[0]?.timestamp || null);
+  console.log(lastDay, chatId);
 
   const scrollToBottom = () => {
     setScroll(scroll + 1);
     messagesEndRef.current.scrollIntoView();
   };
 
+  const handleReply = (id) => {
+    setReplyId(id);
+  };
+
   useEffect(() => {
     if (initialText && message === false) {
       setMessage(initialText);
-    // } else if (message !== initialText) {
-    //   setMessage("");
+      // } else if (message !== initialText) {
+      //   setMessage("");
     }
   }, [initialText, chatId]);
 
@@ -43,8 +51,8 @@ const Chat = ({
     setScroll(0);
   }, [chatId]);
 
-  useEffect(() =>{
-    if (scroll < 3 || messages[0].mine) {
+  useEffect(() => {
+    if (scroll < 3 || messages[0]?.mine) {
       scrollToBottom();
     }
   }, [messages]);
@@ -61,7 +69,7 @@ const Chat = ({
                   const m = { ...msg };
                   const last = lastDay;
                   if (typeof msg !== "object") {
-                    return null
+                    return null;
                   }
                   const current = m.timestamp;
                   if (m.mine && !m.agentId) {
@@ -69,11 +77,13 @@ const Chat = ({
                   }
                   lastDay = current;
                   if (m === "none" || m.chatId !== chatId) {
-                    return;
+                    return null;
                   } else if (i === messages.length - 1) {
                     return (
                       <Fragment key={m.messageId}>
                         <Bubble
+                          handleReply={handleReply}
+                          handleDelete={handleDelete}
                           showMedia={showMedia}
                           key={m.messageId}
                           message={m}
@@ -87,6 +97,8 @@ const Chat = ({
                       <Fragment key={m.messageId}>
                         <Day day={last} />
                         <Bubble
+                          handleReply={handleReply}
+                          handleDelete={handleDelete}
                           showMedia={showMedia}
                           message={m}
                           isGroup={isGroup}
@@ -96,7 +108,9 @@ const Chat = ({
                   } else {
                     return (
                       <Bubble
+                        handleReply={handleReply}
                         showMedia={showMedia}
+                        handleDelete={handleDelete}
                         key={m.messageId}
                         message={m}
                         isGroup={isGroup}
@@ -118,6 +132,8 @@ const Chat = ({
         handleModal={handleModal}
         message={message}
         handleChangeMessage={setMessage}
+        handleReply={handleReply}
+        replyId={replyId}
         send={send}
         sendAudio={sendAudio}
       />
