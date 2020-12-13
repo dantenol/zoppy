@@ -143,3 +143,16 @@ button.loading > img {
   margin-left: 20px;
   display: block;
 }
+
+#launches th:nth-child(3) {
+  width: 128px;
+  text-align: center;
+}
+
+#launches td:nth-child(3) {
+  text-align: center;
+}
+
+.participantData > p {
+  width: 32px;
+}
