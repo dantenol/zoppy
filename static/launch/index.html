@@ -7,8 +7,10 @@
     <meta name="robots" content="noindex" />
     <link rel="stylesheet" href="index.css" />
     <link rel="stylesheet" href="./index/style.css" />
-    <script src="./index/script.js"></script>
+    <script src="https://unpkg.com/dayjs@1.8.21/dayjs.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.8.21/locale/pt-br.js"></script>
     <script src="index.js"></script>
+    <script src="./index/script.js"></script>
   </head>
   <body>
     <div class="wrapper">
@@ -24,24 +26,35 @@
           <p>Selecione um lançamento para continuar</p>
         </div>
         <div id="launches">
-          <button id="newGroup" onclick="createGroup()">
-            Criar novo grupo <img src="./assets/loading.gif" alt="loading" />
-          </button>
-          <table>
-            <thead>
-              <tr>
-                <th>Nome do grupo</th>
-                <th>Num. participantes</th>
-                <th>
-                  <div id="sendToGroup">
-                    Enviar?
-                    <input type="checkbox" id="sendToAll" />
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <tbody id="launchesTable"></tbody>
-          </table>
+          <div id="buttons">
+            <button id="newGroup" onclick="createGroup()">
+              Criar novo grupo <img src="./assets/loading.gif" alt="loading" />
+            </button>
+            <img
+              src="./assets/reload.svg"
+              alt="atualizar"
+              id="reloadButton"
+              onclick="loadLaunch()"
+            />
+          </div>
+          <div id="tableContainer">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome do grupo</th>
+                  <th>Num. participantes</th>
+                  <th>Última mensagem</th>
+                  <th>
+                    <div id="sendToGroup">
+                      Enviar?
+                      <input type="checkbox" id="sendToAll" />
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="launchesTable"></tbody>
+            </table>
+          </div>
           <div id="send">
             <h3>Enviar mensagem para grupos</h3>
             <textarea id="messageToSend" rows="4"></textarea>

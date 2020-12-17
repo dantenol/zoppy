@@ -1,6 +1,6 @@
 window.onload = async () => {
   if (!localStorage.access_token) {
-    return (window.location.href = "./login");
+    return (window.location.href = "..");
   }
   let data;
   try {
@@ -15,7 +15,7 @@ window.onload = async () => {
     console.log(error.statusCode);
     if (error.statusCode === 401) {
       alert("Você precisa logar novamente!");
-      window.location.href = "./login";
+      window.location.href = "..";
     }
     throw "something went wrong";
   }
@@ -30,6 +30,7 @@ window.onload = async () => {
     opt.value = launchData.launchId;
     el.appendChild(opt);
   });
+  dayjs.locale("pt-br");
 };
 
 function checkboxLisener(e) {
@@ -72,6 +73,22 @@ function setAllCheckboxListener() {
   });
 }
 
+async function copyUrl(e) {
+  const url = e.target.dataset.url;
+  try {
+    await navigator.clipboard.writeText(url);
+    alert("Link do grupo copiado!");
+  } catch (err) {
+    console.error("Failed to copy: ", err);
+  }
+}
+
+function setGroupNameClickListener() {
+  document.querySelectorAll(".groupName").forEach((n) => {
+    n.addEventListener("click", copyUrl);
+  });
+}
+
 function participantsBar(nbr) {
   const e = `<div class="outter"><div class="inner" style="width: ${
     (nbr / 256) * 100
@@ -82,6 +99,9 @@ function participantsBar(nbr) {
 
 async function loadLaunch() {
   const select = document.getElementById("launchOptions").value;
+  if (window.allGroups) {
+    document.querySelector("#launchesTable").innerHTML = "";
+  }
   window.selectedGroups = [];
   try {
     const res = await fetch(
@@ -115,15 +135,18 @@ async function loadLaunch() {
     console.log(orderedGroups);
     orderedGroups.forEach((d) => {
       const e = `<tr>
-      <td>${d.name}</td>
+      <td class="groupName" data-url="${d.url}">${d.name}</td>
       <td><div class="participantData"><p>${d.participants}</p>
       ${participantsBar(d.participants)}</div>
+      </td>
+      <td>${dayjs(d.lastMessage).format("DD/MM [às] HH:mm")}
       </td>
       <td><input type="checkbox" value="${d.id}" />
       </tr>`;
       table.innerHTML += e;
     });
     setAllCheckboxListener();
+    setGroupNameClickListener();
   } catch (error) {
     alert("Algo deu errado ao acessar o lançamento");
     console.log(error);
@@ -198,7 +221,7 @@ async function bulkSend() {
     return;
   }
   if (!msg) {
-    alert("Você deve digitar a mensagem antes!")
+    alert("Você deve digitar a mensagem antes!");
     btn.classList.toggle("loading");
     return;
   }
@@ -219,7 +242,7 @@ async function bulkSend() {
     const res = await fetch(url, options);
     const data = await res.json();
     alert("Mensagens enviadas com sucesso!");
-    msg.value = "";
+    document.getElementById("messageToSend").value = "";
     console.log(data);
   } catch (e) {
     alert("Algo deu errado no envio das mensagens!");
