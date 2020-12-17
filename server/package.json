@@ -16,8 +16,8 @@
     "prod-db": "sed -i 's@\"0.0.0.0\"@\"db\"@' ./server/datasources.json"
   },
   "dependencies": {
-    "@open-wa/wa-automate": "^3.1.7",
-    "aws-sdk": "^2.807.0",
+    "@open-wa/wa-automate": "^3.1.10",
+    "aws-sdk": "^2.809.0",
     "axios": "^0.21.0",
     "axios-debug-log": "^0.8.2",
     "compression": "^1.7.4",
