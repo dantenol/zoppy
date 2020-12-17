@@ -10,7 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@open-wa/wa-automate": "^3.1.10",
     "axios": "^0.21.0",
-    "mongodb": "^3.6.3"
+    "mongodb": "^3.6.3",
+    "puppeteer": "^5.5.0"
   }
 }
