@@ -1,5 +1,6 @@
 header {
-  height: 10%;
+  height: 10vh;
+  min-height: 96px;
   display: flex;
   align-items: center;
 }
@@ -19,12 +20,6 @@ header select {
   height: 50%;
   width: 40%;
   font-size: 24px;
-}
-
-main {
-  width: 100%;
-  height: 90%;
-  overflow-y: auto;
 }
 
 main #selectLaunch {
@@ -116,7 +111,7 @@ tr:nth-child(even) {
 }
 
 #send > button,
-#launches > button {
+#launches > #buttons > button {
   width: 50%;
   background: white;
   color: darkgreen;
@@ -144,15 +139,68 @@ button.loading > img {
   display: block;
 }
 
-#launches th:nth-child(3) {
+#launches th:last-child {
   width: 128px;
   text-align: center;
 }
 
-#launches td:nth-child(3) {
+#launches td:last-child {
   text-align: center;
 }
 
 .participantData > p {
   width: 32px;
+}
+
+#buttons {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  height: 10vh;
+  min-height: 96px;
+}
+
+#reloadButton {
+  width: 40px;
+  margin-left: 16px;
+  cursor: pointer;
+}
+
+#tableContainer {
+  height: 40vh;
+  display: block;
+  overflow: auto;
+}
+
+.groupName {
+  cursor: pointer;
+}
+
+@media screen and (max-width: 512px) {
+  header, #buttons {
+    height: 48px;
+    min-height: auto;
+  }
+  header img {
+    height: 32px;
+  }
+  header select {
+    width: auto;
+    font-size: smaller;
+  }
+
+  button {
+    font-size: small !important;
+    padding: 8px !important;
+  }
+  #reloadButton {
+    width: 32px;
+  }
+  table {
+    font-size: 16px;
+  }
+
+  #send h3 {
+    font-size: 20px;
+  }
 }
