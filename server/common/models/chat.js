@@ -7,14 +7,14 @@ const wa = require('@open-wa/wa-automate');
 const pkg = require('../../package.json');
 const {default: PQueue} = require('p-queue');
 
-const queue = new PQueue({concurrency: 1, timeout: 2000});
+const queue = new PQueue({concurrency: 1});
 
 require('axios-debug-log')({
   request: function (debug, config) {
     debug('Request with ', config);
   },
   response: function (debug, response) {
-    debug('Response with ' + response.data, 'from ' + response.config.url);
+    debug('Response with ' + JSON.stringify(response.data), 'from ' + response.config.url);
   },
   error: function (debug, error) {
     // Read https://www.npmjs.com/package/axios#handling-errors for more info
@@ -219,9 +219,7 @@ module.exports = function (Chat) {
 
       if (s === 'UNPAIRED') {
         console.log('LOGGED OUT!!!!');
-        wp.kill();
-        wp = undefined;
-        startedSetup = false;
+        Chat.kill();
       }
     });
   }
@@ -577,7 +575,7 @@ module.exports = function (Chat) {
   });
 
   Chat.setup = async () => {
-    console.log("starting");
+    console.log('starting');
     if (wp) {
       throw new Error('WhatApp already set');
     } else if (startedSetup) {
@@ -601,7 +599,7 @@ module.exports = function (Chat) {
       const client = await wa.create({
         killProcessOnBrowserClose: false,
         restartOnCrash: start,
-        // licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
+        licenseKey: '239D193F-26D442BD-AC392ED5-E9DB781F',
         disableSpins: true,
         hostNotificationLang: 'pt-br',
         // cacheEnabled: false,
@@ -615,10 +613,11 @@ module.exports = function (Chat) {
         // qrRefreshS: 15,
         qrTimeout: 90,
         authTimeout: 90,
-      })
+      });
       start(client);
     } catch (error) {
-      console.log("Failed to start: " + error );
+      console.log('Failed to start: ' + error);
+      startedSetup = false;
     }
   };
 
@@ -820,20 +819,31 @@ module.exports = function (Chat) {
     http: {path: '/:chatId/name', verb: 'patch'},
   });
 
-  Chat.kill = async () => {
-    startedSetup = false;
+  Chat.kill = async (body) => {
+    const {noRevoke} = body;
     try {
-      fs.unlinkSync(path.resolve(__dirname, '../../session/session.data.json'));
+      if (!noRevoke) {
+        fs.unlinkSync(
+          path.resolve(__dirname, '../../session/session.data.json'),
+        );
+      }
+      await wp.kill();
+      startedSetup = false;
+      wp = undefined;
+      return true;
     } catch (error) {
       console.log(error);
+      return error;
     }
-    await wp.kill();
-    wp = undefined;
-
-    return true;
   };
 
   Chat.remoteMethod('kill', {
+    accepts: {
+      arg: 'body',
+      type: 'object',
+      required: false,
+      http: {source: 'body'},
+    },
     description: 'Stops the WA server',
     returns: {root: true},
     http: {path: '/stop', verb: 'post'},
@@ -893,6 +903,25 @@ module.exports = function (Chat) {
     http: {path: '/:chatId/reload', verb: 'post'},
   });
 
+  Chat.sendSingleText = async (to, message) => {
+    console.log(to, message);
+    try {
+      if (Array.isArray(to)) {
+        const ids = await Promise.all(
+          to.map(async (gId) => {
+            return await sendMsgLoop(message, gId);
+          }),
+        );
+        return ids;
+      } else {
+        return await queue.add(async () => await wp.sendText(to, message));
+      }
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  };
+
   Chat.sendMessage = async (req, to, message, from, customId, quoted) => {
     const Message = model.app.models.Message;
     const agentId = from || req.accessToken.userId;
@@ -901,12 +930,12 @@ module.exports = function (Chat) {
     let wpMsg;
     console.log('QUOTE', quoted);
     if (quoted) {
-      const waMsg = await wp.getMessageById(quoted);
-      console.log('result of getmessagebyid', waMsg);
-      wpMsg = await wp.reply(to, message, quoted, true);
+      wpMsg = await queue.add(
+        async () => await wp.reply(to, message, quoted, true),
+      );
       console.log('answerId', wpMsg);
     } else {
-      wpMsg = await wp.sendText(to, message);
+      wpMsg = await queue.add(async () => await wp.sendText(to, message));
     }
     console.log('FINISHED', new Date().valueOf() - t, wpMsg);
     if (typeof wpMsg === 'string') {
@@ -1179,21 +1208,26 @@ module.exports = function (Chat) {
   });
 
   Chat.status = async () => {
-    let conn = false;
-    const status = await wp.getConnectionState();
-    if (wp) {
-      conn = (await wp.isConnected()) || status;
-    }
+    try {
+      if (!wp) {
+        throw 'no wp yet';
+      }
+      const status = await wp.getConnectionState();
+      let conn = (await wp.isConnected()) || status;
 
-    battery = await wp.getBatteryLevel();
-    return {
-      battery,
-      charging,
-      online: conn,
-      status: sts,
-      connection: status,
-      version: pkg.version,
-    };
+      battery = await wp.getBatteryLevel();
+      return {
+        battery,
+        charging,
+        online: conn,
+        status: sts,
+        connection: status,
+        version: pkg.version,
+      };
+    } catch (error) {
+      console.log(error);
+      return error;
+    }
   };
 
   Chat.remoteMethod('status', {
@@ -1309,6 +1343,8 @@ module.exports = function (Chat) {
           participants[group.id] = {
             name: group.name,
             participants: n.length,
+            lastMessage: group.lastMessageAt,
+            url: group.url,
           };
           return;
         } catch (error) {
@@ -1327,10 +1363,9 @@ module.exports = function (Chat) {
   });
 
   async function sendMsgLoop(msg, to) {
-    console.log(msg, to);
     try {
       sentMessages.push({to, msg});
-      const msgId = await wp.sendText(to, msg);
+      const msgId = await queue.add(async () => await wp.sendText(to, msg));
       return msgId;
     } catch (error) {
       console.log(error);
@@ -1344,9 +1379,11 @@ module.exports = function (Chat) {
       throw 'Need to wait 60 seconds to send message';
     }
     lastSent = new Date().valueOf();
-    const id = groups.map(async (gId, i) => {
-      return await queue.add(async () => await sendMsgLoop(msg, gId));
-    });
+    const id = await Promise.all(
+      groups.map(async (gId) => {
+        return await sendMsgLoop(msg, gId);
+      }),
+    );
     console.log(id);
     return id;
   };
