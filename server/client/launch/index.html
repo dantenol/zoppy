@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zoppy Lançamentos</title>
+    <meta name="robots" content="noindex" />
+    <link rel="stylesheet" href="index.css" />
+    <link rel="stylesheet" href="./index/style.css" />
+    <script src="https://unpkg.com/dayjs@1.8.21/dayjs.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.8.21/locale/pt-br.js"></script>
+    <script src="index.js"></script>
+    <script src="./index/script.js"></script>
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <img src="./assets/logo.png" alt="Zoppy" />
+        <div class="buffer"></div>
+        <select id="launchOptions" onchange="loadLaunch()">
+          <option value="" selected disabled>Selecionar lançamento</option>
+        </select>
+      </header>
+      <main>
+        <div id="selectLaunch">
+          <p>Selecione um lançamento para continuar</p>
+        </div>
+        <div id="launches">
+          <div id="buttons">
+            <button id="newGroup" onclick="createGroup()">
+              Criar novo grupo <img src="./assets/loading.gif" alt="loading" />
+            </button>
+            <img
+              src="./assets/reload.svg"
+              alt="atualizar"
+              id="reloadButton"
+              onclick="loadLaunch()"
+            />
+          </div>
+          <div id="tableContainer">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome do grupo</th>
+                  <th>Num. participantes</th>
+                  <th>Última mensagem</th>
+                  <th>
+                    <div id="sendToGroup">
+                      Enviar?
+                      <input type="checkbox" id="sendToAll" />
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="launchesTable"></tbody>
+            </table>
+          </div>
+          <div id="send">
+            <h3>Enviar mensagem para grupos</h3>
+            <textarea id="messageToSend" rows="4"></textarea>
+            <button onclick="bulkSend()">
+              Enviar<img src="./assets/loading.gif" alt="loading" />
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

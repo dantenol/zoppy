@@ -1,0 +1,206 @@
+header {
+  height: 10vh;
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+}
+
+header img {
+  max-height: 100%;
+}
+
+.buffer {
+  flex-grow: 1;
+}
+
+header select {
+  border-radius: 8px;
+  background-color: white;
+  border: 1px solid lightgray;
+  height: 50%;
+  width: 40%;
+  font-size: 24px;
+}
+
+main #selectLaunch {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+#selectLaunch p {
+  font-size: 48px;
+  font-weight: bold;
+  text-align: center;
+}
+
+#launches {
+  display: none;
+  flex-direction: column;
+}
+
+.launchOption {
+  display: flex;
+  width: 100%;
+}
+
+.launchOption > div {
+  flex: 1;
+  text-align: center;
+  padding: 16px;
+  border-right: 1px solid darkgreen;
+}
+
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+  /* max-height: 70%; */
+  color: black;
+  background-color: white;
+}
+
+td,
+th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 16px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
+.participantData {
+  display: flex;
+  align-items: center;
+}
+
+.outter {
+  margin-left: 8px;
+  width: 60%;
+  height: 8px;
+  border-radius: 4px;
+  background: #ccc;
+}
+
+.inner {
+  height: 8px;
+  border-radius: 4px;
+  background-color: darkgreen;
+}
+
+#send {
+  height: 30%;
+  width: 100%;
+}
+
+#messageToSend {
+  width: 100%;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  padding: 8px;
+  font-size: 24px;
+}
+
+#send h3 {
+  font-size: 30px;
+  margin: 8px 0;
+  font-weight: bold;
+}
+
+#send > button,
+#launches > #buttons > button {
+  width: 50%;
+  background: white;
+  color: darkgreen;
+  border: 2px solid darkgreen;
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+button > img {
+  width: 24px;
+  margin-left: 20px;
+  display: none;
+}
+
+button.loading > img {
+  width: 24px;
+  margin-left: 20px;
+  display: block;
+}
+
+#launches th:last-child {
+  width: 128px;
+  text-align: center;
+}
+
+#launches td:last-child {
+  text-align: center;
+}
+
+.participantData > p {
+  width: 32px;
+}
+
+#buttons {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  height: 10vh;
+  min-height: 96px;
+}
+
+#reloadButton {
+  width: 40px;
+  margin-left: 16px;
+  cursor: pointer;
+}
+
+#tableContainer {
+  height: 40vh;
+  display: block;
+  overflow: auto;
+}
+
+.groupName {
+  cursor: pointer;
+}
+
+@media screen and (max-width: 512px) {
+  header, #buttons {
+    height: 48px;
+    min-height: auto;
+  }
+  header img {
+    height: 32px;
+  }
+  header select {
+    width: auto;
+    font-size: smaller;
+  }
+
+  button {
+    font-size: small !important;
+    padding: 8px !important;
+  }
+  #reloadButton {
+    width: 32px;
+  }
+  table {
+    font-size: 16px;
+  }
+
+  #send h3 {
+    font-size: 20px;
+  }
+}
