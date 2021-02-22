@@ -687,12 +687,12 @@ const App = () => {
       );
     } catch (error) {
       console.log(error);
-      if (attempt < 3) {
-        sleep(200);
-        await send(message, quoted, to, attempt + 1);
-      } else {
+      // if (attempt < 3) {
+      //   sleep(200);
+      //   await send(message, quoted, to, attempt + 1);
+      // } else {
         throw error;
-      }
+      // }
     }
   };
 
