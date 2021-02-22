@@ -87,11 +87,11 @@ const MessageField = ({
       e.target.scrollTop = e.target.scrollHeight;
     }
 
-    if (e.target.value.length > 0 && !focused) {
-      setFocused(true);
-    } else if (e.target.value.length < 1) {
-      setFocused(false);
-    }
+    // if (e.target.value.length > 0 && !focused) {
+    //   setFocused(true);
+    // } else if (e.target.value.length < 1) {
+    //   setFocused(false);
+    // }
 
     handleChangeMessage(e.target.value);
     setRows(currentRows < maxRows ? currentRows : maxRows);
