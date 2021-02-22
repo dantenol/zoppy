@@ -203,7 +203,7 @@ module.exports = function (Chat) {
       io.sockets.emit('status', status);
     });
 
-    wp.onGlobalParicipantsChanged((e) => {
+    wp.onGlobalParticipantsChanged((e) => {
       console.log(e);
     });
 
