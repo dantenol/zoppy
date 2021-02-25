@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "v68.0.0",
+  "version": "v69.0.0",
   "main": "server/server.js",
   "engines": {
     "node": ">=4"
@@ -15,7 +15,7 @@
     "prod-db": "sed -i 's@\"0.0.0.0\"@\"db\"@' ./server/datasources.json"
   },
   "dependencies": {
-    "@open-wa/wa-automate": "^3.6.9",
+    "@open-wa/wa-automate": "^3.6.10",
     "aws-sdk": "^2.851.0",
     "axios": "^0.21.1",
     "axios-debug-log": "^0.8.2",
