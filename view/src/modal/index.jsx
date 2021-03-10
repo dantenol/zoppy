@@ -150,7 +150,12 @@ const Modal = ({
           {file.qr ? (
             <img className={classes.qr} src={file.qr} alt="QR code" />
           ) : null}
-          {file.status ? <h1>QR code validado. Carregando...</h1> : null}
+          {file.status ? (
+          <>
+          <h1>QR code validado. Carregando...</h1>
+          <h4>{`${file.partial}/${file.total}`}</h4>
+          </>
+          ) : null}
         </div>
       </>
     );

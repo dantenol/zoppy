@@ -8,6 +8,7 @@
   background-color: #f7f7f7;
   box-shadow: -2px 0 5px -2px #797979;
   transition: width ease 0.3s;
+  z-index: 999;
 }
 
 .container.true {
@@ -68,7 +69,7 @@
   border-radius: 0.4em;
   padding: 16px;
   position: absolute;
-  z-index: 1;
+  z-index: 1000;
   width: 256px;
   max-width: 50vw;
   text-align: center;
@@ -104,4 +105,23 @@
 
 .dataContainer .salesAgent img {
   width: 100%;
+}
+
+.statsContainer img {
+  height: 16px;
+  padding-right: 16px;
+  padding-left: 4px;
+}
+
+.statsContainer h1 {
+  font-size: 20px;
+  padding: 16px 0;
+  padding-right: 12px;
+}
+
+.counter, .statsContainer > div{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
 }

@@ -3,11 +3,12 @@ import classNames from "classnames";
 
 import logo from "../assets/images/icon.png";
 import launch from "../assets/images/rocket.svg";
+import sync from "../assets/images/sync.svg";
 import change from "../assets/images/changeUser.svg";
 import settings from "../assets/images/gear.svg";
 import classes from "./index.module.css";
 
-const Header = ({ logout, handleSettings, isLaunch }) => {
+const Header = ({ logout, handleSettings, isLaunch, handleManualSync }) => {
   let agent;
   if (localStorage.salesAgentProfile) {
     agent = JSON.parse(localStorage.salesAgentProfile);
@@ -17,6 +18,7 @@ const Header = ({ logout, handleSettings, isLaunch }) => {
 
   const goToLaunch = () => (window.location.href = "/launch");
   const fullName = (agent && agent.fullName) || "";
+  const isLocal = localStorage.getItem("adminSettings").includes("importSettings")
 
   return (
     <div className={classNames(classes.header)}>
@@ -33,6 +35,12 @@ const Header = ({ logout, handleSettings, isLaunch }) => {
           <img src={launch} alt="lançamento" />
         </button>
       ) : null}
+      {isLocal ? (
+        <button onClick={handleManualSync}>
+        <img src={sync} alt="Sincronizar" />
+      </button>
+      ): null}
+
     </div>
   );
 };

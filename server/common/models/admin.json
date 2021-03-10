@@ -29,7 +29,9 @@
     "viewOthersChats": {
       "type": "boolean",
       "default": true
-    }
+    },
+    "importSettings": "object",
+    "myNumber": "date"
   },
   "validations": [],
   "relations": {},

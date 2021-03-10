@@ -53,14 +53,14 @@ const App = () => {
   const isLaunch = !!adminSettings.launch;
   window.me = me;
 
-  function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
+  // function sleep(ms) {
+  //   return new Promise((resolve) => setTimeout(resolve, ms));
+  // }
 
   const checkOnline = async () => {
     try {
       const isSetup = (await axios(`${url}chats/online`, params)).data;
-      if (isSetup) {
+      if (isSetup || localStorage.useSavedData) {
         getStatus();
         await loadChats(socket);
         getUser(); // TODO carregar as configs do user
@@ -85,7 +85,8 @@ const App = () => {
 
   const evaluateStatus = (data) => {
     const onlineStates = ["TIMEOUT", "CONNECTED", "PAIRING", "OPENING"];
-    if (!onlineStates.includes(data.connection)) {
+    if (!onlineStates.includes(data.connection) && !localStorage.useSavedData) {
+      window.workingOffline = true;
       console.log("OFFLINE", data);
       setModal({ type: "offline", reason: data.connection });
       axios.post(`${url}/chats/refocus`, {}, params);
@@ -159,6 +160,13 @@ const App = () => {
         console.log(data);
         evaluateStatus(data);
       });
+      socket.on("loadedAMessage", (data) => {
+        if (data.total) {
+          setModal({...modal, total: data.total})
+        } else {
+          setModal({...modal, partial: data.partial})
+        }
+      })
     } else {
       localStorage.clear();
       setModal({
@@ -447,30 +455,30 @@ const App = () => {
     }
   };
 
-  const handleRecieveChats = ({ data, count }) => {
-    const chts = data.map((c) => {
-      const image = colors[Math.floor(Math.random() * 6)];
-      c.profilePic = c.profilePic || image;
-      c.firstClick = true;
-      c.filtered = true;
-      c.more = true;
-      c.displayName = c.customName || c.name;
-      if (c.messages.length && c.messages[0].mine) {
-        c.unread = 0;
-      }
-      return c;
-    });
+  // const handleRecieveChats = ({ data, count }) => {
+  //   const chts = data.map((c) => {
+  //     const image = colors[Math.floor(Math.random() * 6)];
+  //     c.profilePic = c.profilePic || image;
+  //     c.firstClick = true;
+  //     c.filtered = true;
+  //     c.more = true;
+  //     c.displayName = c.customName || c.name;
+  //     if (c.messages.length && c.messages[0].mine) {
+  //       c.unread = 0;
+  //     }
+  //     return c;
+  //   });
 
-    if (!count) {
-      console.log("STARTING");
-      setChats(() => chts);
-    } else {
-      setChats((draft) => {
-        draft.push(...chts);
-        draft.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
-      });
-    }
-  };
+  //   if (!count) {
+  //     console.log("STARTING");
+  //     setChats(() => chts);
+  //   } else {
+  //     setChats((draft) => {
+  //       draft.push(...chts);
+  //       draft.sort((a, b) => (a.lastMessageAt < b.lastMessageAt ? 1 : -1));
+  //     });
+  //   }
+  // };
 
   const updateAfterNewChat = (chatId) => {
     console.log(findIdxById(chatId));
@@ -691,7 +699,7 @@ const App = () => {
       //   sleep(200);
       //   await send(message, quoted, to, attempt + 1);
       // } else {
-        throw error;
+      throw error;
       // }
     }
   };
@@ -751,17 +759,13 @@ const App = () => {
     formData.append("", file);
     formData.append("caption", caption);
 
-    const msg = await axios.post(
-      `${url}chats/${currentChat}/sendMedia`,
-      formData,
-      {
-        ...params,
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/form-data",
-        },
-      }
-    );
+    await axios.post(`${url}chats/${currentChat}/sendMedia`, formData, {
+      ...params,
+      headers: {
+        accept: "application/json",
+        "Content-Type": "application/form-data",
+      },
+    });
 
     // const idx = findIdxById(currentChat);
 
@@ -792,7 +796,7 @@ const App = () => {
         })
       ).data;
       console.log(isSetup);
-      if (isSetup) {
+      if (isSetup || localStorage.useSavedData) {
         localStorage.setItem("connected", true);
         window.location.reload(true);
       } else {
@@ -836,6 +840,29 @@ const App = () => {
       console.log(error);
       alert("Email ou senha incorreto");
     }
+  };
+
+  const manualConnect = async () => {
+    socket = io(...socketParams);
+    socket.on("scanned", () => {
+      console.log("SCANNED");
+      setModal({ type: "qr", status: "scanned" });
+    });
+    socket.on("reload", () => {
+      window.location.reload(true);
+    });
+    socket.on("QR", (img) => {
+      console.log(img);
+      setModal({
+        type: "qr",
+        qr: img,
+      });
+    });
+    await axios.post(`${url}chats/init`, {force: true, reset: true}, params);
+    localStorage.removeItem("chats");
+    setModal({
+      type: "qr",
+    });
   };
 
   const clearLoginData = () => {
@@ -937,13 +964,10 @@ const App = () => {
 
   const deleteMessages = async (msgId) => {
     try {
-      await axios.delete(
-        `${url}chats/${currentChat}/deleteMessages`,
-        {
-          data: [msgId],
-          params: { access_token: params.params.access_token },
-        }
-      );
+      await axios.delete(`${url}chats/${currentChat}/deleteMessages`, {
+        data: [msgId],
+        params: { access_token: params.params.access_token },
+      });
     } catch (err) {
       console.log(err);
     }
@@ -956,17 +980,24 @@ const App = () => {
     });
   };
 
-  const handleDBQuery = ({ res, pinned }) => {
-    const queried = [];
+  const handleDBQuery = ({ res, pinned, string }) => {
     if (!res) {
       return;
     }
-    res.forEach((c) => {
-      if (pinned && c.agentId === me) {
-        queried.push(c);
-      } else if (!pinned) {
-        queried.push(c);
+    const queried = res.map((c) => {
+      const lowerStr = string.toLowerCase();
+      let str = true;
+      let pin = true;
+      if (string) {
+        str =
+          (c.displayName && c.displayName.toLowerCase().includes(lowerStr)) ||
+          c.chatId.slice(2, 12).includes(lowerStr);
       }
+      if (pinned) {
+        pin = c.agentId === me;
+      }
+      c.filtered = str && pin;
+      return c;
     });
     if (queried.length) {
       addChatWithoutDuplicate(queried, true);
@@ -983,7 +1014,7 @@ const App = () => {
         if (string) {
           str =
             (c.displayName && c.displayName.toLowerCase().includes(lowerStr)) ||
-            c.chatId.slice(0, 12).includes(lowerStr);
+            c.chatId.slice(2, 12).includes(lowerStr);
         }
         if (pinned) {
           pin = c.agentId === me;
@@ -1066,6 +1097,7 @@ const App = () => {
           showing={String(isMobile && page === "conversations")}
           data={chats}
           handleSettingsModal={handleSettingsModal}
+          handleManualSync={manualConnect}
           logout={logout}
           isLaunch={isLaunch}
           handleQuery={handleQuery}

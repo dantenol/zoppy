@@ -4,18 +4,21 @@ import classNames from "classnames";
 import classes from "./index.module.css";
 import swap from "../../assets/images/swap.svg";
 import { idToPhone } from "../../hooks/helpers";
+import Stats from "./Stats";
 
 const ContactDetails = ({
   data,
   handleClose,
   handleChangeName,
   show,
+  stats,
   handlePin,
 }) => {
   const [name, setName] = useState(data.displayName);
   const [savedName, setSavedName] = useState(data.displayName);
   const [showHint, setShowHint] = useState(false);
   const [attendant, setAttendant] = useState("");
+  console.log(stats);
 
   useEffect(() => {
     setName(data.displayName);
@@ -102,6 +105,7 @@ const ContactDetails = ({
             <img src={swap} alt="Trocar" />
           </button>
         </div>
+        <Stats data={stats} />
       </div>
     </div>
   );

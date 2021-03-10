@@ -25,6 +25,7 @@ const Conversations = ({
   handleModal,
   handleNewContactModal,
   handleSettingsModal,
+  handleManualSync,
   showing,
   logout,
   isLaunch,
@@ -41,6 +42,7 @@ const Conversations = ({
         <Header
           logout={logout}
           handleSettings={handleSettingsModal}
+          handleManualSync={handleManualSync}
           isLaunch={isLaunch}
         />
       )}

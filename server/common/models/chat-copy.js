@@ -4,13 +4,10 @@ const fs = require('fs');
 const random = require('random');
 const path = require('path');
 const wa = require('@open-wa/wa-automate');
-const {default: PQueue} = require('p-queue');
-const mime = require('mime-types');
-
 const pkg = require('../../package.json');
+const {default: PQueue} = require('p-queue');
 
 const queue = new PQueue({concurrency: 1});
-const tripleQueue = new PQueue({concurrency: 3});
 
 require('axios-debug-log')({
   request: function (debug, config) {
@@ -314,7 +311,7 @@ module.exports = function (Chat) {
       }
       return savedMsg;
     } catch (error) {
-      // console.log('duplicated %s', waMsg.id);
+      console.log('duplicated %s', waMsg.id);
     }
   }
 
@@ -341,9 +338,9 @@ module.exports = function (Chat) {
       if (!msg.fromMe && settings.randomizeNewChats) {
         agent = assignAgent();
       }
-      // if (wpChat.kind === 'group') {
-      //   url = await retrieveGroupLink(msg.chatId);
-      // }
+      if (wpChat.kind === 'group') {
+        url = await retrieveGroupLink(msg.chatId);
+      }
       try {
         newChat = await model.create({
           chatId: msg.chatId,
@@ -394,64 +391,12 @@ module.exports = function (Chat) {
     // }
   }
 
-  let ldd = 0;
-
-  // async function loadMsgs(id) {
-  //   try {
-  //     return await wp.loadEarlierMessages(id);
-  //   } catch (error) {
-  //     console.log(error);
-  //     return [];
-  //   }
-  // }
-
-  function loadCounter(total, chatId) {
+  function loadCounter(total) {
     if (total) {
-      io.sockets.emit('loadedMessage', {total});
-    } else {
-      io.sockets.emit('loadedAMessage', {partial: ++ldd});
-    }
-  }
-
-  async function saveMedia(message, chat) {
-    if (message.mimetype) {
-      const filename = path.resolve(
-        __dirname,
-        '../../media/',
-        `${chat} - ${message.t}.${mime.extension(message.mimetype)}`,
-      );
-      let mediaData;
-      try {
-        mediaData = await wa.decryptMedia(message);
-      } catch (error) {
-        console.log('FAILED TO LOAD MEDIA');
-      }
-      if (!mediaData) {
-        try {
-          mediaData = await decryptMedia(
-            await wp.forceStaleMediaUpdate(message.id),
-          );
-        } catch (error) {
-          console.log('FAILED AGAIN');
-          return;
-        }
-      }
-      // const imageBase64 = `data:${message.mimetype};base64,${mediaData.toString(
-      //   'base64'
-      // )}`;
-      // await client.sendImage(
-      //   message.from,
-      //   imageBase64,
-      //   filename,
-      //   `You just sent me this ${message.type}`
-      // );
-      fs.writeFile(filename, mediaData, function (err) {
-        if (err) {
-          return console.log(err);
-        }
-        console.log('The file was saved!');
-      });
-    }
+      io.sockets.emit('loadedMessages', total)
+    } else (
+      io.sockets.emit('loadedAMessage')
+    )
   }
 
   async function loadAllMessages(client) {
@@ -461,7 +406,7 @@ module.exports = function (Chat) {
     console.log('LOADED ALL CHATS IN', new Date() - t0);
     console.log(chats.length);
 
-    loadCounter(chats.length);
+    loadCounter(chats.length)
     let t = new Date();
     console.log(t);
     if (process.env.RESET === 'true') {
@@ -471,15 +416,10 @@ module.exports = function (Chat) {
 
     const THREE_MONTHS = moment().subtract(3, 'M').valueOf() / 1000;
     let customDate = THREE_MONTHS;
-    const {importSettings} = settings;
-    if (importSettings.customStartDate) {
-      customDate = importSettings.customStartDate.valueOf() / 1000;
+    if (settings.customStartDate) {
+      customDate = settings.customStartDate.valueOf() / 1000;
     }
-    const allMsgs = chats.map(async (oc) => {
-      // TODO use while loop
-      // let i = 0;
-      // while (i < chats.length) {
-      // const oc = chats[i];
+    const allMsgs = chats.map(async (oc) => { // TODO use while loop
       const t2 = new Date().valueOf();
       const currChat = await model.findById(oc.id);
       const chat = oc;
@@ -497,11 +437,11 @@ module.exports = function (Chat) {
       } else {
         try {
           let url;
-          // if (!chat.kind) {
-          //   return;
-          // } else if (chat.kind === 'group') {
-          //   url = await retrieveGroupLink(chatId);
-          // }
+          if (!chat.kind) {
+            return;
+          } else if (chat.kind === 'group') {
+            url = await retrieveGroupLink(chatId);
+          }
           await model.create({
             chatId,
             name:
@@ -518,21 +458,16 @@ module.exports = function (Chat) {
             url,
           });
         } catch (error) {
-          console.log(123231, error);
+          console.log(error);
         }
       }
 
       if (chat.t < customDate) {
         console.log('loaded only chat in', new Date() - t2);
-        loadCounter(null, chatId);
+        loadCounter();
         return;
       }
-      let allMessages;
-      try {
-        allMessages = await client.getAllMessagesInChat(chatId, true);
-      } catch (error) {
-        console.log(7664732, error);
-      }
+      let allMessages = await client.getAllMessagesInChat(chatId, true);
       // console.log(
       //   'loaded %d messages on chat %s',
       //   allMessages.length,
@@ -541,30 +476,20 @@ module.exports = function (Chat) {
       let ix = 0;
       let noMoreMessages;
       let multiRun = true;
-      while (ix < 300 && !noMoreMessages && multiRun) {
+      while (ix < 500 && !noMoreMessages && multiRun) {
         if (!allMessages.length) {
-          allMessages = await tripleQueue.add(async () => {
-            const t4load = new Date().valueOf();
-            console.log('GETTING MSG');
-            const newMsgs = await wp.loadEarlierMessages(chatId);
-            console.log(
-              'TOOK %d TO LOAD OLDER MSGS',
-              new Date().valueOf() - t4load,
-            );
-            return newMsgs;
-          });
+          const t4load = new Date().valueOf();
+          allMessages = await client.loadEarlierMessages(chatId);
+          console.log("TOOK %d TO LOAD OLDER MSGS", (new Date().valueOf() - t4load));
         }
         if (!allMessages.length) {
           noMoreMessages = true;
-          console.log('NO MORE MESSAGES', chatId);
+          console.log("NO MORE MESSAGES", chatId);
         } else {
           // console.log(chatId, allMessages.length);
           const createMsgs = allMessages.map(async (m) => {
             try {
               await createMessage(m);
-              // if (importSettings) {
-              //   saveMedia(m, chatId);
-              // }
               ix++;
             } catch (error) {
               // noMoreMessages = true;
@@ -573,24 +498,19 @@ module.exports = function (Chat) {
           });
           allMessages = [];
           await Promise.all(createMsgs);
-          if (chatId.includes('@g')) {
-            multiRun = importSettings.includeGroups;
-          }
-          multiRun = importSettings.customStartDate && multiRun;
+          multiRun = settings.customStartDate;
         }
       }
-      if (ix >= 300) {
+      if (ix >= 500) {
         console.log('message cap', ix);
       } else if (noMoreMessages) {
         console.log('loaded all msgs');
-      } else if (!multiRun) {
+      } else if (!singleRun) {
         console.log('single run');
       }
       console.log('loaded chat and messages in', new Date() - t2, chatId);
-      loadCounter(null, chatId);
+      loadCounter();
       client.cutMsgCache();
-      // i++;
-      // }
     });
     await Promise.all(allMsgs);
 
@@ -702,11 +622,8 @@ module.exports = function (Chat) {
     http: {path: '/refocus', verb: 'post'},
   });
 
-  Chat.setup = async (data) => {
-    console.log(data);
+  Chat.setup = async () => {
     console.log('starting');
-    settings = await Chat.app.models.Admin.get();
-    console.log(settings);
     if (wp) {
       throw new Error('WhatApp already set');
     } else if (startedSetup) {
@@ -714,15 +631,6 @@ module.exports = function (Chat) {
       return;
       // await wa.kill();
       // return Chat.setup();
-    }
-    if (data && data.reset === true) {
-      try {
-        fs.unlinkSync(
-          path.resolve(__dirname, '../../session/session.data.json'),
-        );
-      } catch (error) {
-        console.log(error);
-      }
     }
     startedSetup = true;
     io = Chat.app.io;
@@ -735,11 +643,6 @@ module.exports = function (Chat) {
     let source = {executablePath: '/usr/bin/google-chrome-stable'};
     if (process.env.NODE_ENV === 'production') {
       source = {browserWSEndpoint: 'ws://browser:3000'};
-    }
-    if (settings.preventAutoInit && !data.force) {
-      startedSetup = false;
-      console.log('stopped due to auto init block');
-      return;
     }
     try {
       const client = await wa.create({
@@ -769,12 +672,6 @@ module.exports = function (Chat) {
 
   Chat.remoteMethod('setup', {
     description: 'Start whatsapp web',
-    accepts: {
-      arg: 'body',
-      type: 'object',
-      required: false,
-      http: {source: 'body'},
-    },
     returns: {root: true},
     http: {path: '/init', verb: 'post'},
   });
