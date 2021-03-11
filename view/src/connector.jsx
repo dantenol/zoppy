@@ -1,6 +1,6 @@
 import pkg from "../package.json"
 
-let url = "/api/"
+let url = "https://a142b078ec8c.ngrok.io/api/"
 
 let socketParams = [{
   secure: true,

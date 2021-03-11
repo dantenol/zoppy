@@ -116,6 +116,7 @@ img.logo {
 
 .qr {
   margin: auto;
+  width: 50vh !important;
 }
 
 .saleType {

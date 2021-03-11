@@ -154,6 +154,7 @@ const App = () => {
       checkOnline();
       socket = io(...socketParams);
       socket.on("reload", () => {
+        localStorage.removeItem("chats");
         window.location.reload(true);
       });
       socket.on("status", (data) => {
@@ -168,7 +169,7 @@ const App = () => {
         }
       })
     } else {
-      localStorage.clear();
+      clearLoginData();
       setModal({
         type: "login",
       });
@@ -934,6 +935,9 @@ const App = () => {
     try {
       const { data } = await axios(`${url}admins`, params);
       localStorage.setItem("adminSettings", JSON.stringify(data));
+      if (data.preventAutoInit) {
+        localStorage.setItem("useSavedData", 1)
+      }
       console.log(data);
       setAdminSettings(data);
     } catch (err) {

@@ -190,9 +190,11 @@ module.exports = function (Chat) {
       await Chat.app.models.Message.deleteAll();
       console.log('DELETED ALL MESSAGES FROM OLD NUMBER');
     }
-    wpp.onAnyMessage((msg) => {
-      saveMsg(msg);
-    });
+    // wpp.onAnyMessage((msg) => {
+    //   if (!settings.importSettings) {
+    //     saveMsg(msg);
+    //   }
+    // });
 
     process.on('SIGINT', () => {
       wpp.close();
@@ -215,25 +217,25 @@ module.exports = function (Chat) {
       io.sockets.emit('status', status);
     });
 
-    wp.onGlobalParticipantsChanged((e) => {
-      console.log(e);
-    });
+    // wp.onGlobalParticipantsChanged((e) => {
+    //   console.log(e);
+    // });
 
-    wp.onStateChanged(async (s) => {
-      console.log(s);
-      sts = s;
-      status.connection = s;
-      io.sockets.emit('status', status);
-      if (s === 'CONFLICT' || s === 'UNLAUNCHED') {
-        console.log(wp.forceRefocus.toString());
-        wp.forceRefocus();
-      }
+    // wp.onStateChanged(async (s) => {
+    //   console.log(s);
+    //   sts = s;
+    //   status.connection = s;
+    //   io.sockets.emit('status', status);
+    //   if (s === 'CONFLICT' || s === 'UNLAUNCHED') {
+    //     console.log(wp.forceRefocus.toString());
+    //     wp.forceRefocus();
+    //   }
 
-      if (s === 'UNPAIRED') {
-        console.log('LOGGED OUT!!!!');
-        Chat.kill();
-      }
-    });
+    //   if (s === 'UNPAIRED') {
+    //     console.log('LOGGED OUT!!!!');
+    //     Chat.kill();
+    //   }
+    // });
   }
 
   function assignAgent() {
@@ -457,25 +459,33 @@ module.exports = function (Chat) {
   async function loadAllMessages(client) {
     const Message = model.app.models.Message;
     const t0 = new Date().valueOf();
-    const chats = await client.getAllChats();
+    const chats = await client.getAllChatIds();
     console.log('LOADED ALL CHATS IN', new Date() - t0);
     console.log(chats.length);
+    const {importSettings} = settings;
 
     loadCounter(chats.length);
     let t = new Date();
     console.log(t);
-    if (process.env.RESET === 'true') {
+    if (process.env.RESET === 'true' || importSettings) {
       await model.deleteAll();
       await Message.deleteAll();
+      console.log("CLEAR");
     }
 
     const THREE_MONTHS = moment().subtract(3, 'M').valueOf() / 1000;
     let customDate = THREE_MONTHS;
-    const {importSettings} = settings;
-    if (importSettings.customStartDate) {
+    if (importSettings && importSettings.customStartDate) {
       customDate = importSettings.customStartDate.valueOf() / 1000;
     }
-    const allMsgs = chats.map(async (oc) => {
+    const allMsgs = chats.map(async (id) => {
+      let oc;
+      try {
+        oc = await client.getChatById(id);
+      } catch (error) {
+        console.log("FAILED", id);
+        return
+      }
       // TODO use while loop
       // let i = 0;
       // while (i < chats.length) {
@@ -502,6 +512,20 @@ module.exports = function (Chat) {
           // } else if (chat.kind === 'group') {
           //   url = await retrieveGroupLink(chatId);
           // }
+          if (importSettings && importSettings.searchRegex) {
+            const regex =new RegExp(importSettings.searchRegex);
+            if (!regex.test(chat.formattedTitle)) {
+              // console.log("skipped", chat.formattedTitle);
+              return
+            }
+          }
+          if (importSettings && !importSettings.includeGroups) {
+            if (chat.kind === 'group') {
+              // console.log("skipped", chat.formattedTitle);
+              return
+            }
+          }
+          console.log(chat.formattedTitle);
           await model.create({
             chatId,
             name:
@@ -565,18 +589,15 @@ module.exports = function (Chat) {
               // if (importSettings) {
               //   saveMedia(m, chatId);
               // }
-              ix++;
             } catch (error) {
               // noMoreMessages = true;
               // console.log(error);
             }
+            ix++;
           });
           allMessages = [];
           await Promise.all(createMsgs);
-          if (chatId.includes('@g')) {
-            multiRun = importSettings.includeGroups;
-          }
-          multiRun = importSettings.customStartDate && multiRun;
+          multiRun = importSettings && importSettings.customStartDate && multiRun;
         }
       }
       if (ix >= 300) {
@@ -730,7 +751,7 @@ module.exports = function (Chat) {
       console.log('no socket found. retrying');
       await sleep(100);
       startedSetup = false;
-      return Chat.setup();
+      return Chat.setup({});
     }
     let source = {executablePath: '/usr/bin/google-chrome-stable'};
     if (process.env.NODE_ENV === 'production') {

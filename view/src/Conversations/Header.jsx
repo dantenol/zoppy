@@ -18,7 +18,7 @@ const Header = ({ logout, handleSettings, isLaunch, handleManualSync }) => {
 
   const goToLaunch = () => (window.location.href = "/launch");
   const fullName = (agent && agent.fullName) || "";
-  const isLocal = localStorage.getItem("adminSettings").includes("importSettings")
+  const isLocal = localStorage.useSavedData;
 
   return (
     <div className={classNames(classes.header)}>

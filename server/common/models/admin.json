@@ -31,7 +31,7 @@
       "default": true
     },
     "importSettings": "object",
-    "myNumber": "date"
+    "myNumber": "string"
   },
   "validations": [],
   "relations": {},
