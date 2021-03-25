@@ -1,6 +1,6 @@
 {
   "name": "view",
-  "version": "v75.0.0",
+  "version": "v76.0.0",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.9",
