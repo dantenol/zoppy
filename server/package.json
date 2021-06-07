@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "v84.0.0",
+  "version": "v85.0.0",
   "main": "server/server.js",
   "engines": {
     "node": ">=4"
@@ -15,34 +15,34 @@
     "prod-db": "sed -i 's@\"0.0.0.0\"@\"db\"@' ./server/datasources.json"
   },
   "dependencies": {
-    "@open-wa/wa-automate": "^3.10.5",
-    "aws-sdk": "^2.876.0",
+    "@open-wa/wa-automate": "^4.2.1",
+    "aws-sdk": "^2.923.0",
     "axios": "^0.21.1",
     "axios-debug-log": "^0.8.2",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
-    "dotenv": "^8.2.0",
+    "dotenv": "^10.0.0",
     "express-fileupload": "^1.2.1",
-    "helmet": "^4.4.1",
+    "helmet": "^4.6.0",
     "loopback": "^3.28.0",
     "loopback-boot": "^3.3.1",
     "loopback-component-explorer": "^6.5.1",
-    "loopback-connector-mongodb": "^6.0.0",
-    "mime-types": "^2.1.29",
+    "loopback-connector-mongodb": "^6.0.1",
+    "mime-types": "^2.1.31",
     "moment": "^2.29.1",
     "p-queue": "^6.6.2",
-    "random": "^3.0.3",
+    "random": "^3.0.6",
     "serve-favicon": "^2.5.0",
-    "sharp": "^0.27.2",
-    "socket.io": "^4.0.0",
+    "sharp": "^0.28.3",
+    "socket.io": "^4.1.2",
     "strong-error-handler": "^4.0.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "eslint": "^7.23.0",
+    "eslint": "^7.28.0",
     "eslint-config-loopback": "^13.1.0",
-    "eslint-config-prettier": "^8.1.0",
-    "prettier": "^2.2.1"
+    "eslint-config-prettier": "^8.3.0",
+    "prettier": "^2.3.1"
   },
   "repository": {
     "type": "",
